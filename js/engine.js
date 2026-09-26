@@ -61,29 +61,38 @@ const LEVELS={
     width:2400,height:270,spawn:{x:40,y:190},
     powerUp:'double_jump',
     platforms:[
-      {x:0,y:230,w:160,h:16},{x:200,y:205,w:70,h:12},{x:305,y:175,w:65,h:12},
-      {x:405,y:200,w:75,h:12},{x:515,y:230,w:110,h:16},{x:660,y:195,w:65,h:12},
-      {x:760,y:165,w:65,h:12},{x:860,y:195,w:70,h:12},{x:970,y:230,w:120,h:16},
-      {x:1130,y:195,w:65,h:12},{x:1230,y:160,w:65,h:12},{x:1330,y:195,w:65,h:12},
-      {x:1440,y:230,w:110,h:16},{x:1590,y:195,w:70,h:12},{x:1700,y:165,w:70,h:12},
-      {x:1810,y:195,w:65,h:12},{x:1920,y:230,w:115,h:16},{x:2070,y:200,w:70,h:12},
-      {x:2180,y:230,w:220,h:16},
+      {x:0,y:230,w:300,h:16}, // Inicio largo y seguro
+      {x:360,y:200,w:100,h:12}, // Primer salto fácil
+      {x:520,y:170,w:120,h:12}, // Segundo salto un poco más alto
+      {x:700,y:230,w:250,h:16}, // Zona de descanso
+      {x:1000,y:190,w:90,h:12}, // Salto intermedio
+      {x:1140,y:160,w:90,h:12}, 
+      {x:1280,y:200,w:90,h:12},
+      {x:1430,y:230,w:300,h:16}, // Otra zona segura
+      {x:1780,y:190,w:100,h:12},
+      {x:1930,y:150,w:100,h:12},
+      {x:2100,y:230,w:300,h:16}, // Plataforma final hacia la nave
     ],
     spikes:[
-      {x:275,y:222,w:20,h:8},{x:990,y:222,w:36,h:8},
-      {x:1460,y:222,w:36,h:8},{x:1940,y:222,w:36,h:8},
+      {x:750,y:222,w:40,h:8}, // Pinchos en la zona de descanso baja
+      {x:1550,y:222,w:40,h:8},
     ],
-    memories:[{x:310,y:148,id:1},{x:775,y:136,id:2},{x:1245,y:130,id:3}],
+    memories:[
+      {x:390,y:160,id:1}, // Fácil de agarrar
+      {x:1170,y:120,id:2}, // Requiere salto preciso
+      {x:1960,y:110,id:3} // Casi al final
+    ],
     items:[
-      {x:525,y:198,type:'star'},{x:985,y:198,type:'heart'},
-      {x:1455,y:198,type:'star'},{x:2085,y:168,type:'heart'},
+      {x:560,y:140,type:'star'},
+      {x:850,y:200,type:'heart'},
+      {x:1310,y:170,type:'star'},
+      {x:1810,y:160,type:'heart'},
     ],
     enemies:[
-      {x:540,y:208,type:'walker',range:80,dir:1,spd:.7},
-      {x:990,y:208,type:'walker',range:90,dir:1,spd:.7},
-      {x:1310,y:208,type:'flyer',range:110,dir:1},
-      {x:1650,y:175,type:'flyer',range:90,dir:-1},
-      {x:1940,y:208,type:'walker',range:80,dir:1,spd:.8},
+      {x:790,y:208,type:'walker',range:60,dir:1,spd:.5}, // Enemigos lentos
+      {x:1500,y:208,type:'walker',range:80,dir:1,spd:.6},
+      {x:1030,y:150,type:'flyer',range:50,dir:1}, // Volador predecible
+      {x:2150,y:208,type:'walker',range:100,dir:-1,spd:.6},
     ],
     goal:{x:2340,y:196,w:24,h:34},
     decision:{

@@ -34,29 +34,6 @@ function toggleFS(){
 window.addEventListener('click',()=>{try{SFX.jump();}catch(e){}},{once:true});
 document.addEventListener('fullscreenchange',fitCanvas);
 
-// --- Mobile Controls Handling ---
-function setupMobileControls() {
-  const map = {
-    'btn-left': 'L',
-    'btn-right': 'R',
-    'btn-dash': 'D',
-    'btn-jump': 'U' // or 'J'
-  };
-  for (const [id, k] of Object.entries(map)) {
-    const btn = document.getElementById(id);
-    if (!btn) continue;
-    
-    const press = (e) => { e.preventDefault(); keys[k] = true; };
-    const release = (e) => { e.preventDefault(); keys[k] = false; };
-    
-    btn.addEventListener('touchstart', press, {passive: false});
-    btn.addEventListener('touchend', release, {passive: false});
-    btn.addEventListener('mousedown', press);
-    btn.addEventListener('mouseup', release);
-    btn.addEventListener('mouseleave', release);
-  }
-}
-window.addEventListener('DOMContentLoaded', setupMobileControls);
 
 
 // ═══════════════════════════════════════════════════════════
@@ -1088,15 +1065,17 @@ function drawBG(theme,cx,cy){
       }
     }
     ctx.globalAlpha=1;
-    // Planeta decorativo
+    // Planeta decorativo enorme
     const px=(VW*.88-cx*.06)%VW;
-    ctx.globalAlpha=.55;
-    const pg=ctx.createRadialGradient(px,65,0,px,65,44);
-    pg.addColorStop(0,'#f472b6');pg.addColorStop(.6,'#7e22ce');pg.addColorStop(1,'#1e0535');
-    ctx.fillStyle=pg;ctx.beginPath();ctx.arc(px,65,44,0,Math.PI*2);ctx.fill();
-    // Anillo
-    ctx.strokeStyle='rgba(200,130,255,.4)';ctx.lineWidth=2.5;
-    ctx.beginPath();ctx.ellipse(px,65+2,56,12,-.15,0,Math.PI*2);ctx.stroke();
+    ctx.globalAlpha=.7;
+    const pg=ctx.createRadialGradient(px,80,0,px,80,75);
+    pg.addColorStop(0,'#f472b6');pg.addColorStop(.4,'#a855f7');pg.addColorStop(1,'#1e0535');
+    ctx.fillStyle=pg;ctx.beginPath();ctx.arc(px,80,75,0,Math.PI*2);ctx.fill();
+    // Anillos del planeta
+    ctx.strokeStyle='rgba(251,191,36,.6)';ctx.lineWidth=4;
+    ctx.beginPath();ctx.ellipse(px,80+5,110,25,-.2,0,Math.PI*2);ctx.stroke();
+    ctx.strokeStyle='rgba(96,165,250,.4)';ctx.lineWidth=2;
+    ctx.beginPath();ctx.ellipse(px,80+5,120,30,-.2,0,Math.PI*2);ctx.stroke();
     ctx.globalAlpha=1;
     // Cohete BG
     const rx=((t*40+200)%(LS.data.width+200)-100-cx*.08)*(VW/LS.data.width);
@@ -1273,15 +1252,18 @@ function drawPlatforms(lvl,cx){
     if(sx>VW||sx+p.w<0)continue;
     const t=lvl.theme;
     if(t==='galaxy'){
-      ctx.fillStyle='#2e1065';ctx.fillRect(sx,sy,p.w,p.h);
-      ctx.fillStyle='#4c1d95';ctx.fillRect(sx,sy,p.w,3);
-      ctx.fillStyle='#7c3aed';ctx.fillRect(sx,sy,p.w,1);
-      ctx.fillStyle='#c4b5fd';ctx.fillRect(sx,sy+1,p.w,1);
-      // Cristales decorativos
-      for(let i=4;i<p.w-4;i+=14){
-        if((i+Math.floor(p.x))%28<14){
-          ctx.fillStyle='rgba(200,180,255,.7)';ctx.fillRect(sx+i,sy+7,1,1);
-        }
+      // Plataformas de energía neón
+      ctx.fillStyle='rgba(46,16,101,0.6)';ctx.fillRect(sx,sy,p.w,p.h); // base semitransparente
+      ctx.fillStyle='#a855f7';ctx.fillRect(sx,sy,p.w,2); // borde brillante superior
+      ctx.fillStyle='#f472b6';ctx.fillRect(sx,sy+p.h-1,p.w,1); // borde inferior
+      // Pulso interno
+      const pulse = Math.abs(Math.sin(LS.time*2 + p.x));
+      ctx.fillStyle = `rgba(232,121,249,${0.1 + pulse * 0.2})`;
+      ctx.fillRect(sx,sy+2,p.w,p.h-3);
+      // Líneas de conexión
+      for(let i=0;i<p.w;i+=15){
+        ctx.fillStyle='rgba(139,92,246,0.4)';
+        ctx.fillRect(sx+i,sy+2,1,p.h-3);
       }
     }else if(t==='city'){
       ctx.fillStyle='#1e1b2e';ctx.fillRect(sx,sy,p.w,p.h);
@@ -1319,18 +1301,33 @@ function drawPlatforms(lvl,cx){
 }
 
 function drawSpikes(lvl,cx){
+  const isGalaxy = lvl.theme === 'galaxy';
   for(const sp of lvl.spikes||[]){
     const sx=Math.floor(sp.x-cx),sy=Math.floor(sp.y-Cam.cy);
     if(sx>VW||sx+sp.w<0)continue;
-    ctx.fillStyle='#300';ctx.fillRect(sx,sy+sp.h-2,sp.w,2);
-    const n=Math.floor(sp.w/8);
-    for(let i=0;i<n;i++){
-      const tx=sx+i*8;
-      ctx.fillStyle='#7f1d1d';
-      ctx.beginPath();ctx.moveTo(tx,sy+sp.h);ctx.lineTo(tx+4,sy);ctx.lineTo(tx+8,sy+sp.h);ctx.fill();
-      ctx.fillStyle='#f87171';
-      ctx.beginPath();ctx.moveTo(tx+2,sy+sp.h-2);ctx.lineTo(tx+4,sy+4);ctx.lineTo(tx+6,sy+sp.h-2);ctx.fill();
-      ctx.fillStyle='rgba(255,200,200,.6)';ctx.fillRect(tx+3,sy+5,1,4);
+    
+    if (isGalaxy) {
+      // Pinchos de energía / cristales neón
+      ctx.fillStyle='rgba(139,92,246,0.3)';ctx.fillRect(sx,sy+sp.h-2,sp.w,2);
+      const n=Math.floor(sp.w/8);
+      for(let i=0;i<n;i++){
+        const tx=sx+i*8;
+        ctx.fillStyle='rgba(232,121,249,0.8)';
+        ctx.beginPath();ctx.moveTo(tx,sy+sp.h);ctx.lineTo(tx+4,sy);ctx.lineTo(tx+8,sy+sp.h);ctx.fill();
+        ctx.fillStyle='#f472b6';
+        ctx.beginPath();ctx.moveTo(tx+2,sy+sp.h-2);ctx.lineTo(tx+4,sy+4);ctx.lineTo(tx+6,sy+sp.h-2);ctx.fill();
+      }
+    } else {
+      ctx.fillStyle='#300';ctx.fillRect(sx,sy+sp.h-2,sp.w,2);
+      const n=Math.floor(sp.w/8);
+      for(let i=0;i<n;i++){
+        const tx=sx+i*8;
+        ctx.fillStyle='#7f1d1d';
+        ctx.beginPath();ctx.moveTo(tx,sy+sp.h);ctx.lineTo(tx+4,sy);ctx.lineTo(tx+8,sy+sp.h);ctx.fill();
+        ctx.fillStyle='#f87171';
+        ctx.beginPath();ctx.moveTo(tx+2,sy+sp.h-2);ctx.lineTo(tx+4,sy+4);ctx.lineTo(tx+6,sy+sp.h-2);ctx.fill();
+        ctx.fillStyle='rgba(255,200,200,.6)';ctx.fillRect(tx+3,sy+5,1,4);
+      }
     }
   }
 }
