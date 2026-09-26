@@ -2162,19 +2162,31 @@ function renderUI(){
       <p class="title-kicker">UNA HISTORIA HECHA PARA TI</p>
       <h1 class="title-logo">ENTRE LOS<br><span>RECUERDOS</span></h1>
       <div class="title-sparkles" aria-hidden="true"><span>✦</span><span>♥</span><span>✦</span></div>
-      <button class="pixel-button" id="btnTitleStart" type="button">
-        <span class="pixel-button-icon" aria-hidden="true">▶</span> COMENZAR
-      </button>
+      <div class="title-actions">
+        <button class="pixel-button" id="btnTitleStart" type="button">
+          <span class="pixel-button-icon" aria-hidden="true">▶</span> COMENZAR
+        </button>
+        <button class="title-map-button" id="btnTitleMap" type="button">VER MAPA DE NIVELES</button>
+      </div>
       <p class="title-hint">UN AÑO · UN AMOR · UN VIAJE</p>
     `;
     ui.appendChild(t);
     id('btnTitleStart').onclick=()=>{
       SFX.select();
-      G.state='menu';
+      const hasSave=Save.load();
+      const levelToStart=hasSave&&LEVELS[G.levelId]?G.levelId:1;
+      startLevel(levelToStart);
+      try{
+        if(!document.fullscreenElement){
+          document.documentElement.requestFullscreen?.()?.catch(()=>{});
+        }
+      }catch(e){}
+    };
+    id('btnTitleMap').onclick=()=>{
+      SFX.select();
+      Save.load();
+      G.state='map';
       renderUI();
-      if(!document.fullscreenElement) {
-        document.documentElement.requestFullscreen().catch(()=>{});
-      }
     };
     return;
   }

@@ -13,10 +13,15 @@ canvas.width=VW;canvas.height=VH;
 ctx.imageSmoothingEnabled=false;
 const ui=document.getElementById('ui');
 
+function updateResponsiveLayout(width,height){
+  document.body.dataset.layout=Math.min(width,height)<=600?'small':'large';
+  document.body.dataset.orientation=width>=height?'landscape':'portrait';
+}
 function fitCanvas(){
   const viewport=window.visualViewport;
   const width=viewport?viewport.width:window.innerWidth;
   const height=viewport?viewport.height:window.innerHeight;
+  updateResponsiveLayout(width,height);
   const s=Math.min(width/VW,height/VH);
   canvas.style.width=Math.floor(VW*s)+'px';
   canvas.style.height=Math.floor(VH*s)+'px';
