@@ -9,15 +9,15 @@
 <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-<canvas id="game"></canvas>
+<canvas id="game" aria-label="Entre los Recuerdos, juego de plataformas pixel art"></canvas>
 <div id="ui"></div>
 
-<div id="touch-controls" style="display:none; position:fixed; inset:0; z-index:900; pointer-events:none;">
-  <div style="position:absolute; bottom:20px; left:20px; display:flex; gap:10px; pointer-events:auto;">
+<div id="touch-controls" aria-label="Controles táctiles">
+  <div class="touch-cluster touch-cluster-left">
     <button id="btn-left" class="t-btn">◄</button>
     <button id="btn-right" class="t-btn">►</button>
   </div>
-  <div style="position:absolute; bottom:20px; right:20px; display:flex; gap:10px; pointer-events:auto;">
+  <div class="touch-cluster touch-cluster-right">
     <button id="btn-dash" class="t-btn">»</button>
     <button id="btn-jump" class="t-btn">▲</button>
   </div>

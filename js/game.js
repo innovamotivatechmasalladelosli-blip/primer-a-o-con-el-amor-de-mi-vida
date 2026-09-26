@@ -41,23 +41,29 @@ const touchMap = {
   'btn-jump': 'J',
   'btn-dash': 'D'
 };
-let isMobile = false;
-window.addEventListener('touchstart', (e) => {
-  if(!isMobile){
-    isMobile = true;
-    document.getElementById('touch-controls').style.display = 'block';
-  }
-  if (e.target.classList.contains('t-btn')) {
-    keys[touchMap[e.target.id]] = true;
-    e.preventDefault();
-  }
-}, {passive: false});
-window.addEventListener('touchend', (e) => {
-  if (e.target.classList.contains('t-btn')) {
-    keys[touchMap[e.target.id]] = false;
-    e.preventDefault();
-  }
-}, {passive: false});
+const touchControls=document.getElementById('touch-controls');
+const hasTouchInput=navigator.maxTouchPoints>0||window.matchMedia('(pointer: coarse)').matches;
+function updateTouchControls(){
+  touchControls.classList.toggle('is-visible',hasTouchInput&&(G.state==='level'||G.state==='minigame'));
+}
+function releaseTouchKey(e){
+  const button=e.target.closest?.('.t-btn');
+  if(!button)return;
+  const key=touchMap[button.id];
+  if(key)keys[key]=false;
+}
+touchControls.addEventListener('pointerdown',e=>{
+  const button=e.target.closest?.('.t-btn');
+  if(!button)return;
+  const key=touchMap[button.id];
+  if(!key)return;
+  keys[key]=true;
+  button.setPointerCapture?.(e.pointerId);
+  if(e.pointerType==='touch')e.preventDefault();
+});
+['pointerup','pointercancel','lostpointercapture'].forEach(type=>
+  touchControls.addEventListener(type,releaseTouchKey)
+);
 
 
 // ═══════════════════════════════════════════════════════════
@@ -904,6 +910,7 @@ function finishLevel(){
 let CINE = { timer: 0 };
 function startCinematic() {
   G.state = 'cinematic';
+  updateTouchControls();
   ui.innerHTML = '';
   CINE = { timer: 0 };
 }
@@ -946,6 +953,7 @@ let MG = { active: false };
 function startMinigame() {
   G.state = 'minigame';
   ui.innerHTML = '';
+  updateTouchControls();
   MG = {
     active: true,
     shipY: VH / 2,
@@ -1385,45 +1393,42 @@ function _drawRocket(rx,ry){
 
 // ═══════════════════════════════════════════════════════════
 function _drawSofa(sx,sy,w,h){
-  // Sofa: más claro y simple.
-  ctx.fillStyle='#5b21b6'; ctx.fillRect(sx,sy+4,w,h-4); // Base
-  ctx.fillStyle='#7c3aed'; ctx.fillRect(sx,sy,8,h); // Brazo izq
-  ctx.fillStyle='#7c3aed'; ctx.fillRect(sx+w-8,sy,8,h); // Brazo der
-  ctx.fillStyle='#c4b5fd'; ctx.fillRect(sx+8,sy+4,w-16,4); // Cojín
-  // Patas oscuras
-  ctx.fillStyle='#1e1b4b'; ctx.fillRect(sx+2,sy+h,4,4);
-  ctx.fillRect(sx+w-6,sy+h,4,4);
+  // Respaldo, asiento y brazos se dibujan a escala con el personaje.
+  const arm=Math.min(7,Math.max(5,Math.floor(w*.15)));
+  ctx.fillStyle='#32155f';ctx.fillRect(sx+arm,sy-15,w-arm*2,11);
+  ctx.fillStyle='#8b5cf6';ctx.fillRect(sx+arm+2,sy-13,w-arm*2-4,7);
+  ctx.fillStyle='#5b21b6';ctx.fillRect(sx,sy,w,h+2);
+  ctx.fillStyle='#7c3aed';ctx.fillRect(sx,sy-7,arm,10);
+  ctx.fillRect(sx+w-arm,sy-7,arm,10);
+  ctx.fillStyle='#c4b5fd';ctx.fillRect(sx+arm+2,sy,w-arm*2-4,2);
+  ctx.fillStyle='#2e1065';ctx.fillRect(sx+4,sy+h,3,3);
+  ctx.fillRect(sx+w-7,sy+h,3,3);
 }
-
 function _drawShelf(sx,sy,w,h){
-  // Cama / Colchón flotante
-  ctx.fillStyle='#e0e7ff'; ctx.fillRect(sx,sy,w,h); // Sábana blanca
-  ctx.fillStyle='#818cf8'; ctx.fillRect(sx,sy,w,4); // Borde azulado
-  ctx.fillStyle='#fbcfe8'; ctx.fillRect(sx+4,sy-6,14,6); // Almohada rosada
-  // Patas de madera
-  ctx.fillStyle='#78350f'; ctx.fillRect(sx+4,sy+h,4,6);
-  ctx.fillRect(sx+w-8,sy+h,4,6);
+  // Colchón bajo con cabecera y almohada; la superficie de apoyo es sy.
+  ctx.fillStyle='#78350f';ctx.fillRect(sx+2,sy-13,4,h+15);
+  ctx.fillRect(sx+w-6,sy-13,4,h+15);
+  ctx.fillStyle='#818cf8';ctx.fillRect(sx,sy,w,h+1);
+  ctx.fillStyle='#e0e7ff';ctx.fillRect(sx+2,sy,w-4,Math.max(4,h-2));
+  ctx.fillStyle='#fbcfe8';ctx.fillRect(sx+6,sy-5,Math.min(14,w/3),5);
+  ctx.fillStyle='#c4b5fd';ctx.fillRect(sx+4,sy+2,w-8,1);
 }
-
 function _drawCloud(sx,sy,w,h){
-  // Estante simple y grueso de madera
-  ctx.fillStyle='#92400e'; ctx.fillRect(sx,sy,w,h);
-  ctx.fillStyle='#d97706'; ctx.fillRect(sx,sy,w,4);
-  // Cajones simulados
-  ctx.fillStyle='#78350f';
-  ctx.fillRect(sx+10,sy+8,w/2-15,4);
-  ctx.fillRect(sx+w/2+5,sy+8,w/2-15,4);
+  // Estante compacto: la repisa superior marca claramente el suelo.
+  ctx.fillStyle='#78350f';ctx.fillRect(sx+5,sy-10,4,h+10);
+  ctx.fillRect(sx+w-9,sy-10,4,h+10);
+  ctx.fillStyle='#d97706';ctx.fillRect(sx,sy,w,3);
+  ctx.fillStyle='#92400e';ctx.fillRect(sx+2,sy+3,w-4,Math.max(4,h-3));
+  ctx.fillStyle='#fbbf24';ctx.fillRect(sx+8,sy+6,Math.max(4,w/2-10,0),1);
+  if(w>28)ctx.fillRect(sx+w/2+2,sy+6,Math.max(4,w/2-10),1);
 }
-
 function _drawBook(sx,sy,w,h){
-  // Cojín gigante
-  ctx.fillStyle='#ec4899';
-  ctx.beginPath();
-  if(ctx.roundRect) ctx.roundRect(sx,sy,w,h,8);
-  else ctx.fillRect(sx,sy,w,h);
-  ctx.fill();
-  ctx.fillStyle='#fbcfe8';
-  ctx.fillRect(sx+4,sy+4,w-8,2); // Hilo/Brillo
+  // Banco acolchado / otomana, de huella corta y fácil de leer.
+  ctx.fillStyle='#9d174d';ctx.fillRect(sx+3,sy,w-6,h+2);
+  ctx.fillStyle='#ec4899';ctx.fillRect(sx,sy,w,4);
+  ctx.fillStyle='#fbcfe8';ctx.fillRect(sx+5,sy+1,w-10,1);
+  ctx.fillStyle='#831843';ctx.fillRect(sx+7,sy+h+2,3,3);
+  ctx.fillRect(sx+w-10,sy+h+2,3,3);
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -1434,8 +1439,9 @@ function drawPlatforms(lvl,cx){
   const t=lvl.theme;
   let furnitureIdx=0;
   for(const p of lvl.platforms){
-    const sx=Math.floor(p.x-cx),sy=Math.floor(p.y-Cam.cy);
-    if(sx>VW||sx+p.w<0){furnitureIdx++;continue;}
+    const screenX=p.x-cx;
+    const sx=Math.floor(p.x),sy=Math.floor(p.y);
+    if(screenX>VW||screenX+p.w<0){furnitureIdx++;continue;}
 
     if(t==='galaxy'){
       // Las plataformas largas se dividen en muebles repetidos para que no se estiren
@@ -1495,8 +1501,9 @@ function drawPlatforms(lvl,cx){
 function drawSpikes(lvl,cx){
   const isGalaxy = lvl.theme === 'galaxy';
   for(const sp of lvl.spikes||[]){
-    const sx=Math.floor(sp.x-cx),sy=Math.floor(sp.y-Cam.cy);
-    if(sx>VW||sx+sp.w<0)continue;
+    const screenX=sp.x-cx;
+    const sx=Math.floor(sp.x),sy=Math.floor(sp.y);
+    if(screenX>VW||screenX+sp.w<0)continue;
     
     if (isGalaxy) {
       // Pinchos de energía / cristales neón
@@ -1528,8 +1535,9 @@ function drawMemories(){
   for(const m of LS.memories){
     if(m.collected)continue;
     const bob=Math.sin(performance.now()/450+m.bob)*3.5;
-    const sx=Math.floor(m.x-Cam.cx),sy=Math.floor(m.y-Cam.cy+bob);
-    if(sx<-40||sx>VW+40)continue;
+    const screenX=m.x-Cam.cx;
+    const sx=Math.floor(m.x),sy=Math.floor(m.y+bob);
+    if(screenX<-40||screenX>VW+40)continue;
     const t=performance.now()/350;
     // Aura
     ctx.globalAlpha=.3+Math.sin(t)*.2;
@@ -1569,8 +1577,9 @@ function drawItems(){
   for(const it of LS.items){
     if(it.taken)continue;
     const bob=Math.sin(t*2.2+it.bob)*2.5;
-    const sx=Math.floor(it.x-Cam.cx),sy=Math.floor(it.y-Cam.cy+bob);
-    if(sx<-40||sx>VW+40)continue;
+    const screenX=it.x-Cam.cx;
+    const sx=Math.floor(it.x),sy=Math.floor(it.y+bob);
+    if(screenX<-40||screenX>VW+40)continue;
     // Aura
     ctx.globalAlpha=.35+Math.sin(t*3+it.bob)*.2;
     ctx.fillStyle=it.type==='heart'?'#f472b6':'#fbbf24';
@@ -1598,7 +1607,7 @@ function drawItems(){
 function drawGoal(){
   if(!LS.data.goal)return;
   const g=LS.data.goal;
-  const sx=Math.floor(g.x-Cam.cx),sy=Math.floor(g.y-Cam.cy);
+  const sx=Math.floor(g.x),sy=Math.floor(g.y);
   const t=performance.now()/400;
   
   if (G.levelId === 1) {
@@ -2144,21 +2153,22 @@ function calcEnding(){
 function renderUI(){
   ui.innerHTML='';
   canvas.onclick=null;
+  updateTouchControls();
 
   // ── TITULO ──
   if(G.state==='title'){
-    const t=mk('div');
-    t.style.cssText='position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(0,0,0,0.5);cursor:pointer;';
+    const t=mk('section','title-screen');
     t.innerHTML=`
-      <div class="game-title" style="font-size:24px;text-align:center;text-shadow: 0 4px 15px rgba(255,107,157,0.8);">
-        ENTRE LOS<br>RECUERDOS
-      </div>
-      <div style="font-family:'Press Start 2P',monospace;font-size:10px;color:#fbbf24;margin-top:40px;animation:heartbeat 1.5s infinite;">
-        ▶ HAZ CLIC PARA INICIAR ◀
-      </div>
+      <p class="title-kicker">UNA HISTORIA HECHA PARA TI</p>
+      <h1 class="title-logo">ENTRE LOS<br><span>RECUERDOS</span></h1>
+      <div class="title-sparkles" aria-hidden="true"><span>✦</span><span>♥</span><span>✦</span></div>
+      <button class="pixel-button" id="btnTitleStart" type="button">
+        <span class="pixel-button-icon" aria-hidden="true">▶</span> COMENZAR
+      </button>
+      <p class="title-hint">UN AÑO · UN AMOR · UN VIAJE</p>
     `;
     ui.appendChild(t);
-    t.onclick=()=>{
+    id('btnTitleStart').onclick=()=>{
       SFX.select();
       G.state='menu';
       renderUI();
@@ -2244,8 +2254,7 @@ function renderUI(){
 
   // ── MAPA ──
   if(G.state==='map'){
-    const row=mk('div');
-    row.style.cssText='position:absolute;bottom:60px;left:50%;transform:translateX(-50%);display:flex;gap:8px;pointer-events:auto;';
+    const row=mk('div','map-actions');
     ['Menú Principal','Diario'].forEach((lb,i)=>{
       const b=mk('button','btn sm');b.textContent=lb;
       b.onclick=[

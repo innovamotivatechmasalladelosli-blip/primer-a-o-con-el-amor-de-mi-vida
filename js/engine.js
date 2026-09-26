@@ -10,14 +10,20 @@ const VW=480,VH=270;
 const canvas=document.getElementById('game');
 const ctx=canvas.getContext('2d');
 canvas.width=VW;canvas.height=VH;
+ctx.imageSmoothingEnabled=false;
 const ui=document.getElementById('ui');
 
 function fitCanvas(){
-  const s=Math.min(window.innerWidth/VW,window.innerHeight/VH);
+  const viewport=window.visualViewport;
+  const width=viewport?viewport.width:window.innerWidth;
+  const height=viewport?viewport.height:window.innerHeight;
+  const s=Math.min(width/VW,height/VH);
   canvas.style.width=Math.floor(VW*s)+'px';
   canvas.style.height=Math.floor(VH*s)+'px';
 }
-window.addEventListener('resize',fitCanvas);fitCanvas();
+window.addEventListener('resize',fitCanvas);
+window.visualViewport?.addEventListener('resize',fitCanvas);
+fitCanvas();
 
 // ── Physics ──
 const GRAVITY=0.55,MAX_FALL=12,JUMP_FORCE=9.8;
