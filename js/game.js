@@ -34,6 +34,30 @@ function toggleFS(){
 window.addEventListener('click',()=>{try{SFX.jump();}catch(e){}},{once:true});
 document.addEventListener('fullscreenchange',fitCanvas);
 
+// --- Mobile Controls Handling ---
+function setupMobileControls() {
+  const map = {
+    'btn-left': 'L',
+    'btn-right': 'R',
+    'btn-dash': 'D',
+    'btn-jump': 'U' // or 'J'
+  };
+  for (const [id, k] of Object.entries(map)) {
+    const btn = document.getElementById(id);
+    if (!btn) continue;
+    
+    const press = (e) => { e.preventDefault(); keys[k] = true; };
+    const release = (e) => { e.preventDefault(); keys[k] = false; };
+    
+    btn.addEventListener('touchstart', press, {passive: false});
+    btn.addEventListener('touchend', release, {passive: false});
+    btn.addEventListener('mousedown', press);
+    btn.addEventListener('mouseup', release);
+    btn.addEventListener('mouseleave', release);
+  }
+}
+window.addEventListener('DOMContentLoaded', setupMobileControls);
+
 
 // ═══════════════════════════════════════════════════════════
 //   SAVE
