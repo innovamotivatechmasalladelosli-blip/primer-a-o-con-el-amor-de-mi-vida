@@ -12,6 +12,17 @@
 <canvas id="game"></canvas>
 <div id="ui"></div>
 
+<div id="touch-controls" style="display:none; position:fixed; inset:0; z-index:900; pointer-events:none;">
+  <div style="position:absolute; bottom:20px; left:20px; display:flex; gap:10px; pointer-events:auto;">
+    <button id="btn-left" class="t-btn">◄</button>
+    <button id="btn-right" class="t-btn">►</button>
+  </div>
+  <div style="position:absolute; bottom:20px; right:20px; display:flex; gap:10px; pointer-events:auto;">
+    <button id="btn-dash" class="t-btn">»</button>
+    <button id="btn-jump" class="t-btn">▲</button>
+  </div>
+</div>
+
 <script src="js/engine.js"></script>
 <script src="js/levels.js"></script>
 <script src="js/audio.js"></script>

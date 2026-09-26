@@ -34,6 +34,30 @@ function toggleFS(){
 window.addEventListener('click',()=>{try{SFX.jump();}catch(e){}},{once:true});
 document.addEventListener('fullscreenchange',fitCanvas);
 
+// ── Touch Controls ──
+const touchMap = {
+  'btn-left': 'L',
+  'btn-right': 'R',
+  'btn-jump': 'J',
+  'btn-dash': 'D'
+};
+let isMobile = false;
+window.addEventListener('touchstart', (e) => {
+  if(!isMobile){
+    isMobile = true;
+    document.getElementById('touch-controls').style.display = 'block';
+  }
+  if (e.target.classList.contains('t-btn')) {
+    keys[touchMap[e.target.id]] = true;
+    e.preventDefault();
+  }
+}, {passive: false});
+window.addEventListener('touchend', (e) => {
+  if (e.target.classList.contains('t-btn')) {
+    keys[touchMap[e.target.id]] = false;
+    e.preventDefault();
+  }
+}, {passive: false});
 
 
 // ═══════════════════════════════════════════════════════════
@@ -968,11 +992,11 @@ function updateMinigame(dt) {
     return;
   }
 
-  // Input — flechas Y también W/S/A/D
-  const up = keys.U || keys['ArrowUp'];
-  const dn = keys.D2 || keys['ArrowDown'];
-  const lt = keys.L || keys['ArrowLeft'];
-  const rt = keys.R || keys['ArrowRight'];
+  // Input — flechas, WASD, o botones táctiles (Jump=Arriba, Dash=Abajo)
+  const up = keys.U || keys['ArrowUp'] || keys.J;
+  const dn = keys.D2 || keys['ArrowDown'] || keys.D || keys.s;
+  const lt = keys.L || keys['ArrowLeft'] || keys.a;
+  const rt = keys.R || keys['ArrowRight'] || keys.d;
 
   if (up) MG.vy -= 9 * dt;
   else if (dn) MG.vy += 9 * dt;
@@ -2146,67 +2170,74 @@ function renderUI(){
     p.innerHTML=`
       <div class="game-title">ENTRE LOS<br>RECUERDOS 1</div>
       <div class="subtitle">Un año · Un amor · Un viaje</div>
-      <div class="hearts">♥ ♥ ♥</div>
-      <div class="lore-box" style="font-size:12px;margin:12px 0">
+      <div class="lore-box" style="font-size:12px;margin:12px 0;text-align:center;">
         Hecho a mano, pixel a pixel,<br>con todo mi amor para ti.<br>
         <span style="color:#fbbf24;font-style:normal">Recoge los 12 recuerdos · Descubre el final.</span>
       </div>
       <div class="row" style="flex-direction:column">
-        <button class="btn" id="btnNew">♡ &nbsp;Nueva Aventura</button>
-        <button class="btn" id="btnCont" ${hasSave?'':'disabled'}>✦ &nbsp;Continuar</button>
-        <button class="btn gold" id="btnJrn">📖 &nbsp;Diario de Recuerdos</button>
+        <button class="btn" id="btnNew">Nueva Aventura</button>
+        <button class="btn" id="btnCont" ${hasSave?'':'disabled'}>Continuar</button>
+        <button class="btn gold" id="btnJrn">Diario de Recuerdos</button>
       </div>
       <div class="row" style="margin-top:10px">
-        <button class="btn sm" id="btnHelp">❓ Ayuda</button>
-        <button class="btn sm" id="btnFs">⛶ Pantalla Completa</button>
+        <button class="btn sm" id="btnHelp">Ayuda</button>
       </div>
       <p style="font-size:10px;color:rgba(130,90,160,.6);margin-top:14px;letter-spacing:2px">
-        Presiona F para pantalla completa · J para el diario
+        Presiona J para el diario
       </p>
     `;
     ui.appendChild(p);
+
+    const tryFS = () => {
+      if(!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().catch(()=>{});
+      }
+    };
+
     id('btnNew').onclick=()=>{
+      tryFS();
       Object.assign(G,{memories:[],decisions:{},
         powers:{double_jump:false,dash:false,glide:false,rocket:false},
         levelId:1,timePlayed:0,unlockedEndings:[],score:0,coins:0});
       Save.clear();SFX.select();G.state='map';renderUI();
     };
-    id('btnCont').onclick=()=>{if(Save.load()){SFX.select();G.state='map';renderUI();}};
+    id('btnCont').onclick=()=>{
+      tryFS();
+      if(Save.load()){SFX.select();G.state='map';renderUI();}
+    };
     id('btnJrn').onclick=openJournal;
-    id('btnFs').onclick=toggleFS;
     id('btnHelp').onclick=()=>{
       p.style.display='none';
       const h=mk('div','panel');
       h.style.maxWidth='540px';
       h.innerHTML=`
-        <h2>❓ Cómo Jugar</h2>
+        <h2 style="color:#fff;font-size:14px;text-shadow:none;">Cómo Jugar</h2>
         <div class="info-row">
-          <div class="chip"><span>◀▶</span><span><span class="key">A</span> <span class="key">D</span> Mover</span></div>
-          <div class="chip"><span>⤒</span><span><span class="key">ESPACIO</span> Saltar</span></div>
-          <div class="chip"><span>»</span><span><span class="key">SHIFT</span> Dash</span></div>
+          <div class="chip"><span>A / D</span><span>Mover</span></div>
+          <div class="chip"><span>ESPACIO</span><span>Saltar</span></div>
+          <div class="chip"><span>SHIFT</span><span>Dash</span></div>
         </div>
         <div class="info-row">
-          <div class="chip"><span>📖</span><span><span class="key">J</span> Diario</span></div>
-          <div class="chip"><span>⏸</span><span><span class="key">ESC</span> Pausa</span></div>
-          <div class="chip"><span>⛶</span><span><span class="key">F</span> Fullscreen</span></div>
+          <div class="chip"><span>J</span><span>Diario</span></div>
+          <div class="chip"><span>ESC</span><span>Pausa</span></div>
         </div>
         <div class="lore-box" style="text-align:left">
           <strong style="color:#fbbf24;font-style:normal">Objetivo:</strong><br>
-          • Recoge las <strong style="color:#f472b6">📸 polaroids</strong> — son tus recuerdos.<br>
-          • Esquiva <strong style="color:#c084fc">gusanos</strong> y <strong style="color:#fb7185">murciélagos</strong>.<br>
-          • Evita los <strong style="color:#f87171">pinchos rojos</strong>.<br>
-          • Recoge <strong style="color:#f43f5e">❤ corazones</strong> (+1 vida) y <strong style="color:#fbbf24">★ estrellas</strong> (+puntos).<br>
-          • Usa el <strong style="color:#fbbf24">dash</strong> para atacar enemigos y jefes.<br>
-          • Llega al <strong style="color:#f43f5e">♥ corazón grande</strong> para completar el nivel.
+          • Recoge las polaroids — son tus recuerdos.<br>
+          • Esquiva a los enemigos.<br>
+          • Evita los pinchos.<br>
+          • Recoge corazones (+1 vida) y estrellas (+puntos).<br>
+          • Usa el dash para atacar enemigos y jefes.<br>
+          • Llega a la estrella final para completar el nivel.
         </div>
         <div class="lore-box" style="text-align:left;margin-top:8px">
           <strong style="color:#86efac;font-style:normal">Poderes desbloqueables:</strong><br>
-          • ↑↑ <strong>Doble salto</strong> — Nivel 1<br>
-          • » <strong>Dash</strong> — Nivel 2<br>
-          • ~ <strong>Planeo</strong> — Nivel 3 (mantén ESPACIO en el aire)<br>
-          • 🚀 <strong>Cohete</strong> — Nivel 4 (boss final)
+          • Doble salto — Nivel 1<br>
+          • Dash — Nivel 2<br>
+          • Planeo — Nivel 3 (mantén ESPACIO en el aire)<br>
+          • Cohete — Nivel 4 (jefe final)
         </div>
-        <button class="btn" id="btnHelpOk" style="margin-top:12px">Entendido ✦</button>
+        <button class="btn" id="btnHelpOk" style="margin-top:12px">Entendido</button>
       `;
       ui.appendChild(h);
       id('btnHelpOk').onclick=()=>{h.remove();p.style.display='';};
@@ -2218,12 +2249,11 @@ function renderUI(){
   if(G.state==='map'){
     const row=mk('div');
     row.style.cssText='position:absolute;bottom:60px;left:50%;transform:translateX(-50%);display:flex;gap:8px;pointer-events:auto;';
-    ['◀ Menú','📖 Diario','⛶ Full'].forEach((lb,i)=>{
+    ['Menú Principal','Diario'].forEach((lb,i)=>{
       const b=mk('button','btn sm');b.textContent=lb;
       b.onclick=[
         ()=>{SFX.select();G.state='menu';renderUI();},
-        ()=>openJournal(),
-        ()=>toggleFS(),
+        ()=>openJournal()
       ][i];
       row.appendChild(b);
     });
@@ -2249,15 +2279,14 @@ function renderUI(){
     const p=mk('div','panel');
     p.style.maxWidth='500px';
     p.innerHTML=`
-      <h2>✦ Recuerdo #${G.currentMemory} ✦</h2>
-      <div class="hearts" style="font-size:18px">♥ ♥ ♥</div>
-      <div class="lore-box" style="font-size:13px;color:#fbbf24;text-align:center">
+      <h2 style="color:#fbbf24;font-size:14px;text-shadow:none;">Recuerdo #${G.currentMemory}</h2>
+      <div class="lore-box" style="font-size:13px;color:#f5d0fe;text-align:center">
         "${MEMORY_TEXTS[G.currentMemory]||'...'}"
       </div>
       <p style="font-size:11px;color:rgba(200,150,220,.7);letter-spacing:2px;margin:10px 0">
         RECUERDO ${G.memories.length} DE 12
       </p>
-      <button class="btn" id="btnMemOk">Continuar ✦</button>
+      <button class="btn" id="btnMemOk">Continuar</button>
     `;
     ui.appendChild(p);
     id('btnMemOk').onclick=()=>{G.state='level';renderUI();};
@@ -2270,7 +2299,7 @@ function renderUI(){
     const d=LS.data.decision;
     const p=mk('div','panel');
     p.innerHTML=`
-      <h2>✦ Un Momento de Decisión ✦</h2>
+      <h2 style="color:#f472b6;font-size:14px;text-shadow:none;">Un Momento de Decisión</h2>
       <p style="font-size:13px;margin:16px 0;color:#f5d0fe;line-height:1.7">${d.q}</p>
       <div class="row" style="flex-direction:column">
         <button class="btn gold" id="btnDA">${d.a}</button>
@@ -2291,18 +2320,17 @@ function renderUI(){
   if(G.state==='paused'){
     const p=mk('div','panel');
     p.innerHTML=`
-      <h2>⏸ Pausa</h2>
-      <div class="hearts" style="font-size:14px">♡ ♥ ♡</div>
+      <h2 style="color:#fff;font-size:14px;text-shadow:none;">Pausa</h2>
       <div class="info-row">
-        <div class="chip"><span>📸</span><span style="color:#fbbf24">${G.memories.length}/12</span></div>
-        <div class="chip"><span>⭐</span><span style="color:#fbbf24">${G.score} pts</span></div>
-        <div class="chip"><span>⏱</span><span>${Math.floor(LS.time/60)}:${String(Math.floor(LS.time%60)).padStart(2,'0')}</span></div>
+        <div class="chip"><span>Recuerdos:</span><span style="color:#fbbf24">${G.memories.length}/12</span></div>
+        <div class="chip"><span>Puntos:</span><span style="color:#fbbf24">${G.score}</span></div>
+        <div class="chip"><span>Tiempo:</span><span>${Math.floor(LS.time/60)}:${String(Math.floor(LS.time%60)).padStart(2,'0')}</span></div>
       </div>
       <div class="row" style="flex-direction:column;margin-top:6px">
-        <button class="btn" id="btnRes">▶ Reanudar</button>
-        <button class="btn" id="btnPJrn">📖 Diario</button>
-        <button class="btn" id="btnPMap">🗺 Volver al Mapa</button>
-        <button class="btn sm" id="btnPMenu" style="min-width:200px">🏠 Menú Principal</button>
+        <button class="btn" id="btnRes">Reanudar</button>
+        <button class="btn" id="btnPJrn">Diario</button>
+        <button class="btn" id="btnPMap">Volver al Mapa</button>
+        <button class="btn sm" id="btnPMenu" style="min-width:200px">Menú Principal</button>
       </div>
     `;
     ui.appendChild(p);
@@ -2319,15 +2347,15 @@ function renderUI(){
     for(let i=1;i<=12;i++){
       const owned=G.memories.includes(i);
       const c=mk('div','mem-card'+(owned?' owned':''));
-      c.innerHTML=`<div class="icon">${owned?'📸':'🔒'}</div><div class="num">${i}</div>`;
+      c.innerHTML=`<div class="icon" style="font-size:12px;">${owned?'FOTO':'X'}</div><div class="num">${i}</div>`;
       c.title=owned?`Recuerdo #${i}`:`Aún no encontrado`;
       c.onclick=()=>{
         const det=id('memDet');
         if(owned){
-          det.innerHTML=`<strong style="color:#fbbf24">♥ Recuerdo #${i}:</strong><br><br><em>"${MEMORY_TEXTS[i]}"</em>`;
+          det.innerHTML=`<strong style="color:#fbbf24">Recuerdo #${i}:</strong><br><br><em>"${MEMORY_TEXTS[i]}"</em>`;
           SFX.select();
         }else{
-          det.innerHTML=`<span style="color:rgba(130,90,160,.6)">🔒 Aún no has vivido este momento...</span>`;
+          det.innerHTML=`<span style="color:rgba(130,90,160,.6)">Aún no has vivido este momento...</span>`;
         }
       };
       grid.appendChild(c);
@@ -2335,21 +2363,21 @@ function renderUI(){
     const p=mk('div','panel');
     p.style.maxWidth='580px';
     p.innerHTML=`
-      <h2>📖 Diario de Recuerdos</h2>
+      <h2 style="color:#fff;font-size:14px;text-shadow:none;">Diario de Recuerdos</h2>
       <p style="font-size:11px;color:rgba(232,121,249,.8);letter-spacing:2px;margin-bottom:12px">
-        ♥ ${G.memories.length} de 12 recuerdos encontrados
+        ${G.memories.length} de 12 recuerdos encontrados
       </p>
     `;
     p.appendChild(grid);
     const det=mk('div');det.id='memDet';
     det.style.cssText='min-height:60px;font-size:12px;padding:12px 14px;border-top:1px solid rgba(139,92,246,.4);margin-top:8px;background:rgba(9,3,22,.6);border-radius:8px;line-height:1.8;color:#f5d0fe;';
-    det.innerHTML='<span style="color:rgba(130,90,160,.5)">Toca una polaroid para leer su historia...</span>';
+    det.innerHTML='<span style="color:rgba(130,90,160,.5)">Toca un recuerdo para leer su historia...</span>';
     p.appendChild(det);
     const infoDiv=mk('div','info-row');infoDiv.style.marginTop='10px';
     infoDiv.innerHTML=`
-      <div class="chip"><span>⏱</span><span>${Math.floor(G.timePlayed/60)} min jugados</span></div>
-      <div class="chip"><span>🎯</span><span>${Object.keys(G.decisions).length} decisiones</span></div>
-      <div class="chip"><span>⭐</span><span>${G.score} pts</span></div>
+      <div class="chip"><span>Tiempo:</span><span>${Math.floor(G.timePlayed/60)} min</span></div>
+      <div class="chip"><span>Decisiones:</span><span>${Object.keys(G.decisions).length}</span></div>
+      <div class="chip"><span>Puntos:</span><span>${G.score}</span></div>
     `;
     p.appendChild(infoDiv);
     const closeBtn=mk('button','btn');closeBtn.style.marginTop='12px';
@@ -2367,7 +2395,7 @@ function renderUI(){
   if(G.state==='ending'){
     const tipo=calcEnding();
     const ENDS={
-      ETERNO:{t:'Siempre Tú ♥',col:'#fbbf24',txt:
+      ETERNO:{t:'Siempre Tú',col:'#fbbf24',txt:
         'Cada recuerdo que recogiste, cada decisión, cada paso...<br>' +
         'Todo nos trajo hasta aquí, hasta este momento.<br><br>' +
         'Gracias por este año tan extraordinariamente hermoso.<br>' +
@@ -2387,23 +2415,22 @@ function renderUI(){
     const e=ENDS[tipo]||ENDS.AGRIDULCE;
     const p=mk('div','panel');p.style.maxWidth='520px';
     p.innerHTML=`
-      <h2 style="color:${e.col}">♥ ${e.t} ♥</h2>
+      <h2 style="color:${e.col};font-size:16px;text-shadow:none;">${e.t}</h2>
       <div class="lore-box" style="font-size:13px;line-height:1.9;color:#f5d0fe;text-align:center;font-style:normal">
         ${e.txt}
       </div>
-      <div class="hearts">♡ ♥ ♡</div>
       <div class="info-row">
-        <div class="chip"><span>📸</span><span>${G.memories.length}/12 recuerdos</span></div>
-        <div class="chip"><span>🏆</span><span>Final: ${tipo}</span></div>
-        <div class="chip"><span>⏱</span><span>${Math.floor(G.timePlayed/60)} min</span></div>
+        <div class="chip"><span>Recuerdos:</span><span>${G.memories.length}/12</span></div>
+        <div class="chip"><span>Final:</span><span>${tipo}</span></div>
+        <div class="chip"><span>Tiempo:</span><span>${Math.floor(G.timePlayed/60)} min</span></div>
       </div>
       <p style="font-size:10px;color:rgba(130,90,160,.5);margin:12px 0;line-height:1.6">
         Hay <strong style="color:${e.col}">4 finales diferentes</strong> — las decisiones que tomaste definen cuál obtienes.<br>
-        ¿Quieres encontrarlos todos? ✦
+        ¿Quieres encontrarlos todos?
       </p>
       <div class="row">
-        <button class="btn" id="btnEndMenu">🏠 Menú</button>
-        <button class="btn gold" id="btnEndPlay">🔄 Volver a Jugar</button>
+        <button class="btn" id="btnEndMenu">Menú Principal</button>
+        <button class="btn gold" id="btnEndPlay">Volver a Jugar</button>
       </div>
     `;
     ui.appendChild(p);
