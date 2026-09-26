@@ -256,7 +256,15 @@ class Player{
     const fps=this.state==='run'?10:5;
     this.frame=Math.floor(this.animT*fps)%4;
 
-    if(this.y>lvl.height+60)this.hurt(lvl.spawn.x,lvl.spawn.y,true);
+    // MUERTE POR CAIDA — si cae fuera de la pantalla, muere al instante
+    if(this.y > lvl.height + 40){
+      this.hp = 0;
+      Px.burst(this.x+8, this.y-20, '#f472b6', 30, {speed:2.5, up:3, heart:true});
+      Px.burst(this.x+8, this.y-20, '#fbbf24', 20, {star:true, speed:2});
+      SFX.hurt();
+      G.shakeT=0.5; G.shakeAmt=8;
+      this.respawn();
+    }
   }
   _collide(dt,lvl){
     this.x+=this.vx*60*dt;
@@ -291,11 +299,10 @@ class Player{
     Px.burst(this.x+8,this.y+14,'#4ade80',20,{speed:1.5,up:2,heart:true});
   }
   respawn(){
-    this.hp=this.maxHp;
-    this.x=this.checkpoint.x;this.y=this.checkpoint.y;
-    this.vx=this.vy=0;this.invT=2;
-    Px.burst(this.x+8,this.y+14,'#f472b6',28,{heart:true,speed:1.8});
-    Cam.snap(this,LS.data);
+    // Reiniciar nivel completo al morir
+    const lvlId = G.levelId;
+    G.shakeT=0;
+    setTimeout(()=>{ startLevel(lvlId); }, 600);
   }
 
   draw(){
@@ -913,14 +920,16 @@ function startMinigame() {
   MG = {
     active: true,
     shipY: VH / 2,
-    shipX: 40,
+    shipX: 60,
+    vx: 0,
     vy: 0,
     asteroids: [],
-    timer: 20, // 20 seconds to survive
+    timer: 20,
     health: 3,
     bgT: 0,
     spawnT: 0,
-    won: false
+    won: false,
+    blackHole: null
   };
 }
 
@@ -928,101 +937,201 @@ function updateMinigame(dt) {
   if (MG.won) return;
   MG.bgT += dt;
   MG.timer -= dt;
-  
-  if (MG.timer <= 0) {
-    MG.won = true;
-    SFX.win();
-    setTimeout(()=>{
-      // after minigame, go to cinematic or decision
-      if(LEVELS[1].decision){G.state='decision';renderUI();}
-      else finishLevel();
-      Save.save();
-    }, 1500);
+
+  // Mostrar agujero negro en los últimos 5 segundos
+  if (!MG.blackHole && MG.timer <= 5) {
+    MG.blackHole = { x: VW - 40, y: VH/2, r: 0 };
+  }
+  if (MG.blackHole) {
+    const bh = MG.blackHole;
+    bh.r = Math.min(50, bh.r + 60*dt); // crece hasta radio 50
+
+    // ¿La nave entró en el agujero negro?
+    const dx = MG.shipX - bh.x, dy = MG.shipY - bh.y;
+    if (Math.hypot(dx,dy) < bh.r + 8) {
+      MG.won = true;
+      SFX.win();
+      Px.burst(bh.x, bh.y, '#f472b6', 50, {heart:true, speed:3, up:2});
+      Px.burst(bh.x, bh.y, '#fbbf24', 30, {star:true, speed:2.5});
+      setTimeout(()=>{
+        if(LEVELS[1].decision){G.state='decision';renderUI();}
+        else finishLevel();
+        Save.save();
+      }, 1800);
+      return;
+    }
+  }
+
+  if (MG.timer <= 0 && !MG.won) {
+    // Si se acaba el tiempo sin entrar al agujero negro, reiniciar
+    startMinigame();
     return;
   }
 
-  // Input
-  if (keys['ArrowUp'] || keys['w']) MG.vy -= 8 * dt;
-  else if (keys['ArrowDown'] || keys['s']) MG.vy += 8 * dt;
-  else MG.vy *= 0.9; // friction
-  
-  MG.shipY += MG.vy;
-  if (MG.shipY < 10) MG.shipY = 10;
-  if (MG.shipY > VH - 10) MG.shipY = VH - 10;
+  // Input — flechas Y también W/S/A/D
+  const up = keys.U || keys['ArrowUp'];
+  const dn = keys.D2 || keys['ArrowDown'];
+  const lt = keys.L || keys['ArrowLeft'];
+  const rt = keys.R || keys['ArrowRight'];
 
-  // Asteroids spawn
+  if (up) MG.vy -= 9 * dt;
+  else if (dn) MG.vy += 9 * dt;
+  else MG.vy *= 0.88;
+
+  if (lt) MG.vx -= 7 * dt;
+  else if (rt) MG.vx += 7 * dt;
+  else MG.vx *= 0.88;
+
+  MG.shipX = Math.max(10, Math.min(VW*0.6, MG.shipX + MG.vx));
+  MG.shipY = Math.max(10, Math.min(VH-10, MG.shipY + MG.vy));
+
+  // Cometas/asteroides — se vuelven más rápidos con el tiempo
+  const elapsed = 20 - MG.timer;
+  const speed = 70 + elapsed * 6;
   MG.spawnT -= dt;
   if (MG.spawnT <= 0) {
-    MG.spawnT = 0.5 + Math.random() * 0.5;
+    MG.spawnT = Math.max(0.3, 0.8 - elapsed*0.02);
     MG.asteroids.push({
       x: VW + 20,
       y: 20 + Math.random() * (VH - 40),
-      vx: -(60 + Math.random() * 60),
-      s: 10 + Math.random() * 15
+      vx: -(speed + Math.random() * 40),
+      vy: (Math.random()-0.5)*20,
+      s: 8 + Math.random() * 14,
+      isComet: Math.random()>0.5
     });
   }
 
-  // Asteroids update
+  // Actualizar cometas
   for (let i = MG.asteroids.length - 1; i >= 0; i--) {
     let a = MG.asteroids[i];
     a.x += a.vx * dt;
-    // Collision
-    let dx = a.x - MG.shipX;
-    let dy = a.y - MG.shipY;
-    if (Math.hypot(dx, dy) < a.s + 8) {
-      // Hit!
+    a.y += (a.vy||0) * dt;
+    const dx = a.x - MG.shipX;
+    const dy = a.y - MG.shipY;
+    if (Math.hypot(dx, dy) < a.s + 7) {
       MG.asteroids.splice(i, 1);
       MG.health--;
       SFX.hit();
-      G.shakeT = 0.2; G.shakeAmt = 3;
-      Px.burst(MG.shipX, MG.shipY, '#f87171', 20, {speed:2});
+      G.shakeT = 0.25; G.shakeAmt = 4;
+      Px.burst(MG.shipX, MG.shipY, '#f87171', 18, {speed:2});
       if (MG.health <= 0) {
-        // Restart level or minigame? Restart minigame.
-        startMinigame();
+        // Reiniciar el NIVEL completo
+        setTimeout(()=>{ startLevel(G.levelId); }, 600);
+        G.state='level';
         return;
       }
-    } else if (a.x < -20) {
+    } else if (a.x < -30 || a.y < -30 || a.y > VH+30) {
       MG.asteroids.splice(i, 1);
     }
   }
 }
 
 function drawMinigame() {
-  drawBG('galaxy', MG.bgT * 100, 0); // use galaxy background with scrolling
+  drawBG('galaxy', MG.bgT * 100, 0);
 
-  // Draw asteroids
-  ctx.fillStyle = '#9ca3af';
-  for (let a of MG.asteroids) {
-    ctx.beginPath();
-    ctx.arc(a.x, a.y, a.s, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.strokeStyle = '#4b5563';
-    ctx.lineWidth = 2;
-    ctx.stroke();
+  // Agujero negro de recuerdos
+  if (MG.blackHole) {
+    const bh = MG.blackHole;
+    const t = performance.now()/1000;
+    // Vórtice
+    for (let ring=5; ring>=0; ring--) {
+      const r = bh.r * (ring/5);
+      const alpha = 0.15 + (5-ring)*0.1;
+      ctx.globalAlpha = alpha;
+      const gr = ctx.createRadialGradient(bh.x,bh.y,0,bh.x,bh.y,r);
+      gr.addColorStop(0,'#000');
+      gr.addColorStop(0.4,'#1e0535');
+      gr.addColorStop(0.7,'#7c3aed');
+      gr.addColorStop(1,'rgba(0,0,0,0)');
+      ctx.fillStyle=gr;
+      ctx.beginPath(); ctx.arc(bh.x,bh.y,r*1.5,0,Math.PI*2); ctx.fill();
+    }
+    // Espirales de color (recuerdos absorbidos)
+    ctx.globalAlpha=0.8;
+    for(let i=0;i<6;i++){
+      const a = t*2 + i*Math.PI/3;
+      const sr = bh.r*0.6;
+      const x2=bh.x+Math.cos(a)*sr, y2=bh.y+Math.sin(a)*sr;
+      ctx.fillStyle=['#f472b6','#fbbf24','#60a5fa','#4ade80','#a855f7','#fb923c'][i];
+      ctx.fillRect(x2-1,y2-1,3,3);
+    }
+    // Borde brillante
+    ctx.globalAlpha=0.9;
+    ctx.strokeStyle='#a855f7'; ctx.lineWidth=2;
+    ctx.beginPath(); ctx.arc(bh.x,bh.y,bh.r,0,Math.PI*2); ctx.stroke();
+    ctx.strokeStyle='#f472b6'; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.arc(bh.x,bh.y,bh.r+4,0,Math.PI*2); ctx.stroke();
+    // Texto
+    ctx.globalAlpha=0.9+(Math.sin(t*4)*0.1);
+    ctx.fillStyle='#fbbf24'; ctx.font='6px "Press Start 2P"';
+    ctx.textAlign='center';
+    ctx.fillText('RECUERDOS',bh.x,bh.y-bh.r-8);
+    ctx.globalAlpha=1;
   }
 
-  // Draw spaceship
+  // Cometas/asteroides
+  for (let a of MG.asteroids) {
+    if (a.isComet) {
+      // Cola de cometa
+      const tailLen = 30;
+      const angle = Math.atan2(a.vy||0, a.vx);
+      for(let t=1; t<=5; t++){
+        ctx.globalAlpha = (6-t)/8;
+        ctx.fillStyle='#fbbf24';
+        ctx.beginPath();
+        ctx.arc(a.x - Math.cos(angle)*t*tailLen/5, a.y - Math.sin(angle)*t*tailLen/5, a.s*(1-t*0.15), 0, Math.PI*2);
+        ctx.fill();
+      }
+      ctx.globalAlpha=1;
+      ctx.fillStyle='#fef3c7';
+      ctx.beginPath(); ctx.arc(a.x,a.y,a.s,0,Math.PI*2); ctx.fill();
+    } else {
+      // Asteroide normal
+      ctx.fillStyle='#6b7280';
+      ctx.beginPath(); ctx.arc(a.x,a.y,a.s,0,Math.PI*2); ctx.fill();
+      ctx.strokeStyle='#374151'; ctx.lineWidth=1.5; ctx.stroke();
+    }
+    ctx.globalAlpha=1;
+  }
+
+  Px.draw();
+
+  // Nave
   ctx.save();
   ctx.translate(MG.shipX, MG.shipY);
-  ctx.scale(0.8, 0.8);
   _drawRocket(0, 0);
   ctx.restore();
 
-  // Draw UI
-  ctx.fillStyle = '#fff';
-  ctx.font = '12px "Press Start 2P"';
-  ctx.textAlign = 'left';
-  ctx.fillText(`Salud: ${MG.health}`, 10, 20);
-  
-  ctx.textAlign = 'right';
-  ctx.fillText(`Tiempo: ${Math.ceil(MG.timer)}`, VW - 10, 20);
+  // HUD — corazones
+  ctx.textAlign='left';
+  for(let i=0;i<3;i++){
+    ctx.fillStyle = i < MG.health ? '#f472b6' : 'rgba(255,255,255,0.2)';
+    ctx.font='14px Arial';
+    ctx.fillText('♥', 8+i*18, 20);
+  }
+  // Tiempo restante
+  const timeLeft = Math.max(0, MG.timer);
+  ctx.fillStyle='#fbbf24'; ctx.font='8px "Press Start 2P"';
+  ctx.textAlign='right';
+  ctx.fillText(`${Math.ceil(timeLeft)}s`, VW-8, 20);
+
+  // Instrucciones rápidas al inicio
+  if (MG.bgT < 3) {
+    ctx.globalAlpha = Math.min(1, MG.bgT)*Math.min(1, 3-MG.bgT);
+    ctx.fillStyle='rgba(0,0,0,0.5)'; ctx.fillRect(VW/2-80,VH/2-12,160,22);
+    ctx.fillStyle='#fff'; ctx.font='6px "Press Start 2P"';
+    ctx.textAlign='center';
+    ctx.fillText('↑↓←→ para mover la nave',VW/2,VH/2+2);
+    ctx.globalAlpha=1;
+  }
 
   if (MG.won) {
-    ctx.fillStyle = 'rgba(0,0,0,0.5)';
-    ctx.fillRect(0,0,VW,VH);
-    ctx.fillStyle = '#fbbf24';
-    ctx.textAlign = 'center';
-    ctx.fillText("¡SUPERADO!", VW/2, VH/2);
+    ctx.fillStyle='rgba(0,0,0,0.6)'; ctx.fillRect(0,0,VW,VH);
+    ctx.fillStyle='#fbbf24'; ctx.font='10px "Press Start 2P"';
+    ctx.textAlign='center';
+    ctx.fillText('¡RECUERDOS ENCONTRADOS!', VW/2, VH/2-10);
+    ctx.fillStyle='#f472b6'; ctx.font='8px "Press Start 2P"';
+    ctx.fillText('♥ Pasando al siguiente nivel ♥', VW/2, VH/2+10);
   }
 }
 
@@ -1243,28 +1352,107 @@ function _drawRocket(rx,ry){
 
 
 // ═══════════════════════════════════════════════════════════
+//   FURNITURE — plataformas con forma de muebles para el espacio
+
+// ═══════════════════════════════════════════════════════════
+function _drawSofa(sx,sy,w,h){
+  // Sillón/sofá flotante
+  const c1='#6d28d9', c2='#4c1d95', cush='#a78bfa', arm='#5b21b6', leg='#2e1065';
+  // Base
+  ctx.fillStyle=c1; ctx.fillRect(sx,sy+h-8,w,8);
+  // Respaldo
+  ctx.fillStyle=c2; ctx.fillRect(sx,sy,8,h-2);
+  ctx.fillStyle=c2; ctx.fillRect(sx+w-8,sy,8,h-2);
+  // Cojines
+  const nCush=Math.max(1,Math.floor((w-20)/30));
+  const cushW=Math.floor((w-20)/nCush)-2;
+  for(let i=0;i<nCush;i++){
+    const cx2=sx+10+i*(cushW+2);
+    ctx.fillStyle=cush; ctx.fillRect(cx2,sy+h-20,cushW,12);
+    ctx.fillStyle=arm; ctx.fillRect(cx2+2,sy+h-18,cushW-4,2);
+  }
+  // Patas
+  ctx.fillStyle=leg;
+  ctx.fillRect(sx+4,sy+h,4,4);
+  ctx.fillRect(sx+w-8,sy+h,4,4);
+  // Brillo neón encima
+  ctx.fillStyle='rgba(167,139,250,0.6)'; ctx.fillRect(sx,sy,w,2);
+}
+
+function _drawShelf(sx,sy,w,h){
+  // Estante de madera con libros y fotos
+  const wood='#7c3f1e', darkW='#5a2d0c', plank='#a0522d';
+  // Base del estante
+  ctx.fillStyle=wood; ctx.fillRect(sx,sy,w,h);
+  ctx.fillStyle=darkW; ctx.fillRect(sx,sy+h-3,w,3);
+  ctx.fillStyle=plank; ctx.fillRect(sx,sy,w,2);
+  // Libritos decorativos
+  const bookColors=['#f472b6','#60a5fa','#fbbf24','#4ade80','#f87171'];
+  for(let i=0;i<Math.min(5,Math.floor(w/12));i++){
+    ctx.fillStyle=bookColors[i%5];
+    ctx.fillRect(sx+4+i*12,sy+2,8,h-5);
+    ctx.fillStyle='rgba(255,255,255,0.3)';
+    ctx.fillRect(sx+5+i*12,sy+3,1,h-7);
+  }
+  // Borde neón
+  ctx.fillStyle='rgba(251,191,36,0.5)'; ctx.fillRect(sx,sy,w,1);
+}
+
+function _drawCloud(sx,sy,w,h){
+  // Nube/nebulosa como plataforma
+  const t=performance.now()/1000;
+  ctx.save();
+  ctx.globalAlpha=0.85;
+  // Fondo de nube
+  const grad=ctx.createLinearGradient(sx,sy,sx,sy+h);
+  grad.addColorStop(0,'#c4b5fd'); grad.addColorStop(1,'#7c3aed');
+  ctx.fillStyle=grad;
+  // Forma redondeada
+  ctx.beginPath();
+  ctx.roundRect?ctx.roundRect(sx,sy+4,w,h-4,8):ctx.fillRect(sx,sy+4,w,h-4);
+  ctx.fill();
+  // Destellos
+  for(let i=0;i<Math.floor(w/20);i++){
+    ctx.globalAlpha=0.3+0.3*Math.sin(t*3+i*1.5);
+    ctx.fillStyle='#fff';
+    ctx.fillRect(sx+5+i*20,sy+5,2,2);
+  }
+  ctx.globalAlpha=1;
+  ctx.restore();
+}
+
+function _drawBook(sx,sy,w,h){
+  // Pila de libros grandes
+  const cols=['#be185d','#1d4ed8','#047857','#92400e'];
+  const bookH=Math.max(4,Math.floor(h/cols.length));
+  for(let i=0;i<cols.length;i++){
+    const by=sy+i*bookH;
+    if(by>sy+h) break;
+    ctx.fillStyle=cols[i]; ctx.fillRect(sx,by,w,Math.min(bookH-1,h-i*bookH));
+    ctx.fillStyle='rgba(255,255,255,0.2)'; ctx.fillRect(sx+2,by+1,w-4,1);
+  }
+  ctx.fillStyle='rgba(255,255,255,0.15)'; ctx.fillRect(sx,sy,w,1);
+}
+
+// ═══════════════════════════════════════════════════════════
 //   PLATFORMS & OBJECTS
 
 // ═══════════════════════════════════════════════════════════
 function drawPlatforms(lvl,cx){
+  const t=lvl.theme;
+  let furnitureIdx=0;
   for(const p of lvl.platforms){
     const sx=Math.floor(p.x-cx),sy=Math.floor(p.y-Cam.cy);
-    if(sx>VW||sx+p.w<0)continue;
-    const t=lvl.theme;
+    if(sx>VW||sx+p.w<0){furnitureIdx++;continue;}
+
     if(t==='galaxy'){
-      // Plataformas de energía neón
-      ctx.fillStyle='rgba(46,16,101,0.6)';ctx.fillRect(sx,sy,p.w,p.h); // base semitransparente
-      ctx.fillStyle='#a855f7';ctx.fillRect(sx,sy,p.w,2); // borde brillante superior
-      ctx.fillStyle='#f472b6';ctx.fillRect(sx,sy+p.h-1,p.w,1); // borde inferior
-      // Pulso interno
-      const pulse = Math.abs(Math.sin(LS.time*2 + p.x));
-      ctx.fillStyle = `rgba(232,121,249,${0.1 + pulse * 0.2})`;
-      ctx.fillRect(sx,sy+2,p.w,p.h-3);
-      // Líneas de conexión
-      for(let i=0;i<p.w;i+=15){
-        ctx.fillStyle='rgba(139,92,246,0.4)';
-        ctx.fillRect(sx+i,sy+2,1,p.h-3);
-      }
+      // Cada plataforma es un mueble distinto que flota en el espacio
+      const fi=furnitureIdx%4;
+      if(fi===0) _drawSofa(sx,sy,p.w,p.h);
+      else if(fi===1) _drawShelf(sx,sy,p.w,p.h);
+      else if(fi===2) _drawCloud(sx,sy,p.w,p.h);
+      else _drawBook(sx,sy,p.w,p.h);
+      furnitureIdx++;
     }else if(t==='city'){
       ctx.fillStyle='#1e1b2e';ctx.fillRect(sx,sy,p.w,p.h);
       ctx.fillStyle='#312e48';ctx.fillRect(sx,sy,p.w,3);
