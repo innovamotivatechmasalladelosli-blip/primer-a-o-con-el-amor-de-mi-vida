@@ -25,7 +25,7 @@ const GRAVITY=0.55,MAX_FALL=12,JUMP_FORCE=9.8;
 
 // ═══════════════════════════════════════════════════════════
 const G={
-  state:'menu',prevState:'menu',
+  state:'title',prevState:'menu',
   levelId:1,
   memories:[],decisions:{},
   powers:{double_jump:false,dash:false,glide:false,rocket:false},

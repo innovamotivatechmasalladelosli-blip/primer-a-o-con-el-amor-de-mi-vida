@@ -300,12 +300,17 @@ class Player{
       }
     }
     this.onGround=false;
+    const prevY = this.y;
     this.y+=this.vy*60*dt;
     for(const p of lvl.platforms){
-      if(this._aabb(p)){
-        if(this.vy>0){this.y=p.y-this.h;this.onGround=true;}
-        else if(this.vy<0){this.y=p.y+p.h;}
-        this.vy=0;
+      // Expanded AABB check for fast falling
+      if(this.x<p.x+p.w && this.x+this.w>p.x){
+        // Y collision
+        if(this.vy>0 && prevY+this.h <= p.y+4 && this.y+this.h >= p.y){
+          this.y=p.y-this.h; this.onGround=true; this.vy=0;
+        } else if(this.vy<0 && prevY >= p.y+p.h-4 && this.y < p.y+p.h){
+          this.y=p.y+p.h; this.vy=0;
+        }
       }
     }
   }
@@ -1433,12 +1438,24 @@ function drawPlatforms(lvl,cx){
     if(sx>VW||sx+p.w<0){furnitureIdx++;continue;}
 
     if(t==='galaxy'){
-      // Cada plataforma es un mueble distinto que flota en el espacio
+      // Las plataformas largas se dividen en muebles repetidos para que no se estiren
       const fi=furnitureIdx%4;
-      if(fi===0) _drawSofa(sx,sy,p.w,p.h);
-      else if(fi===1) _drawShelf(sx,sy,p.w,p.h);
-      else if(fi===2) _drawCloud(sx,sy,p.w,p.h);
-      else _drawBook(sx,sy,p.w,p.h);
+      const MAX_W = 60;
+      let currX = sx;
+      let remW = p.w;
+      while (remW > 0) {
+        let drawW = Math.min(remW, MAX_W);
+        // Si el sobrante es muy pequeño, estiramos un poquito el último
+        if(remW > MAX_W && remW - MAX_W < 20) drawW = remW / 2; 
+
+        if(fi===0) _drawSofa(currX,sy,drawW,p.h);
+        else if(fi===1) _drawShelf(currX,sy,drawW,p.h);
+        else if(fi===2) _drawCloud(currX,sy,drawW,p.h);
+        else _drawBook(currX,sy,drawW,p.h);
+        
+        currX += drawW;
+        remW -= drawW;
+      }
       furnitureIdx++;
     }else if(t==='city'){
       ctx.fillStyle='#1e1b2e';ctx.fillRect(sx,sy,p.w,p.h);
@@ -1758,6 +1775,8 @@ function drawMapFull(){
     ctx.fillStyle='#fff';ctx.fillRect(Math.floor(sx),Math.floor(sy),1,1);
   }
   ctx.globalAlpha=1;
+
+  if (G.state !== 'map') return;
 
   // Título del mapa
   ctx.fillStyle='rgba(9,3,22,.8)';ctx.fillRect(VW/2-130,4,260,28);
@@ -2091,10 +2110,10 @@ function loop(){
 
   // Draw
   ctx.clearRect(0,0,VW,VH);
-  if(G.state==='menu')drawMenuBG();
+  if(G.state==='title'||G.state==='menu')drawMapFull();
   else if(G.state==='map')drawMapFull();
   else if(['level','paused','memory','decision'].includes(G.state)){if(LS.data)renderLevel();}
-  else if(G.state==='journal'){if(LS.data)renderLevel();else drawMenuBG();}
+  else if(G.state==='journal'){if(LS.data)renderLevel();else drawMapFull();}
   else if(G.state==='ending')drawEndingBG();
   else if(G.state==='minigame')drawMinigame();
   else if(G.state==='cinematic')drawCinematic();
@@ -2126,12 +2145,35 @@ function renderUI(){
   ui.innerHTML='';
   canvas.onclick=null;
 
+  // ── TITULO ──
+  if(G.state==='title'){
+    const t=mk('div');
+    t.style.cssText='position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(0,0,0,0.5);cursor:pointer;';
+    t.innerHTML=`
+      <div class="game-title" style="font-size:24px;text-align:center;text-shadow: 0 4px 15px rgba(255,107,157,0.8);">
+        ENTRE LOS<br>RECUERDOS
+      </div>
+      <div style="font-family:'Press Start 2P',monospace;font-size:10px;color:#fbbf24;margin-top:40px;animation:heartbeat 1.5s infinite;">
+        ▶ HAZ CLIC PARA INICIAR ◀
+      </div>
+    `;
+    ui.appendChild(t);
+    t.onclick=()=>{
+      SFX.select();
+      G.state='menu';
+      renderUI();
+      if(!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().catch(()=>{});
+      }
+    };
+    return;
+  }
+
   // ── MENÚ ──
   if(G.state==='menu'){
     const hasSave=Save.load();
     const p=mk('div','panel');
     p.innerHTML=`
-      <div class="game-title">ENTRE LOS<br>RECUERDOS 1</div>
       <div class="subtitle">Un año · Un amor · Un viaje</div>
       <div class="lore-box" style="font-size:12px;margin:12px 0;text-align:center;">
         Hecho a mano, pixel a pixel,<br>con todo mi amor para ti.<br>
@@ -2151,22 +2193,14 @@ function renderUI(){
     `;
     ui.appendChild(p);
 
-    const tryFS = () => {
-      if(!document.fullscreenElement) {
-        document.documentElement.requestFullscreen().catch(()=>{});
-      }
-    };
-
     id('btnNew').onclick=()=>{
-      tryFS();
       Object.assign(G,{memories:[],decisions:{},
         powers:{double_jump:false,dash:false,glide:false,rocket:false},
         levelId:1,timePlayed:0,unlockedEndings:[],score:0,coins:0});
-      Save.clear();SFX.select();startLevel(1);
+      Save.clear();SFX.select();G.state='map';renderUI();
     };
     id('btnCont').onclick=()=>{
-      tryFS();
-      if(Save.load()){SFX.select();startLevel(G.levelId);}
+      if(Save.load()){SFX.select();G.state='map';renderUI();}
     };
     id('btnJrn').onclick=openJournal;
     id('btnHelp').onclick=()=>{
@@ -2292,13 +2326,15 @@ function renderUI(){
       <div class="row" style="flex-direction:column;margin-top:6px">
         <button class="btn" id="btnRes">Reanudar</button>
         <button class="btn" id="btnPJrn">Diario</button>
+        <button class="btn" id="btnPMap">Volver al Mapa</button>
         <button class="btn sm" id="btnPMenu" style="min-width:200px">Menú Principal</button>
       </div>
     `;
     ui.appendChild(p);
     id('btnRes').onclick=()=>{G.state='level';G.paused=false;renderUI();};
     id('btnPJrn').onclick=openJournal;
-    id('btnPMenu').onclick=()=>{G.state='menu';G.paused=false;renderUI();};
+    id('btnPMap').onclick=()=>{G.state='map';G.paused=false;renderUI();};
+    id('btnPMenu').onclick=()=>{G.state='title';G.paused=false;renderUI();};
     return;
   }
 
