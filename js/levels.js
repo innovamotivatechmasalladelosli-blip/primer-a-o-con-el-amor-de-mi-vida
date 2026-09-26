@@ -1,9 +1,9 @@
 // ═══════════════════════════════════════════════════════════
 const PAL={
-  // Piel cálida morena
-  skin:'#d4956a',skinHi:'#e8b48a',skinSh:'#a06040',
-  // Pelo negro oscuro con ondas
-  hair:'#1c1118',hairHi:'#3a2830',hairLo:'#0e080c',hairEdge:'#241a20',
+  // Piel clara cálida (un poco más blanca)
+  skin:'#e8b89a',skinHi:'#f5d4b8',skinSh:'#c48a68',
+  // Pelo rubio con toque pelirrojo
+  hair:'#d4a040',hairHi:'#e8c068',hairLo:'#b07828',hairEdge:'#c48838',
   // Chaqueta café/marrón
   jkt:'#8B5E3C',jktHi:'#a87048',jktSh:'#5a3820',jktDk:'#3d2010',
   // Forro de la chaqueta (crema)
