@@ -20,7 +20,7 @@ function fitCanvas(){
 window.addEventListener('resize',fitCanvas);fitCanvas();
 
 // ── Physics ──
-const GRAVITY=0.42,MAX_FALL=10,JUMP_FORCE=8.6;
+const GRAVITY=0.55,MAX_FALL=12,JUMP_FORCE=9.8;
 
 
 // ═══════════════════════════════════════════════════════════

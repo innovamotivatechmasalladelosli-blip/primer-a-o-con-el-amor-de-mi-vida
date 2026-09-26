@@ -224,10 +224,10 @@ class Player{
       }
 
       // Move
-      const spd=2.4,acc=.38;
+      const spd=2.8,acc=.5;
       if(wL&&!wR){this.vx=Math.max(-spd,this.vx-acc);this.facing=-1;}
       else if(wR&&!wL){this.vx=Math.min(spd,this.vx+acc);this.facing=1;}
-      else{this.vx*=this.onGround?.74:.88;if(Math.abs(this.vx)<.06)this.vx=0;}
+      else{this.vx*=this.onGround?.7:.8;if(Math.abs(this.vx)<.06)this.vx=0;}
 
       // Dash trigger
       if(keyPressed('D')&&this.dashCd<=0&&G.powers.dash){
@@ -1380,82 +1380,45 @@ function _drawRocket(rx,ry){
 
 // ═══════════════════════════════════════════════════════════
 function _drawSofa(sx,sy,w,h){
-  // Sillón/sofá flotante
-  const c1='#6d28d9', c2='#4c1d95', cush='#a78bfa', arm='#5b21b6', leg='#2e1065';
-  // Base
-  ctx.fillStyle=c1; ctx.fillRect(sx,sy+h-8,w,8);
-  // Respaldo
-  ctx.fillStyle=c2; ctx.fillRect(sx,sy,8,h-2);
-  ctx.fillStyle=c2; ctx.fillRect(sx+w-8,sy,8,h-2);
-  // Cojines
-  const nCush=Math.max(1,Math.floor((w-20)/30));
-  const cushW=Math.floor((w-20)/nCush)-2;
-  for(let i=0;i<nCush;i++){
-    const cx2=sx+10+i*(cushW+2);
-    ctx.fillStyle=cush; ctx.fillRect(cx2,sy+h-20,cushW,12);
-    ctx.fillStyle=arm; ctx.fillRect(cx2+2,sy+h-18,cushW-4,2);
-  }
-  // Patas
-  ctx.fillStyle=leg;
-  ctx.fillRect(sx+4,sy+h,4,4);
-  ctx.fillRect(sx+w-8,sy+h,4,4);
-  // Brillo neón encima
-  ctx.fillStyle='rgba(167,139,250,0.6)'; ctx.fillRect(sx,sy,w,2);
+  // Sofa: más claro y simple.
+  ctx.fillStyle='#5b21b6'; ctx.fillRect(sx,sy+4,w,h-4); // Base
+  ctx.fillStyle='#7c3aed'; ctx.fillRect(sx,sy,8,h); // Brazo izq
+  ctx.fillStyle='#7c3aed'; ctx.fillRect(sx+w-8,sy,8,h); // Brazo der
+  ctx.fillStyle='#c4b5fd'; ctx.fillRect(sx+8,sy+4,w-16,4); // Cojín
+  // Patas oscuras
+  ctx.fillStyle='#1e1b4b'; ctx.fillRect(sx+2,sy+h,4,4);
+  ctx.fillRect(sx+w-6,sy+h,4,4);
 }
 
 function _drawShelf(sx,sy,w,h){
-  // Estante de madera con libros y fotos
-  const wood='#7c3f1e', darkW='#5a2d0c', plank='#a0522d';
-  // Base del estante
-  ctx.fillStyle=wood; ctx.fillRect(sx,sy,w,h);
-  ctx.fillStyle=darkW; ctx.fillRect(sx,sy+h-3,w,3);
-  ctx.fillStyle=plank; ctx.fillRect(sx,sy,w,2);
-  // Libritos decorativos
-  const bookColors=['#f472b6','#60a5fa','#fbbf24','#4ade80','#f87171'];
-  for(let i=0;i<Math.min(5,Math.floor(w/12));i++){
-    ctx.fillStyle=bookColors[i%5];
-    ctx.fillRect(sx+4+i*12,sy+2,8,h-5);
-    ctx.fillStyle='rgba(255,255,255,0.3)';
-    ctx.fillRect(sx+5+i*12,sy+3,1,h-7);
-  }
-  // Borde neón
-  ctx.fillStyle='rgba(251,191,36,0.5)'; ctx.fillRect(sx,sy,w,1);
+  // Cama / Colchón flotante
+  ctx.fillStyle='#e0e7ff'; ctx.fillRect(sx,sy,w,h); // Sábana blanca
+  ctx.fillStyle='#818cf8'; ctx.fillRect(sx,sy,w,4); // Borde azulado
+  ctx.fillStyle='#fbcfe8'; ctx.fillRect(sx+4,sy-6,14,6); // Almohada rosada
+  // Patas de madera
+  ctx.fillStyle='#78350f'; ctx.fillRect(sx+4,sy+h,4,6);
+  ctx.fillRect(sx+w-8,sy+h,4,6);
 }
 
 function _drawCloud(sx,sy,w,h){
-  // Nube/nebulosa como plataforma
-  const t=performance.now()/1000;
-  ctx.save();
-  ctx.globalAlpha=0.85;
-  // Fondo de nube
-  const grad=ctx.createLinearGradient(sx,sy,sx,sy+h);
-  grad.addColorStop(0,'#c4b5fd'); grad.addColorStop(1,'#7c3aed');
-  ctx.fillStyle=grad;
-  // Forma redondeada
-  ctx.beginPath();
-  ctx.roundRect?ctx.roundRect(sx,sy+4,w,h-4,8):ctx.fillRect(sx,sy+4,w,h-4);
-  ctx.fill();
-  // Destellos
-  for(let i=0;i<Math.floor(w/20);i++){
-    ctx.globalAlpha=0.3+0.3*Math.sin(t*3+i*1.5);
-    ctx.fillStyle='#fff';
-    ctx.fillRect(sx+5+i*20,sy+5,2,2);
-  }
-  ctx.globalAlpha=1;
-  ctx.restore();
+  // Estante simple y grueso de madera
+  ctx.fillStyle='#92400e'; ctx.fillRect(sx,sy,w,h);
+  ctx.fillStyle='#d97706'; ctx.fillRect(sx,sy,w,4);
+  // Cajones simulados
+  ctx.fillStyle='#78350f';
+  ctx.fillRect(sx+10,sy+8,w/2-15,4);
+  ctx.fillRect(sx+w/2+5,sy+8,w/2-15,4);
 }
 
 function _drawBook(sx,sy,w,h){
-  // Pila de libros grandes
-  const cols=['#be185d','#1d4ed8','#047857','#92400e'];
-  const bookH=Math.max(4,Math.floor(h/cols.length));
-  for(let i=0;i<cols.length;i++){
-    const by=sy+i*bookH;
-    if(by>sy+h) break;
-    ctx.fillStyle=cols[i]; ctx.fillRect(sx,by,w,Math.min(bookH-1,h-i*bookH));
-    ctx.fillStyle='rgba(255,255,255,0.2)'; ctx.fillRect(sx+2,by+1,w-4,1);
-  }
-  ctx.fillStyle='rgba(255,255,255,0.15)'; ctx.fillRect(sx,sy,w,1);
+  // Cojín gigante
+  ctx.fillStyle='#ec4899';
+  ctx.beginPath();
+  if(ctx.roundRect) ctx.roundRect(sx,sy,w,h,8);
+  else ctx.fillRect(sx,sy,w,h);
+  ctx.fill();
+  ctx.fillStyle='#fbcfe8';
+  ctx.fillRect(sx+4,sy+4,w-8,2); // Hilo/Brillo
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -2199,11 +2162,11 @@ function renderUI(){
       Object.assign(G,{memories:[],decisions:{},
         powers:{double_jump:false,dash:false,glide:false,rocket:false},
         levelId:1,timePlayed:0,unlockedEndings:[],score:0,coins:0});
-      Save.clear();SFX.select();G.state='map';renderUI();
+      Save.clear();SFX.select();startLevel(1);
     };
     id('btnCont').onclick=()=>{
       tryFS();
-      if(Save.load()){SFX.select();G.state='map';renderUI();}
+      if(Save.load()){SFX.select();startLevel(G.levelId);}
     };
     id('btnJrn').onclick=openJournal;
     id('btnHelp').onclick=()=>{
@@ -2329,14 +2292,12 @@ function renderUI(){
       <div class="row" style="flex-direction:column;margin-top:6px">
         <button class="btn" id="btnRes">Reanudar</button>
         <button class="btn" id="btnPJrn">Diario</button>
-        <button class="btn" id="btnPMap">Volver al Mapa</button>
         <button class="btn sm" id="btnPMenu" style="min-width:200px">Menú Principal</button>
       </div>
     `;
     ui.appendChild(p);
     id('btnRes').onclick=()=>{G.state='level';G.paused=false;renderUI();};
     id('btnPJrn').onclick=openJournal;
-    id('btnPMap').onclick=()=>{G.state='map';G.paused=false;renderUI();};
     id('btnPMenu').onclick=()=>{G.state='menu';G.paused=false;renderUI();};
     return;
   }
