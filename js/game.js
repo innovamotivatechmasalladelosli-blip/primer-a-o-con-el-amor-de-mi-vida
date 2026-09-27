@@ -915,7 +915,8 @@ function reachGoal(){
   }
   
   if (G.levelId === 1) {
-    setTimeout(()=>{ startMinigame(); }, 1200);
+    // El contacto con la nave cambia de escenario inmediatamente.
+    startMinigame();
     return;
   }
 
@@ -940,13 +941,26 @@ function startCinematic() {
   G.state='cinematic';
   updateTouchControls();
   ui.innerHTML='';
-  CINE={timer:0,allyX:-40,shipX:-70};
+  CINE={timer:0,page:0,pageT:0,allyX:-40,shipX:-70};
+  canvas.onclick=advanceCinematic;
 }
 function updateCinematic(dt){
   CINE.timer+=dt;
+  CINE.pageT+=dt;
   CINE.allyX=Math.min(245,CINE.allyX+dt*42);
   CINE.shipX=Math.min(540,CINE.shipX+dt*78);
-  if(CINE.timer>10){G.state='map';renderUI();}
+}
+function advanceCinematic(){
+  if(G.state!=='cinematic')return;
+  SFX.select();
+  if(CINE.page<4){
+    CINE.page++;
+    CINE.pageT=0;
+    if(CINE.page===2)CINE.allyX=-40;
+    if(CINE.page===3)CINE.shipX=-70;
+  }else{
+    canvas.onclick=null;G.state='map';renderUI();
+  }
 }
 function _drawAlly(x,y,col,accent){
   ctx.fillStyle='rgba(0,0,0,.35)';ctx.fillRect(x-8,y+18,16,2);
@@ -979,29 +993,33 @@ function drawCinematic(){
   ctx.fillStyle='#fbbf24';ctx.fillRect(ex-14,ey-6,2,2);ctx.fillRect(ex+12,ey-6,2,2);
   ctx.fillStyle='#c084fc';ctx.font='6px "Press Start 2P"';ctx.textAlign='center';ctx.fillText('LA ENTIDAD',ex,ey+57);
   // Cartela de historia por fases.
-  const story=t<2?['LA FRACTURA','Los recuerdos del universo se están rompiendo.']:
-    t<4?['LA INFESTACIÓN','Una entidad se alimenta de mentes y recuerdos.']:
-    t<6?['LOS QUE RESISTEN','Quienes no se rinden conservan su identidad.']:
-    t<8?['LA ALIANZA','Lumen y Nara cruzan el vacío para acompañarte.']:
-    ['EL PRIMER UMBRAL','El viaje espiritual comienza. El multiverso aún puede salvarse.'];
-  const phaseT=t%2;
-  const storyFade=Math.min(1,phaseT*5,(2-phaseT)*5);
+  const stories=[
+    ['LA FRACTURA','Los recuerdos del universo se están rompiendo.'],
+    ['LA INFESTACIÓN','Una entidad se alimenta de mentes y recuerdos.'],
+    ['LOS QUE RESISTEN','Quienes no se rinden conservan su identidad.'],
+    ['LA ALIANZA','Lumen y Nara cruzan el vacío para acompañarte.'],
+    ['EL PRIMER UMBRAL','El viaje espiritual comienza. El multiverso aún puede salvarse.']
+  ];
+  const story=stories[CINE.page||0];
+  const storyFade=Math.min(1,(CINE.pageT||0)*5);
   ctx.globalAlpha=storyFade;
   ctx.fillStyle='rgba(4,2,14,.9)';ctx.fillRect(24,220,432,36);
   ctx.strokeStyle='rgba(244,114,182,.7)';ctx.strokeRect(24.5,220.5,431,35);
   ctx.fillStyle='#fbbf24';ctx.font='6px "Press Start 2P"';ctx.textAlign='left';ctx.fillText(story[0],36,234);
   ctx.fillStyle='#f5d0fe';ctx.font='7px Nunito,sans-serif';ctx.fillText(story[1],36,249);
   ctx.fillStyle='rgba(255,255,255,.25)';ctx.fillRect(36,252,408,1);
-  ctx.fillStyle='#f472b6';ctx.fillRect(36,252,408*((Math.min(4,Math.floor(t/2))+1)/5),1);
+  ctx.fillStyle='#f472b6';ctx.fillRect(36,252,408*((Math.min(4,CINE.page||0)+1)/5),1);
   ctx.globalAlpha=1;
-  if(t>3){
+  ctx.fillStyle='#f5d0fe';ctx.font='6px "Press Start 2P"';ctx.textAlign='center';
+  ctx.fillText(CINE.page<4?'TOCA PARA CONTINUAR':'TOCA PARA VER EL MAPA',VW/2,58);
+  if(CINE.page>=2){
     ctx.fillStyle='#f472b6';ctx.font='7px "Press Start 2P"';ctx.textAlign='center';ctx.fillText('NO TE RINDAS · DESPIERTA',VW/2,48);
     _drawAlly(CINE.allyX,190,'#2563eb','#93c5fd');
     _drawAlly(CINE.allyX+30,190,'#15803d','#a3e635');
     ctx.fillStyle='#93c5fd';ctx.font='5px "Press Start 2P"';ctx.textAlign='left';ctx.fillText('LUMEN',CINE.allyX-13,216);ctx.fillStyle='#a3e635';ctx.fillText('NARA',CINE.allyX+19,216);ctx.textAlign='center';
   }
-  if(t>5){ctx.save();ctx.translate(CINE.shipX,188);_drawRocket(0,0);ctx.restore();}
-  if(t>7){ctx.fillStyle='#fff';ctx.font='8px "Press Start 2P"';ctx.textAlign='center';ctx.fillText('✦ UMBRAL DEL DESPERTAR ✦',VW/2,202);}
+  if(CINE.page>=3){ctx.save();ctx.translate(CINE.shipX,188);_drawRocket(0,0);ctx.restore();}
+  if(CINE.page>=4){ctx.fillStyle='#fff';ctx.font='8px "Press Start 2P"';ctx.textAlign='center';ctx.fillText('✦ UMBRAL DEL DESPERTAR ✦',VW/2,202);}
   ctx.textAlign='left';
 }
 
@@ -2151,6 +2169,7 @@ function loop(){
       if(e.dead)continue;
       if(p.x<e.x+e.w&&p.x+p.w>e.x&&p.y<e.y+e.h&&p.y+p.h>e.y){
         if(p.dashT>0)e.hit(p.facing);
+        else if(p.invT<=0)p.hurt(e.x+e.w/2,e.y,false);
       }
     }
     if(LS.boss&&!LS.boss.dead){
