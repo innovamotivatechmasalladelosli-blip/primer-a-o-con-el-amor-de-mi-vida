@@ -582,7 +582,7 @@ class Walker{
     this.vx=0;this.vy=0;
     this.dir=o.dir||1;this.range=o.range||60;
     this.ox=x;this.spd=o.spd||.65;
-    this.dead=false;this.hp=2;this.hitT=0;
+    this.dead=false;this.hp=2;this.hitT=0;this.onGround=false;this.alertT=0;
     this.animT=Math.random()*10;this.kbT=0;
   }
   update(dt,lvl,p){
@@ -590,17 +590,23 @@ class Walker{
     if(this.hitT>0)this.hitT-=dt;
     if(this.kbT>0){this.kbT-=dt;this.x+=this.vx*60*dt;}
     else{
-      this.vx=this.dir*this.spd;
+      const dx=p.x-(this.x+this.w/2),dy=Math.abs(p.y-this.y);
+      if(Math.abs(dx)<220&&dy<72){this.alertT=Math.min(2,this.alertT+dt);this.dir=dx<0?-1:1;this.vx=this.dir*this.spd*1.28;}
+      else{this.alertT=Math.max(0,this.alertT-dt);this.vx=this.dir*this.spd;}
+      const probeX=this.dir>0?this.x+this.w+3:this.x-3;
+      const support=lvl.platforms.some(pl=>probeX>pl.x&&probeX<pl.x+pl.w&&Math.abs((this.y+this.h)-pl.y)<9);
+      if(this.onGround&&!support){this.dir*=-1;this.vx=this.dir*this.spd;}
       if(Math.abs(this.x-this.ox)>this.range){
         this.dir*=-1;this.x=this.ox+Math.sign(this.x-this.ox)*this.range;
       }
       this.x+=this.vx*60*dt;
     }
+    this.onGround=false;
     this.vy=Math.min(this.vy+GRAVITY,MAX_FALL);
     this.y+=this.vy*60*dt;
     for(const pl of lvl.platforms){
       if(this.x<pl.x+pl.w&&this.x+this.w>pl.x&&this.y<pl.y+pl.h&&this.y+this.h>pl.y){
-        if(this.vy>=0){this.y=pl.y-this.h;this.vy=0;}
+        if(this.vy>=0){this.y=pl.y-this.h;this.vy=0;this.onGround=true;}
         else{this.y=pl.y+pl.h;this.vy=0;}
       }
     }
@@ -649,15 +655,22 @@ class Flyer{
     this.ox=x;this.oy=y;
     this.dir=o.dir||1;this.range=o.range||100;
     this.dead=false;this.hp=1;this.hitT=0;
-    this.animT=Math.random()*10;
+    this.animT=Math.random()*10;this.alertT=0;
   }
   update(dt,lvl,p){
     if(this.dead)return;
     if(this.hitT>0)this.hitT-=dt;
     this.animT+=dt;
-    this.x+=this.dir*.8*60*dt;
-    if(Math.abs(this.x-this.ox)>this.range)this.dir*=-1;
-    this.y=this.oy+Math.sin(this.animT*2.2)*22;
+    const dx=p.x-(this.x+this.w/2),dy=(p.y-28)-(this.y+this.h/2);
+    if(Math.abs(dx)<280&&Math.abs(dy)<150){
+      this.alertT=Math.min(2,this.alertT+dt);this.dir=dx<0?-1:1;
+      this.x+=Math.max(-1.45,Math.min(1.45,dx*.012))*60*dt;
+      this.y+=Math.max(-1.1,Math.min(1.1,dy*.009))*60*dt;
+    }else{
+      this.alertT=Math.max(0,this.alertT-dt);this.x+=this.dir*.8*60*dt;
+      if(Math.abs(this.x-this.ox)>this.range){this.dir*=-1;this.x=this.ox+Math.sign(this.x-this.ox)*this.range;}
+      this.y=this.oy+Math.sin(this.animT*2.2)*22;
+    }
     if(p.invT<=0&&p.x<this.x+this.w&&p.x+p.w>this.x&&p.y<this.y+this.h&&p.y+p.h>this.y)
       p.hurt(this.x+8,this.y);
   }
@@ -2179,6 +2192,13 @@ function loop(){
     const p=LS.player;
     p.update(dt,LS.data);
     for(const e of LS.enemies)e.update(dt,LS.data,p);
+    // Separación ligera: dos bots cercanos no se quedan superpuestos ni forman un bloqueo.
+    for(let i=0;i<LS.enemies.length;i++)for(let j=i+1;j<LS.enemies.length;j++){
+      const a=LS.enemies[i],b=LS.enemies[j];
+      if(a.dead||b.dead||Math.abs((a.y+a.h/2)-(b.y+b.h/2))>18)continue;
+      const overlap=Math.min(a.x+a.w,b.x+b.w)-Math.max(a.x,b.x);
+      if(overlap>0){const push=overlap/2+.2; if(a.x<b.x){a.x-=push;b.x+=push;}else{a.x+=push;b.x-=push;}}
+    }
     updateMeteorites(dt);
     if(LS.portal&&LS.portal.active)LS.portal.t+=dt;
     if(LS.boss)LS.boss.update(dt,LS.data,p);

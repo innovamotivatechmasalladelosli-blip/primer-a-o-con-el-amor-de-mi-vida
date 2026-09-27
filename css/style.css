@@ -133,6 +133,7 @@ button:focus-visible{outline:3px solid #fff;outline-offset:3px;}
   .mem-card .icon{font-size:17px;}
   .map-actions{gap:3px;}
   .map-actions .btn{min-width:110px;padding-inline:8px;font-size:11px;}
+  .level-menu-button{top:8px;right:8px;min-width:72px!important;padding:6px 10px;font-size:11px;border-width:1px;opacity:.9;}
   .map-notice{font-size:5px;max-width:92vw;white-space:normal;line-height:1.5;}
   .title-logo{font-size:clamp(18px,7vw,30px);}
   .pixel-button{min-width:205px;min-height:54px;}
