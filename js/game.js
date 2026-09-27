@@ -58,6 +58,7 @@ function pressTouchKey(e){
     touchKeyCounts[key]=(touchKeyCounts[key]||0)+1;
   }
   keys[key]=true;
+  if(GameSettings.vibration)navigator.vibrate?.(8);
   button.setPointerCapture?.(e.pointerId);
   e.preventDefault();
 }
@@ -2292,7 +2293,29 @@ function calcEnding(){
 function renderUI(){
   ui.innerHTML='';
   canvas.onclick=null;
+  document.body.classList.toggle('reduced-motion',!!GameSettings.reducedMotion);
   updateTouchControls();
+
+  if(G.state==='settings'){
+    const back=G.settingsReturn||'menu';
+    const p=mk('div','panel settings-panel');
+    const settingRow=(key,label,desc)=>`<div class="setting-row"><div><strong>${label}</strong><small>${desc}</small></div><button class="btn sm setting-toggle" data-setting="${key}">${GameSettings[key]?'ACTIVADO':'DESACTIVADO'}</button></div>`;
+    p.innerHTML=`
+      <h2 style="color:#fbbf24;font-size:14px;text-shadow:none">Configuración</h2>
+      <p style="font-size:11px;color:rgba(233,213,255,.7);margin-bottom:10px">Ajusta tu viaje por el multiverso.</p>
+      ${settingRow('sfx','Efectos de sonido','Saltos, recuerdos, enemigos y menús')}
+      ${settingRow('music','Música y ambiente','Reservado para la música de futuros capítulos')}
+      ${settingRow('vibration','Vibración táctil','Respuesta breve al tocar botones en celular')}
+      ${settingRow('reducedMotion','Reducir animaciones','Menos movimiento y destellos visuales')}
+      <button class="btn" id="btnSettingsBack">Volver</button>`;
+    ui.appendChild(p);
+    p.querySelectorAll('[data-setting]').forEach(b=>b.onclick=()=>{
+      GameSettings.toggle(b.dataset.setting);b.textContent=GameSettings[b.dataset.setting]?'ACTIVADO':'DESACTIVADO';
+      document.body.classList.toggle('reduced-motion',!!GameSettings.reducedMotion);
+    });
+    id('btnSettingsBack').onclick=()=>{G.state=back;renderUI();};
+    return;
+  }
 
   // ── TITULO ──
   if(G.state==='title'){
@@ -2359,6 +2382,7 @@ function renderUI(){
       </div>
       <div class="row" style="margin-top:10px">
         <button class="btn sm" id="btnHelp">Ayuda</button>
+        <button class="btn sm" id="btnSettings">Configuración</button>
       </div>
       <p style="font-size:10px;color:rgba(130,90,160,.6);margin-top:14px;letter-spacing:2px">
         Presiona J para el diario
@@ -2376,6 +2400,7 @@ function renderUI(){
       if(Save.load()){SFX.select();G.state='map';renderUI();}
     };
     id('btnJrn').onclick=openJournal;
+    id('btnSettings').onclick=()=>{G.settingsReturn='menu';G.state='settings';renderUI();};
     id('btnShop').onclick=()=>{
       SFX.select();
       p.style.display='none';
@@ -2422,11 +2447,12 @@ function renderUI(){
     notice.innerHTML='<strong>1 NUEVO MAPA CADA SEMANA</strong><span>· HISTORIAS ENTRE MUNDOS ·</span>';
     ui.appendChild(notice);
     const row=mk('div','map-actions');
-    ['Salir al Menú','Diario'].forEach((lb,i)=>{
+    ['Menú','Configuración','Diario'].forEach((lb,i)=>{
       const b=mk('button','btn sm');b.textContent=lb;
       b.onclick=[
         ()=>{SFX.select();G.state='menu';renderUI();},
-        ()=>openJournal()
+        ()=>{G.settingsReturn='map';G.state='settings';renderUI();},
+        ()=>openJournal
       ][i];
       row.appendChild(b);
     });

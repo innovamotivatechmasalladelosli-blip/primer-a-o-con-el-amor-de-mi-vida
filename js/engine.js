@@ -231,17 +231,26 @@ const LEVELS={
 //   AUDIO
 
 // ═══════════════════════════════════════════════════════════
+const GAME_SETTINGS_KEY='entre_recuerdos_settings_v1';
+const GameSettings={
+  sfx:true,music:true,vibration:true,reducedMotion:false,
+  load(){try{Object.assign(this,JSON.parse(localStorage.getItem(GAME_SETTINGS_KEY)||'{}'));}catch(e){}return this;},
+  save(){try{localStorage.setItem(GAME_SETTINGS_KEY,JSON.stringify({sfx:this.sfx,music:this.music,vibration:this.vibration,reducedMotion:this.reducedMotion}));}catch(e){}},
+  toggle(key){this[key]=!this[key];this.save();return this[key];}
+};
+GameSettings.load();
 const SFX=(()=>{
   let ctx2=null;
   const init=()=>{ if(!ctx2) try{ctx2=new(window.AudioContext||window.webkitAudioContext)();}catch(e){} };
   const tone=(f,d,v,t,slide,det)=>{
+    if(!GameSettings.sfx)return;
     init();if(!ctx2)return;
     const o=ctx2.createOscillator(),g=ctx2.createGain();
     o.type=t||'square';o.frequency.value=f;
     if(slide)o.frequency.linearRampToValueAtTime(slide,ctx2.currentTime+d);
     if(det){const o2=ctx2.createOscillator();o2.type=t||'square';o2.frequency.value=f+det;
       o2.connect(g);o2.start();o2.stop(ctx2.currentTime+d);}
-    g.gain.setValueAtTime((v||.07)*0.3,ctx2.currentTime);
+    g.gain.setValueAtTime((v||.07)*0.3*(GameSettings.sfx?1:0),ctx2.currentTime);
     g.gain.exponentialRampToValueAtTime(0.001,ctx2.currentTime+d);
     o.connect(g).connect(ctx2.destination);
     o.start();o.stop(ctx2.currentTime+d);
