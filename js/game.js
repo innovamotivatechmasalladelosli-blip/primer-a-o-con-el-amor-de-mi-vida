@@ -861,6 +861,7 @@ function startLevel(id){
   const data=LEVELS[id];
   G.levelId=id;LS.data=data;
   LS.player=new Player(data.spawn.x,data.spawn.y);
+  LS.portal={x:data.spawn.x+8,y:data.spawn.y+14,t:id===1?0:99,active:id===1};
   LS.player.checkpoint={...data.spawn};
   LS.enemies=(data.enemies||[]).map(e=>
     e.type==='flyer'?new Flyer(e.x,e.y,e):new Walker(e.x,e.y,e));
@@ -910,8 +911,7 @@ function reachGoal(){
   }
 
   setTimeout(()=>{
-    if(LS.data.decision){G.state='decision';renderUI();}
-    else finishLevel();
+    finishLevel();
     Save.save();
   },900);
 }
@@ -949,6 +949,11 @@ function drawCinematic(){
   const t=CINE.timer;
   const g=ctx.createLinearGradient(0,0,0,VH);g.addColorStop(0,'#02010a');g.addColorStop(.55,'#12052a');g.addColorStop(1,'#32104f');
   ctx.fillStyle=g;ctx.fillRect(0,0,VW,VH);
+  // Interfaz narrativa: capítulo, progreso y panel de lectura para que la cinemática se sienta como una página viva del diario.
+  ctx.fillStyle='rgba(5,2,16,.86)';ctx.fillRect(14,10,452,20);
+  ctx.strokeStyle='rgba(192,132,252,.65)';ctx.lineWidth=1;ctx.strokeRect(14.5,10.5,451,19);
+  ctx.fillStyle='#fbbf24';ctx.font='6px "Press Start 2P"';ctx.textAlign='left';ctx.fillText('CAPÍTULO 01  /  EL DESPERTAR',24,23);
+  ctx.fillStyle='rgba(196,181,253,.55)';ctx.fillText('01',424,23);ctx.fillStyle='#f472b6';ctx.fillRect(442,20,14,2);
   // Multiverso fracturado: rutas de recuerdos que la entidad intenta infectar.
   ctx.globalAlpha=.45;
   for(let i=0;i<8;i++){
@@ -964,15 +969,24 @@ function drawCinematic(){
   ctx.fillStyle='#f43f5e';ctx.fillRect(ex-17,ey-7,8,5);ctx.fillRect(ex+9,ey-7,8,5);
   ctx.fillStyle='#fbbf24';ctx.fillRect(ex-14,ey-6,2,2);ctx.fillRect(ex+12,ey-6,2,2);
   ctx.fillStyle='#c084fc';ctx.font='6px "Press Start 2P"';ctx.textAlign='center';ctx.fillText('LA ENTIDAD',ex,ey+57);
-  if(t>1){ctx.globalAlpha=Math.min(1,(t-1)*1.3);ctx.fillStyle='#fef3c7';ctx.font='8px "Press Start 2P"';ctx.fillText('La infestación llegó a los recuerdos...',VW/2,28);ctx.globalAlpha=1;}
+  // Cartela de historia por fases.
+  const story=t<2?['LA FRACTURA','Los recuerdos del universo se están rompiendo.']:
+    t<4?['LA INFESTACIÓN','Una entidad se alimenta de mentes y recuerdos.']:
+    t<6?['LOS QUE RESISTEN','Quienes no se rinden conservan su identidad.']:
+    t<8?['LA ALIANZA','Lumen y Nara cruzan el vacío para acompañarte.']:
+    ['EL PRIMER UMBRAL','El viaje espiritual comienza. El multiverso aún puede salvarse.'];
+  ctx.fillStyle='rgba(4,2,14,.9)';ctx.fillRect(24,220,432,36);
+  ctx.strokeStyle='rgba(244,114,182,.7)';ctx.strokeRect(24.5,220.5,431,35);
+  ctx.fillStyle='#fbbf24';ctx.font='6px "Press Start 2P"';ctx.textAlign='left';ctx.fillText(story[0],36,234);
+  ctx.fillStyle='#f5d0fe';ctx.font='7px Nunito,sans-serif';ctx.fillText(story[1],36,249);
   if(t>3){
-    ctx.fillStyle='#f472b6';ctx.font='7px "Press Start 2P"';ctx.fillText('No te rindas. Despierta.',VW/2,48);
+    ctx.fillStyle='#f472b6';ctx.font='7px "Press Start 2P"';ctx.textAlign='center';ctx.fillText('NO TE RINDAS · DESPIERTA',VW/2,48);
     _drawAlly(CINE.allyX,190,'#2563eb','#93c5fd');
     _drawAlly(CINE.allyX+30,190,'#15803d','#a3e635');
     ctx.fillStyle='#93c5fd';ctx.font='5px "Press Start 2P"';ctx.textAlign='left';ctx.fillText('LUMEN',CINE.allyX-13,216);ctx.fillStyle='#a3e635';ctx.fillText('NARA',CINE.allyX+19,216);ctx.textAlign='center';
   }
-  if(t>5){ctx.save();ctx.translate(CINE.shipX,212);_drawRocket(0,0);ctx.restore();ctx.fillStyle='#fbbf24';ctx.font='7px "Press Start 2P"';ctx.fillText('Las amistades nos acompañan',VW/2,244);}
-  if(t>7){ctx.fillStyle='#fff';ctx.font='9px "Press Start 2P"';ctx.fillText('NIVEL ESPIRITUAL DESBLOQUEADO',VW/2,264);}
+  if(t>5){ctx.save();ctx.translate(CINE.shipX,188);_drawRocket(0,0);ctx.restore();}
+  if(t>7){ctx.fillStyle='#fff';ctx.font='8px "Press Start 2P"';ctx.textAlign='center';ctx.fillText('✦ UMBRAL DEL DESPERTAR ✦',VW/2,202);}
   ctx.textAlign='left';
 }
 
@@ -1022,8 +1036,7 @@ function updateMinigame(dt) {
       Px.burst(bh.x, bh.y, '#f472b6', 50, {heart:true, speed:3, up:2});
       Px.burst(bh.x, bh.y, '#fbbf24', 30, {star:true, speed:2.5});
       setTimeout(()=>{
-        if(LEVELS[1].decision){G.state='decision';renderUI();}
-        else finishLevel();
+        finishLevel();
         Save.save();
       }, 1800);
       return;
@@ -1533,6 +1546,19 @@ function drawMeteorites(){
     ctx.fillStyle='#f97316';ctx.globalAlpha=.65;ctx.fillRect(-r*1.9,-2,r*.8,2);ctx.globalAlpha=1;ctx.restore();
   }
 }
+function drawStartPortal(){
+  if(!LS.portal||!LS.portal.active||LS.portal.t>=2.8)return;
+  const p=LS.portal,t=performance.now()/1000;
+  const fade=Math.min(1,p.t/.35)*Math.min(1,(2.8-p.t)/.7);
+  const pulse=1+Math.sin(t*6)*.08;
+  ctx.save();ctx.translate(p.x,p.y);ctx.globalAlpha=.7*fade;
+  ctx.fillStyle='#7c3aed';ctx.beginPath();ctx.ellipse(0,0,25*pulse,38*pulse,0,0,Math.PI*2);ctx.fill();
+  ctx.strokeStyle='#f472b6';ctx.lineWidth=3;ctx.beginPath();ctx.ellipse(0,0,19*pulse,31*pulse,0,0,Math.PI*2);ctx.stroke();
+  ctx.strokeStyle='#fbbf24';ctx.lineWidth=2;ctx.beginPath();ctx.arc(0,0,27*pulse,t*2,t*2+Math.PI*1.4);ctx.stroke();
+  ctx.fillStyle='#05010b';ctx.beginPath();ctx.ellipse(0,0,12,25,0,0,Math.PI*2);ctx.fill();
+  ctx.globalAlpha=.9*fade;ctx.fillStyle='#f5d0fe';ctx.font='5px "Press Start 2P"';ctx.textAlign='center';ctx.fillText('ENTRADA',0,48);
+  ctx.restore();
+}
 function meteoriteHitsPlayer(p){
   const t=performance.now()/1000;
   return LS.meteorites.some(m=>{const y=m.y+Math.sin(t*(m.drift||.3)+m.phase)*7;return Math.hypot(p.x+p.w/2-m.x,p.y+p.h/2-y)<m.r+8;});
@@ -1787,6 +1813,7 @@ function renderLevel(){
   drawGoal();
   for(const e of LS.enemies)e.draw();
   if(LS.boss)LS.boss.draw();
+  drawStartPortal();
   LS.player.draw();
   Px.draw();
   ctx.restore();
@@ -1850,7 +1877,7 @@ function drawMapFull(){
   G.mapNodePositions=MAP_NODES;
 
   for(const n of MAP_NODES){
-    const unlocked=n.id===1||G.levelId>=n.id;
+    const unlocked=n.id===1;
     const completed=G.levelId>n.id;
     const active=G.levelId===n.id;
 
@@ -1897,6 +1924,10 @@ function drawMapFull(){
     const col=completed?'#86efac':(unlocked?'#f5d0fe':'#6d4c8a');
     ctx.fillStyle=col;ctx.font='bold 8px "Press Start 2P",monospace';
     ctx.textAlign='center';ctx.fillText(n.name,n.x,n.y+nr+13);
+    if(!unlocked){
+      ctx.fillStyle='#8b6aa8';ctx.font='5px "Press Start 2P",monospace';
+      ctx.fillText('PRÓXIMAMENTE',n.x,n.y+nr+25);
+    }
     // Ícono y nombre del sendero espiritual desbloqueable
     if(unlocked){
       ctx.font='11px monospace';ctx.fillText(n.icon,n.x,n.y+nr+26);
@@ -2101,6 +2132,7 @@ function loop(){
     p.update(dt,LS.data);
     for(const e of LS.enemies)e.update(dt,LS.data,p);
     updateMeteorites(dt);
+    if(LS.portal&&LS.portal.active)LS.portal.t+=dt;
     if(LS.boss)LS.boss.update(dt,LS.data,p);
     if(LS.data.theme==='galaxy'&&meteoriteHitsPlayer(p))p.hurt(p.x+p.w/2-1,p.y,true);
 
@@ -2222,8 +2254,8 @@ function renderUI(){
     id('btnTitleStart').onclick=()=>{
       SFX.select();
       const hasSave=Save.load();
-      const levelToStart=hasSave&&LEVELS[G.levelId]?G.levelId:1;
-      startLevel(levelToStart);
+      // Por ahora la aventura jugable comienza en La Galaxia; los demás capítulos quedan como próximos.
+      startLevel(1);
       try{
         if(!document.fullscreenElement){
           document.documentElement.requestFullscreen?.()?.catch(()=>{});
@@ -2331,7 +2363,7 @@ function renderUI(){
       for(const n of MAP_NODES){
         const d=Math.hypot(mx-n.x,my-n.y);
         if(d<22){
-          const ok=n.id===1||G.levelId>=n.id;
+          const ok=n.id===1;
           if(ok){SFX.select();startLevel(n.id);}else{SFX.hurt();G.shakeT=.15;G.shakeAmt=3;}
           return;
         }
