@@ -2313,6 +2313,15 @@ function renderUI(){
     return;
   }
 
+  // ── ACCESO DIRECTO DENTRO DEL NIVEL ──
+  if(G.state==='level'||G.state==='minigame'){
+    const levelMenu=mk('button','btn sm level-menu-button');
+    levelMenu.textContent='Menú';
+    levelMenu.setAttribute('aria-label','Salir al menú principal');
+    levelMenu.onclick=()=>{Save.save();SFX.select();G.paused=false;G.state='menu';renderUI();};
+    ui.appendChild(levelMenu);
+  }
+
   // ── TITULO ──
   if(G.state==='title'){
     const t=mk('section','title-screen');
@@ -2439,9 +2448,6 @@ function renderUI(){
 
   // ── MAPA ──
   if(G.state==='map'){
-    const notice=mk('div','map-notice');
-    notice.innerHTML='<strong>1 NUEVO MAPA CADA SEMANA</strong><span>· HISTORIAS ENTRE MUNDOS ·</span>';
-    ui.appendChild(notice);
     const row=mk('div','map-actions');
     ['Menú','Configuración','Diario'].forEach((lb,i)=>{
       const b=mk('button','btn sm');b.textContent=lb;
