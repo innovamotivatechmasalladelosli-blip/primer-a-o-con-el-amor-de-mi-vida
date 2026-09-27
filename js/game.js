@@ -5,7 +5,7 @@
 const keys={};
 const KM={
   ArrowLeft:'L',KeyA:'L',ArrowRight:'R',KeyD:'R',
-  ArrowUp:'U',KeyW:'U',Space:'J',
+  ArrowUp:'U',KeyW:'U',ArrowDown:'K',KeyS:'K',Space:'J',
   ShiftLeft:'D',ShiftRight:'D',
   KeyZ:'J',KeyX:'D',
   Escape:'ESC',KeyE:'E',KeyJ:'JRN',Tab:'JRN',KeyF:'FS',
@@ -38,7 +38,8 @@ document.addEventListener('fullscreenchange',fitCanvas);
 const touchMap = {
   'btn-left': 'L',
   'btn-right': 'R',
-  'btn-jump': 'J'
+  'btn-jump': 'J',
+  'btn-down': 'K'
 };
 const touchControls=document.getElementById('touch-controls');
 const hasTouchInput=navigator.maxTouchPoints>0||window.matchMedia('(pointer: coarse)').matches;
@@ -211,6 +212,7 @@ class Player{
     this.stepT=0;this.stepPhase=0;
     this.glideT=0;this.trailT=0;
     this.score=0;
+    this.crouching=false;
   }
   update(dt,lvl){
     // Timers
@@ -221,7 +223,13 @@ class Player{
     if(this.trailT>0)this.trailT-=dt;
 
     this._prevGround=this.onGround;
-    const wL=keys.L,wR=keys.R,wJ=keys.J,wD=keys.D;
+    const wL=keys.L,wR=keys.R,wJ=keys.J,wD=keys.D,wK=keys.K;
+
+    // Bajar en una superficie firme: agacha y fija los pies para no caminar fuera del borde.
+    const shouldCrouch=wK&&!wJ&&this.onGround;
+    if(shouldCrouch&&!this.crouching){this.y+=8;this.h=20;}
+    else if(!shouldCrouch&&this.crouching){this.y-=8;this.h=28;}
+    this.crouching=shouldCrouch;
 
     // Coyote
     if(this.onGround){this.coyote=.13;this.jumpUsed=false;this.glideT=0;}
@@ -246,9 +254,10 @@ class Player{
           life:.25,color:'#a3e635',size:1,grav:-.02});
       }
 
-      // Move
+      // Move; mientras se agacha no avanza, así no puede caerse de una plataforma firme.
       const spd=2.8,acc=.5;
-      if(wL&&!wR){this.vx=Math.max(-spd,this.vx-acc);this.facing=-1;}
+      if(this.crouching){this.vx=0;}
+      else if(wL&&!wR){this.vx=Math.max(-spd,this.vx-acc);this.facing=-1;}
       else if(wR&&!wL){this.vx=Math.min(spd,this.vx+acc);this.facing=1;}
       else{this.vx*=this.onGround?.7:.8;if(Math.abs(this.vx)<.06)this.vx=0;}
 
@@ -297,6 +306,7 @@ class Player{
     // State & anim
     if(this.dashT>0)this.state='dash';
     else if(!this.onGround)this.state=this.vy<0?'jump':'fall';
+    else if(this.crouching)this.state='crouch';
     else if(Math.abs(this.vx)>.25)this.state='run';
     else this.state='idle';
     this.animT+=dt;
@@ -362,7 +372,7 @@ class Player{
     const cx=Math.floor(this.x+this.w/2);
     const by=Math.floor(this.y+this.h);
     const sq=this.squash,st=this.stretch;
-    const sy=1-sq*.28+st*.2,sx=1+sq*.28-st*.18;
+    const sy=(this.crouching?.78:1)-sq*.28+st*.2,sx=1+sq*.28-st*.18;
     ctx.save();
     ctx.translate(cx,by);ctx.scale(sx,sy);ctx.translate(-cx,-by);
     _drawChar(cx,by,this.facing,this.state,this.frame,this.dashT>0);
@@ -1054,9 +1064,9 @@ function updateMinigame(dt) {
     return;
   }
 
-  // Input — flechas, WASD, o botones táctiles (Jump=Arriba, Dash=Abajo)
+  // Input — flechas, WASD, o botones táctiles (saltar=arriba, bajar=abajo)
   const up = keys.U || keys['ArrowUp'] || keys.J;
-  const dn = keys.D2 || keys['ArrowDown'] || keys.D || keys.s;
+  const dn = keys.K || keys['ArrowDown'] || keys.s;
   const lt = keys.L || keys['ArrowLeft'] || keys.a;
   const rt = keys.R || keys['ArrowRight'] || keys.d;
 

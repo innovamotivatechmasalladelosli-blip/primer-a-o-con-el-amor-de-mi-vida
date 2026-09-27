@@ -95,8 +95,7 @@ const LEVELS={
       {x:2260,y:116,r:14,drift:.34,phase:.9},
     ],
     memories:[
-      {x:390,y:160,id:1}, // Fácil de agarrar
-      {x:1960,y:110,id:3} // Casi al final
+      {x:390,y:160,id:1} // Recuerdo fotográfico
     ],
     items:[
       {x:560,y:140,type:'star'},
