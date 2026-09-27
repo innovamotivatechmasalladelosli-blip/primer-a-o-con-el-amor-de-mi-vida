@@ -52,6 +52,9 @@ function releaseTouchKey(e){
   const key=touchMap[button.id];
   if(key)keys[key]=false;
 }
+function releaseAllTouchKeys(){
+  for(const key of Object.values(touchMap))keys[key]=false;
+}
 touchControls.addEventListener('pointerdown',e=>{
   const button=e.target.closest?.('.t-btn');
   if(!button)return;
@@ -59,11 +62,15 @@ touchControls.addEventListener('pointerdown',e=>{
   if(!key)return;
   keys[key]=true;
   button.setPointerCapture?.(e.pointerId);
-  if(e.pointerType==='touch')e.preventDefault();
-});
+  e.preventDefault();
+},{passive:false});
 ['pointerup','pointercancel','lostpointercapture'].forEach(type=>
   touchControls.addEventListener(type,releaseTouchKey)
 );
+// Release touch actions even if the finger ends outside the button or the browser changes focus.
+window.addEventListener('pointerup',releaseAllTouchKeys,{passive:true});
+window.addEventListener('pointercancel',releaseAllTouchKeys,{passive:true});
+window.addEventListener('blur',releaseAllTouchKeys,{passive:true});
 
 
 // ═══════════════════════════════════════════════════════════
@@ -1393,42 +1400,67 @@ function _drawRocket(rx,ry){
 
 // ═══════════════════════════════════════════════════════════
 function _drawSofa(sx,sy,w,h){
-  // Respaldo, asiento y brazos se dibujan a escala con el personaje.
-  const arm=Math.min(7,Math.max(5,Math.floor(w*.15)));
-  ctx.fillStyle='#32155f';ctx.fillRect(sx+arm,sy-15,w-arm*2,11);
-  ctx.fillStyle='#8b5cf6';ctx.fillRect(sx+arm+2,sy-13,w-arm*2-4,7);
-  ctx.fillStyle='#5b21b6';ctx.fillRect(sx,sy,w,h+2);
-  ctx.fillStyle='#7c3aed';ctx.fillRect(sx,sy-7,arm,10);
-  ctx.fillRect(sx+w-arm,sy-7,arm,10);
-  ctx.fillStyle='#c4b5fd';ctx.fillRect(sx+arm+2,sy,w-arm*2-4,2);
-  ctx.fillStyle='#2e1065';ctx.fillRect(sx+4,sy+h,3,3);
-  ctx.fillRect(sx+w-7,sy+h,3,3);
+  // Silueta de sillón: respaldo alto, brazos y cojines contrastados.
+  const arm=Math.max(6,Math.min(10,Math.floor(w*.18)));
+  ctx.fillStyle='#241047';ctx.fillRect(sx+arm-1,sy-17,w-arm*2+2,13);
+  ctx.fillStyle='#6d28d9';ctx.fillRect(sx+arm,sy-15,w-arm*2,10);
+  ctx.fillStyle='#a78bfa';ctx.fillRect(sx+arm+3,sy-14,w-arm*2-7,2);
+  ctx.fillStyle='#4c1d95';ctx.fillRect(sx,sy-5,arm+2,h+5);ctx.fillRect(sx+w-arm-2,sy-5,arm+2,h+5);
+  ctx.fillStyle='#7c3aed';ctx.fillRect(sx+arm,sy,w-arm*2,h+2);
+  ctx.fillStyle='#c4b5fd';ctx.fillRect(sx+arm+3,sy,w-arm*2-6,2);
+  ctx.fillStyle='#5b21b6';ctx.fillRect(sx+arm+4,sy+4,Math.max(3,Math.floor(w/3)-4),2);
+  ctx.fillRect(sx+w-arm-Math.max(3,Math.floor(w/3))+1,sy+4,Math.max(3,Math.floor(w/3)-4),2);
+  ctx.fillStyle='#2e1065';ctx.fillRect(sx+4,sy+h+2,3,4);ctx.fillRect(sx+w-7,sy+h+2,3,4);
 }
 function _drawShelf(sx,sy,w,h){
-  // Colchón bajo con cabecera y almohada; la superficie de apoyo es sy.
-  ctx.fillStyle='#78350f';ctx.fillRect(sx+2,sy-13,4,h+15);
-  ctx.fillRect(sx+w-6,sy-13,4,h+15);
-  ctx.fillStyle='#818cf8';ctx.fillRect(sx,sy,w,h+1);
-  ctx.fillStyle='#e0e7ff';ctx.fillRect(sx+2,sy,w-4,Math.max(4,h-2));
-  ctx.fillStyle='#fbcfe8';ctx.fillRect(sx+6,sy-5,Math.min(14,w/3),5);
-  ctx.fillStyle='#c4b5fd';ctx.fillRect(sx+4,sy+2,w-8,1);
+  // Cama/estante con cabecera y almohada, claramente legible a baja resolución.
+  ctx.fillStyle='#422006';ctx.fillRect(sx+2,sy-15,5,h+18);ctx.fillRect(sx+w-7,sy-15,5,h+18);
+  ctx.fillStyle='#92400e';ctx.fillRect(sx+1,sy-16,w-2,3);
+  ctx.fillStyle='#6366f1';ctx.fillRect(sx,sy,w,h+2);
+  ctx.fillStyle='#e0e7ff';ctx.fillRect(sx+3,sy+1,w-6,Math.max(4,h-1));
+  ctx.fillStyle='#fbcfe8';ctx.fillRect(sx+7,sy-5,Math.min(16,Math.max(8,Math.floor(w/3))),5);
+  ctx.fillStyle='#c4b5fd';ctx.fillRect(sx+4,sy+3,w-8,2);
+  ctx.fillStyle='#312e81';ctx.fillRect(sx+4,sy+h+2,w-8,2);
 }
 function _drawCloud(sx,sy,w,h){
-  // Estante compacto: la repisa superior marca claramente el suelo.
-  ctx.fillStyle='#78350f';ctx.fillRect(sx+5,sy-10,4,h+10);
-  ctx.fillRect(sx+w-9,sy-10,4,h+10);
-  ctx.fillStyle='#d97706';ctx.fillRect(sx,sy,w,3);
-  ctx.fillStyle='#92400e';ctx.fillRect(sx+2,sy+3,w-4,Math.max(4,h-3));
-  ctx.fillStyle='#fbbf24';ctx.fillRect(sx+8,sy+6,Math.max(4,w/2-10,0),1);
-  if(w>28)ctx.fillRect(sx+w/2+2,sy+6,Math.max(4,w/2-10),1);
+  // Estantería compacta: repisa superior gruesa y objetos identificables.
+  ctx.fillStyle='#451a03';ctx.fillRect(sx+5,sy-12,4,h+13);ctx.fillRect(sx+w-9,sy-12,4,h+13);
+  ctx.fillStyle='#f59e0b';ctx.fillRect(sx,sy,w,4);
+  ctx.fillStyle='#b45309';ctx.fillRect(sx+2,sy+4,w-4,Math.max(4,h-2));
+  ctx.fillStyle='#fbbf24';ctx.fillRect(sx+8,sy+7,Math.max(4,Math.floor(w/2)-10),2);
+  if(w>34)ctx.fillRect(sx+Math.floor(w/2)+2,sy+7,Math.max(4,Math.floor(w/2)-10),2);
+  ctx.fillStyle='#78350f';ctx.fillRect(sx+7,sy+h-1,3,3);ctx.fillRect(sx+w-10,sy+h-1,3,3);
 }
 function _drawBook(sx,sy,w,h){
-  // Banco acolchado / otomana, de huella corta y fácil de leer.
-  ctx.fillStyle='#9d174d';ctx.fillRect(sx+3,sy,w-6,h+2);
-  ctx.fillStyle='#ec4899';ctx.fillRect(sx,sy,w,4);
-  ctx.fillStyle='#fbcfe8';ctx.fillRect(sx+5,sy+1,w-10,1);
-  ctx.fillStyle='#831843';ctx.fillRect(sx+7,sy+h+2,3,3);
-  ctx.fillRect(sx+w-10,sy+h+2,3,3);
+  // Otomana/libro acolchado con lomo y patas visibles.
+  ctx.fillStyle='#831843';ctx.fillRect(sx+3,sy,w-6,h+3);
+  ctx.fillStyle='#ec4899';ctx.fillRect(sx,sy,w,5);
+  ctx.fillStyle='#fbcfe8';ctx.fillRect(sx+5,sy+1,w-10,2);
+  ctx.fillStyle='#be185d';ctx.fillRect(sx+4,sy+5,w-8,2);
+  ctx.fillStyle='#500724';ctx.fillRect(sx+7,sy+h+2,3,4);ctx.fillRect(sx+w-10,sy+h+2,3,4);
+}
+
+function _furnitureSeed(x,index){
+  // Semilla estable: las piezas flotan pero no cambian de lugar cada frame.
+  const n=Math.sin(x*12.9898+index*78.233)*43758.5453;
+  return n-Math.floor(n);
+}
+function _drawFloatingFurniture(draw,sx,sy,w,h,seed){
+  const angle=(seed-.5)*.12;
+  const lift=Math.round((seed-.5)*6);
+  const scale=.94+seed*.12;
+  const cx=sx+w/2, cy=sy+h/2;
+  ctx.save();
+  ctx.translate(Math.floor(cx),Math.floor(cy+lift));
+  ctx.rotate(angle);
+  ctx.scale(scale,scale);
+  draw(-w/2,-h/2,w,h);
+  ctx.restore();
+  // Sombra de anclaje para que el jugador entienda la superficie de colisión.
+  ctx.globalAlpha=.22;
+  ctx.fillStyle='#05010b';
+  ctx.fillRect(Math.floor(sx+3),Math.floor(sy+h+3),Math.max(4,w-6),2);
+  ctx.globalAlpha=1;
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -1444,23 +1476,16 @@ function drawPlatforms(lvl,cx){
     if(screenX>VW||screenX+p.w<0){furnitureIdx++;continue;}
 
     if(t==='galaxy'){
-      // Las plataformas largas se dividen en muebles repetidos para que no se estiren
-      const fi=furnitureIdx%4;
-      const MAX_W = 60;
-      let currX = sx;
-      let remW = p.w;
-      while (remW > 0) {
-        let drawW = Math.min(remW, MAX_W);
-        // Si el sobrante es muy pequeño, estiramos un poquito el último
-        if(remW > MAX_W && remW - MAX_W < 20) drawW = remW / 2; 
-
-        if(fi===0) _drawSofa(currX,sy,drawW,p.h);
-        else if(fi===1) _drawShelf(currX,sy,drawW,p.h);
-        else if(fi===2) _drawCloud(currX,sy,drawW,p.h);
-        else _drawBook(currX,sy,drawW,p.h);
-        
-        currX += drawW;
-        remW -= drawW;
+      // Cada tramo es un mueble independiente: no se estira y conserva una silueta clara.
+      const MAX_W=72;
+      let currX=sx, remW=p.w, piece=0;
+      while(remW>0){
+        const drawW=Math.min(remW,MAX_W);
+        const fi=(furnitureIdx+piece)%4;
+        const seed=_furnitureSeed(p.x,piece+furnitureIdx*7);
+        const draw=fi===0?_drawSofa:fi===1?_drawShelf:fi===2?_drawCloud:_drawBook;
+        _drawFloatingFurniture(draw,currX,sy,drawW,p.h,seed);
+        currX+=drawW; remW-=drawW; piece++;
       }
       furnitureIdx++;
     }else if(t==='city'){
