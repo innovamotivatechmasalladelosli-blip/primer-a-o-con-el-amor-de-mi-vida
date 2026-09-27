@@ -1059,10 +1059,13 @@ function updateMinigame(dt) {
     const bh = MG.blackHole;
     bh.r = Math.min(54, bh.r + 60*dt); // crece hasta radio 54
     bh.spin += dt*2.8;
+    // Asistencia de accesibilidad: al final del tiempo el umbral se acerca a la nave
+    // para que una pantalla pequeña, latencia o control táctil no bloquee la progresión.
+    if(MG.timer<1.8)bh.y += (MG.shipY-bh.y)*Math.min(1,dt*5);
 
     // ¿La nave entró en el agujero negro?
     const dx = MG.shipX - bh.x, dy = MG.shipY - bh.y;
-    if (Math.hypot(dx,dy) < bh.r + 8) {
+    if (Math.hypot(dx,dy) < bh.r + 8 || MG.timer<=.45) {
       MG.won = true;
       MG.entryT=0;
       SFX.win();
@@ -1850,13 +1853,13 @@ function renderLevel(){
 
 // ═══════════════════════════════════════════════════════════
 const MAP_NODES=[
-  {id:1,name:'La Galaxia',icon:'🚀',x:72,y:215,color:'#7c3aed'},
-  {id:'story-1',name:'Historia I',icon:'📖',kind:'story',x:132,y:185,color:'#f59e0b'},
-  {id:2,name:'La Ciudad',icon:'🌆',x:192,y:155,color:'#be185d'},
-  {id:'story-2',name:'Historia II',icon:'📖',kind:'story',x:252,y:133,color:'#f59e0b'},
-  {id:3,name:'El Bosque',icon:'🌲',x:312,y:115,color:'#15803d'},
-  {id:'story-3',name:'Historia III',icon:'📖',kind:'story',x:372,y:94,color:'#f59e0b'},
-  {id:4,name:'Las Estrellas',icon:'⭐',x:430,y:72,color:'#1d4ed8'},
+  {id:1,name:'GALAXIA',icon:'🚀',x:58,y:205,color:'#7c3aed'},
+  {id:'story-1',name:'HISTORIA I',icon:'📖',kind:'story',x:130,y:205,color:'#f59e0b'},
+  {id:2,name:'CIUDAD',icon:'🌆',x:202,y:205,color:'#be185d'},
+  {id:'story-2',name:'HISTORIA II',icon:'📖',kind:'story',x:274,y:205,color:'#f59e0b'},
+  {id:3,name:'BOSQUE',icon:'🌲',x:346,y:205,color:'#15803d'},
+  {id:'story-3',name:'HISTORIA III',icon:'📖',kind:'story',x:274,y:82,color:'#f59e0b'},
+  {id:4,name:'ESTRELLAS',icon:'⭐',x:410,y:82,color:'#1d4ed8'},
 ];
 
 function drawMapFull(){
@@ -1951,17 +1954,13 @@ function drawMapFull(){
     ctx.textAlign='center';
     if(isStory){
       ctx.fillText(n.name,n.x,n.y-17);
-      ctx.fillStyle='#c49a45';ctx.font='5px "Press Start 2P",monospace';ctx.fillText('HISTORIA · PRÓX.',n.x,n.y-8);
+      ctx.fillStyle='#c49a45';ctx.font='5px "Press Start 2P",monospace';ctx.fillText('CAPÍTULO',n.x,n.y-8);
     }else ctx.fillText(n.name,n.x,n.y+nr+13);
-    if(!unlocked&&!isStory){
-      ctx.fillStyle='#8b6aa8';ctx.font='5px "Press Start 2P",monospace';
-      ctx.fillText('PRÓXIMAMENTE',n.x,n.y+nr+25);
-    }
     // Ícono y nombre del sendero espiritual desbloqueable
     if(!isStory&&unlocked){
       ctx.font='11px monospace';ctx.fillText(n.icon,n.x,n.y+nr+26);
       ctx.fillStyle=completed?'#86efac':'#c4b5fd';ctx.font='5px "Press Start 2P",monospace';
-      ctx.fillText('✦ '+(LEVELS[n.id].spiritual||'SENDERO'),n.x,n.y+nr+37);
+      ctx.fillText('✦ '+(LEVELS[n.id].spiritual||'SENDERO').split(' ')[0].toUpperCase(),n.x,n.y+nr+37);
     }
     ctx.textAlign='left';
 
@@ -2206,7 +2205,8 @@ function loop(){
     // Goal
     if(LS.data.goal&&!LS.goalReached){
       const g=LS.data.goal;
-      if(p.x<g.x+g.w&&p.x+p.w>g.x&&p.y<g.y+g.h&&p.y+p.h>g.y)reachGoal();
+      // Margen extra vertical para que el objetivo sea alcanzable con escalado táctil.
+      if(p.x<g.x+g.w+12&&p.x+p.w>g.x-12&&p.y<g.y+g.h+18&&p.y+p.h>g.y-18)reachGoal();
     }
     // Timers
     if(LS.flashT>0)LS.flashT-=dt;
@@ -2400,7 +2400,7 @@ function renderUI(){
       const my=(e.clientY-r.top)/r.height*VH;
       for(const n of MAP_NODES){
         const d=Math.hypot(mx-n.x,my-n.y);
-        if(d<22){
+        if(d<30){
           const ok=n.id===1;
           if(ok){SFX.select();startLevel(n.id);}else{SFX.hurt();G.shakeT=.15;G.shakeAmt=3;}
           return;
