@@ -38,8 +38,7 @@ document.addEventListener('fullscreenchange',fitCanvas);
 const touchMap = {
   'btn-left': 'L',
   'btn-right': 'R',
-  'btn-jump': 'J',
-  'btn-dash': 'D'
+  'btn-jump': 'J'
 };
 const touchControls=document.getElementById('touch-controls');
 const hasTouchInput=navigator.maxTouchPoints>0||window.matchMedia('(pointer: coarse)').matches;
@@ -98,7 +97,7 @@ const Save={
   load(){try{
     const d=JSON.parse(localStorage.getItem(SAVE_KEY)||'null');
     if(!d)return false;
-    Object.assign(G,{memories:d.memories||[],decisions:d.decisions||{},
+    Object.assign(G,{memories:(d.memories||[]).map(Number).filter(n=>n>=1&&n<=12),decisions:d.decisions||{},
       powers:d.powers||{double_jump:false,dash:false,glide:false,rocket:false},
       timePlayed:d.timePlayed||0,levelId:d.levelId||1,
       unlockedEndings:d.unlockedEndings||[],score:d.score||0,coins:d.coins||0});
@@ -975,10 +974,16 @@ function drawCinematic(){
     t<6?['LOS QUE RESISTEN','Quienes no se rinden conservan su identidad.']:
     t<8?['LA ALIANZA','Lumen y Nara cruzan el vacío para acompañarte.']:
     ['EL PRIMER UMBRAL','El viaje espiritual comienza. El multiverso aún puede salvarse.'];
+  const phaseT=t%2;
+  const storyFade=Math.min(1,phaseT*5,(2-phaseT)*5);
+  ctx.globalAlpha=storyFade;
   ctx.fillStyle='rgba(4,2,14,.9)';ctx.fillRect(24,220,432,36);
   ctx.strokeStyle='rgba(244,114,182,.7)';ctx.strokeRect(24.5,220.5,431,35);
   ctx.fillStyle='#fbbf24';ctx.font='6px "Press Start 2P"';ctx.textAlign='left';ctx.fillText(story[0],36,234);
   ctx.fillStyle='#f5d0fe';ctx.font='7px Nunito,sans-serif';ctx.fillText(story[1],36,249);
+  ctx.fillStyle='rgba(255,255,255,.25)';ctx.fillRect(36,252,408,1);
+  ctx.fillStyle='#f472b6';ctx.fillRect(36,252,408*((Math.min(4,Math.floor(t/2))+1)/5),1);
+  ctx.globalAlpha=1;
   if(t>3){
     ctx.fillStyle='#f472b6';ctx.font='7px "Press Start 2P"';ctx.textAlign='center';ctx.fillText('NO TE RINDAS · DESPIERTA',VW/2,48);
     _drawAlly(CINE.allyX,190,'#2563eb','#93c5fd');
@@ -1769,29 +1774,12 @@ function drawHUD(){
   const ss=String(sec%60).padStart(2,'0');
   ctx.fillText('⏱ '+mm+':'+ss,6,VH-10);
 
-  // Poderes activos
-  const powers=[];
-  if(G.powers.double_jump)powers.push('↑↑');
-  if(G.powers.dash)powers.push('»');
-  if(G.powers.glide)powers.push('~');
-  if(G.powers.rocket)powers.push('🚀');
-  if(powers.length){
-    ctx.fillStyle='rgba(196,181,253,.8)';ctx.font='8px "Press Start 2P",monospace';
-    ctx.textAlign='center';
-    ctx.fillText(powers.join(' '),VW/2,VH-10);
+  // En celular los botones táctiles ya muestran las acciones; no duplicar controles de computadora.
+  if(document.body.dataset.layout!=='small'){
+    ctx.fillStyle='rgba(200,150,220,.4)';ctx.font='7px Nunito,sans-serif';
+    ctx.textAlign='right';
+    ctx.fillText('A/D mover · ESPACIO saltar · J diario · ESC pausa',VW-4,VH-10);
     ctx.textAlign='left';
-  }
-
-  // Controles
-  ctx.fillStyle='rgba(200,150,220,.4)';ctx.font='7px Nunito,sans-serif';
-  ctx.textAlign='right';
-  ctx.fillText('A/D mover · ESPACIO saltar · SHIFT dash · J diario · ESC pausa',VW-4,VH-10);
-  ctx.textAlign='left';
-
-  // Dash cooldown mini
-  if(G.powers.dash&&LS.player.dashCd>0){
-    ctx.fillStyle='rgba(0,0,0,.5)';ctx.fillRect(VW-52,VH-22,48,4);
-    ctx.fillStyle='#c084fc';ctx.fillRect(VW-52,VH-22,48*(1-LS.player.dashCd/.6),4);
   }
 }
 
@@ -1932,15 +1920,17 @@ function drawMapFull(){
     // Nombre
     const col=completed?'#86efac':(unlocked?'#f5d0fe':'#6d4c8a');
     ctx.fillStyle=col;ctx.font=isStory?'bold 6px "Press Start 2P",monospace':'bold 8px "Press Start 2P",monospace';
-    ctx.textAlign='center';ctx.fillText(n.name,n.x,n.y+nr+13);
-    if(!unlocked){
+    ctx.textAlign='center';
+    if(isStory){
+      ctx.fillText(n.name,n.x,n.y-17);
+      ctx.fillStyle='#c49a45';ctx.font='5px "Press Start 2P",monospace';ctx.fillText('HISTORIA · PRÓX.',n.x,n.y-8);
+    }else ctx.fillText(n.name,n.x,n.y+nr+13);
+    if(!unlocked&&!isStory){
       ctx.fillStyle='#8b6aa8';ctx.font='5px "Press Start 2P",monospace';
       ctx.fillText('PRÓXIMAMENTE',n.x,n.y+nr+25);
     }
     // Ícono y nombre del sendero espiritual desbloqueable
-    if(isStory){
-      ctx.fillStyle='#c49a45';ctx.font='5px "Press Start 2P",monospace';ctx.fillText('MINI NIVEL · HISTORIA',n.x,n.y+nr+37);
-    }else if(unlocked){
+    if(!isStory&&unlocked){
       ctx.font='11px monospace';ctx.fillText(n.icon,n.x,n.y+nr+26);
       ctx.fillStyle=completed?'#86efac':'#c4b5fd';ctx.font='5px "Press Start 2P",monospace';
       ctx.fillText('✦ '+(LEVELS[n.id].spiritual||'SENDERO'),n.x,n.y+nr+37);
@@ -1964,22 +1954,6 @@ function drawMapFull(){
   ctx.beginPath();ctx.moveTo(cn.x-7,my2+1);ctx.lineTo(cn.x,my2+9);ctx.lineTo(cn.x+7,my2+1);ctx.fill();
   ctx.fillStyle='#fda4af';ctx.fillRect(cn.x-2,my2-2,1,1);
 
-  // Panel info poderes
-  ctx.fillStyle='rgba(9,3,22,.82)';ctx.fillRect(4,VH-42,VW-8,38);
-  ctx.strokeStyle='rgba(109,40,217,.4)';ctx.lineWidth=1;ctx.strokeRect(4.5,VH-41.5,VW-9,37);
-  ctx.fillStyle='rgba(196,181,253,.6)';ctx.font='7px "Press Start 2P",monospace';
-  ctx.fillText('PODERES:',8,VH-28);
-  const pw=[
-    [G.powers.double_jump,'↑↑ DOBLE SALTO','#fbbf24'],
-    [G.powers.dash,'» DASH','#f472b6'],
-    [G.powers.glide,'~ PLANEO','#86efac'],
-    [G.powers.rocket,'🚀 COHETE','#60a5fa'],
-  ];
-  pw.forEach(([on,lb,col],i)=>{
-    ctx.fillStyle=on?col:'rgba(100,80,120,.5)';
-    ctx.font='7px "Press Start 2P",monospace';
-    ctx.fillText((on?'✓ ':' ✕ ')+lb,8+i*118,VH-12);
-  });
 }
 
 function _drawStoryDiorama(x,y,w,h,t){
@@ -2307,15 +2281,15 @@ function renderUI(){
         Hecho a mano, pixel a pixel,<br>con todo mi amor para ti.<br>
         <span style="color:#fbbf24;font-style:normal">Recoge los 12 recuerdos · Despierta el multiverso.</span>
       </div>
-      <div class="lore-box" style="font-size:11px;line-height:1.6;text-align:left;margin-bottom:12px">
+      <div class="lore-box" style="font-size:10px;line-height:1.45;text-align:left;margin-bottom:10px">
         <strong style="color:#f472b6;font-style:normal">La señal:</strong><br>
         Una entidad está infestando mentes y recuerdos. Cada memoria recuperada devuelve un fragmento de identidad; las amistades que encuentres te acompañarán hasta los niveles espirituales.
       </div>
       <div class="row" style="flex-direction:column">
+        <button class="btn gold" id="btnShop">Tienda · PRÓXIMAMENTE</button>
         <button class="btn" id="btnNew">Nueva Aventura</button>
         <button class="btn" id="btnCont" ${hasSave?'':'disabled'}>Continuar</button>
         <button class="btn gold" id="btnJrn">Diario de Recuerdos</button>
-        <button class="btn" id="btnShop">Tienda · PRÓXIMAMENTE</button>
       </div>
       <div class="row" style="margin-top:10px">
         <button class="btn sm" id="btnHelp">Ayuda</button>
@@ -2355,11 +2329,10 @@ function renderUI(){
         <div class="info-row">
           <div class="chip"><span>A / D</span><span>Mover</span></div>
           <div class="chip"><span>ESPACIO</span><span>Saltar</span></div>
-          <div class="chip"><span>SHIFT</span><span>Dash</span></div>
+          <div class="chip"><span>ESC</span><span>Pausa</span></div>
         </div>
         <div class="info-row">
           <div class="chip"><span>J</span><span>Diario</span></div>
-          <div class="chip"><span>ESC</span><span>Pausa</span></div>
         </div>
         <div class="lore-box" style="text-align:left">
           <strong style="color:#fbbf24;font-style:normal">Objetivo:</strong><br>
@@ -2367,15 +2340,7 @@ function renderUI(){
           • Esquiva a los enemigos.<br>
           • Esquiva meteoritos y enemigos.<br>
           • Recoge corazones (+1 vida) y estrellas (+puntos).<br>
-          • Usa el dash para atacar enemigos y jefes.<br>
           • Llega a la estrella final para completar el nivel.
-        </div>
-        <div class="lore-box" style="text-align:left;margin-top:8px">
-          <strong style="color:#86efac;font-style:normal">Poderes desbloqueables:</strong><br>
-          • Doble salto — Nivel 1<br>
-          • Dash — Nivel 2<br>
-          • Planeo — Nivel 3 (mantén ESPACIO en el aire)<br>
-          • Cohete — Nivel 4 (jefe final)
         </div>
         <button class="btn" id="btnHelpOk" style="margin-top:12px">Entendido</button>
       `;
@@ -2387,6 +2352,9 @@ function renderUI(){
 
   // ── MAPA ──
   if(G.state==='map'){
+    const notice=mk('div','map-notice');
+    notice.innerHTML='<strong>1 NUEVO MAPA CADA SEMANA</strong><span>· HISTORIAS ENTRE MUNDOS ·</span>';
+    ui.appendChild(notice);
     const row=mk('div','map-actions');
     ['Salir al Menú','Diario'].forEach((lb,i)=>{
       const b=mk('button','btn sm');b.textContent=lb;
@@ -2417,11 +2385,10 @@ function renderUI(){
   if(G.state==='memory'){
     const p=mk('div','panel');
     p.style.maxWidth='500px';
+    const memoryCopy=G.currentMemory===1?'':(MEMORY_TEXTS[G.currentMemory]||'...');
     p.innerHTML=`
       <h2 style="color:#fbbf24;font-size:14px;text-shadow:none;">Recuerdo #${G.currentMemory}</h2>
-      <div class="lore-box" style="font-size:13px;color:#f5d0fe;text-align:center">
-        "${MEMORY_TEXTS[G.currentMemory]||'...'}"
-      </div>
+      ${memoryCopy?`<div class="lore-box" style="font-size:13px;color:#f5d0fe;text-align:center">"${memoryCopy}"</div>`:''}
       <p style="font-size:11px;color:rgba(200,150,220,.7);letter-spacing:2px;margin:10px 0">
         RECUERDO ${G.memories.length} DE 12
       </p>
@@ -2505,7 +2472,8 @@ function renderUI(){
           }
           det.dataset.selected=String(i);
           const photo=MEMORY_PHOTOS[i]?`<img src="${MEMORY_PHOTOS[i]}" alt="Fotografía del recuerdo ${i}" style="display:block;width:min(100%,220px);max-height:160px;object-fit:cover;margin:0 auto 10px;border:3px solid #fef3c7">`:'';
-          det.innerHTML=`${photo}<strong style="color:#fbbf24">Recuerdo #${i}:</strong><br><br><em>"${MEMORY_TEXTS[i]}"</em>`;
+          const copy=i===1?'':`<br><br><em>"${MEMORY_TEXTS[i]}"</em>`;
+          det.innerHTML=`${photo}<strong style="color:#fbbf24">Recuerdo #${i}:</strong>${copy}`;
           SFX.select();
         }else{
           det.dataset.selected='';

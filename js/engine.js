@@ -96,7 +96,6 @@ const LEVELS={
     ],
     memories:[
       {x:390,y:160,id:1}, // Fácil de agarrar
-      {x:1170,y:120,id:2}, // Requiere salto preciso
       {x:1960,y:110,id:3} // Casi al final
     ],
     items:[

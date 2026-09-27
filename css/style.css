@@ -93,6 +93,9 @@ button:focus-visible{outline:3px solid #fff;outline-offset:3px;}
 /* Mapa y recuerdos */
 #mapCanvas{display:block;image-rendering:pixelated;position:absolute;inset:0;width:100%;height:100%;}
 .map-actions{position:absolute;bottom:max(12px,env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);display:flex;gap:8px;pointer-events:auto;}
+.map-notice{position:absolute;top:max(8px,env(safe-area-inset-top));left:50%;transform:translateX(-50%);z-index:11;padding:7px 12px;border:1px solid rgba(251,191,36,.6);border-radius:7px;background:rgba(10,3,28,.88);color:#fbbf24;font:7px 'Press Start 2P',monospace;letter-spacing:.4px;text-align:center;white-space:nowrap;box-shadow:0 0 18px rgba(244,114,182,.22);animation:loreNotice 2.8s ease-in-out infinite alternate;}
+.map-notice span{color:#f5d0fe;margin-left:5px;}
+@keyframes loreNotice{from{transform:translateX(-50%) translateY(0);opacity:.82}to{transform:translateX(-50%) translateY(2px);opacity:1}}
 .mem-grid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px;margin:14px 0;}
 .mem-card{aspect-ratio:2/3;background:rgba(8,2,20,.6);border:1px solid rgba(109,40,217,.4);border-radius:6px;
   display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;transition:transform .2s;padding:4px;}
@@ -123,6 +126,7 @@ button:focus-visible{outline:3px solid #fff;outline-offset:3px;}
   .mem-grid{gap:5px;}
   .mem-card .icon{font-size:17px;}
   .map-actions .btn{min-width:110px;}
+  .map-notice{font-size:5px;max-width:92vw;white-space:normal;line-height:1.5;}
   .title-logo{font-size:clamp(18px,7vw,30px);}
   .pixel-button{min-width:205px;min-height:54px;}
 }
