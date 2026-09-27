@@ -968,6 +968,24 @@ function _drawAlly(x,y,col,accent){
   ctx.fillStyle=accent;ctx.fillRect(x-4,y-10,8,4);ctx.fillRect(x-3,y+5,3,8);ctx.fillRect(x+1,y+5,3,8);
   ctx.fillStyle='#fbbf24';ctx.fillRect(x-3,y-7,2,2);ctx.fillRect(x+1,y-7,2,2);
 }
+const CONSCIOUSNESS_PATH=[
+  {short:'I · ELECTRICIDAD',name:'Despertar',hint:'Chispas y reflejos',color:'#60a5fa'},
+  {short:'II · FUEGO',name:'Voluntad',hint:'Fuerza abrasadora',color:'#fb7185'},
+  {short:'III · AGUA',name:'Flujo',hint:'Adaptación y calma',color:'#38bdf8'},
+  {short:'IV · INSTINTOS',name:'Animal',hint:'Sentidos salvajes',color:'#a3e635'},
+  {short:'V · SÚPER DIOS',name:'Trascendencia',hint:'El poder total',color:'#fbbf24'}
+];
+function _drawMonitor(x,y,name,col,t,signal){
+  ctx.fillStyle='rgba(0,0,0,.55)';ctx.fillRect(x-3,y+48,62,4);ctx.fillRect(x+22,y+48,8,10);
+  ctx.fillStyle='#17122a';ctx.fillRect(x,y,56,48);ctx.strokeStyle=col;ctx.lineWidth=2;ctx.strokeRect(x+.5,y+.5,55,47);
+  ctx.fillStyle='rgba(16,185,129,.11)';ctx.fillRect(x+4,y+4,48,36);
+  ctx.globalAlpha=.35+.2*Math.sin(t*5+signal);
+  for(let i=0;i<6;i++){ctx.fillStyle=col;ctx.fillRect(x+6+i*8,y+8+(i%3)*8,2,2);}
+  ctx.globalAlpha=1;
+  ctx.strokeStyle=col;ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(x+6,y+31);ctx.lineTo(x+17,y+24);ctx.lineTo(x+24,y+29);ctx.lineTo(x+34,y+14);ctx.lineTo(x+49,y+22);ctx.stroke();
+  ctx.fillStyle='#f5d0fe';ctx.font='6px "Press Start 2P"';ctx.textAlign='center';ctx.fillText(name,x+28,y+45);
+  ctx.fillStyle=col;ctx.font='5px "Press Start 2P"';ctx.fillText('SEÑAL ACTIVA',x+28,y+66);
+}
 function drawCinematic(){
   const t=CINE.timer;
   const g=ctx.createLinearGradient(0,0,0,VH);g.addColorStop(0,'#02010a');g.addColorStop(.55,'#12052a');g.addColorStop(1,'#32104f');
@@ -984,6 +1002,9 @@ function drawCinematic(){
     ctx.beginPath();ctx.moveTo(0,30+i*30);ctx.bezierCurveTo(140,10+i*34,280,70-i*20,480,25+i*27);ctx.stroke();
   }
   ctx.globalAlpha=1;
+  // Monitores de la red de recuerdos: identifican a quienes resisten la infestación.
+  _drawMonitor(32,72,'URIEL','#60a5fa',t,1);
+  _drawMonitor(108,72,'ALISON','#f472b6',t,2);
   // Entidad: silueta mental, ojos y recuerdos atrapados.
   const ex=360,ey=112+Math.sin(t*2)*4, pulse=1+Math.sin(t*3)*.08;
   ctx.globalAlpha=.2;ctx.fillStyle='#7e22ce';ctx.beginPath();ctx.arc(ex,ey,58*pulse,0,Math.PI*2);ctx.fill();ctx.globalAlpha=1;
@@ -1858,8 +1879,8 @@ const MAP_NODES=[
   {id:2,name:'CIUDAD',icon:'🌆',x:202,y:205,color:'#be185d'},
   {id:'story-2',name:'HISTORIA II',icon:'📖',kind:'story',x:274,y:205,color:'#f59e0b'},
   {id:3,name:'BOSQUE',icon:'🌲',x:346,y:205,color:'#15803d'},
-  {id:'story-3',name:'HISTORIA III',icon:'📖',kind:'story',x:274,y:82,color:'#f59e0b'},
-  {id:4,name:'ESTRELLAS',icon:'⭐',x:410,y:82,color:'#1d4ed8'},
+  {id:'story-3',name:'HISTORIA III',icon:'📖',kind:'story',x:274,y:140,color:'#f59e0b'},
+  {id:4,name:'ESTRELLAS',icon:'⭐',x:410,y:140,color:'#1d4ed8'},
 ];
 
 function drawMapFull(){
@@ -1886,6 +1907,15 @@ function drawMapFull(){
   ctx.textAlign='center';ctx.fillText('✦ ELIGE UN NIVEL ✦',VW/2,23);ctx.textAlign='left';
   ctx.fillStyle='#c4b5fd';ctx.font='6px "Press Start 2P",monospace';ctx.textAlign='center';
   ctx.fillText('NUEVO MAPA CADA SEMANA · SIGUE LA SEÑAL',VW/2,40);ctx.textAlign='left';
+  // Ruta de conciencia: pistas de los poderes que se desbloquearán en futuros mundos.
+  ctx.fillStyle='rgba(4,2,14,.72)';ctx.fillRect(16,51,VW-32,19);
+  ctx.strokeStyle='rgba(196,181,253,.3)';ctx.strokeRect(16.5,51.5,VW-33,18);
+  ctx.font='5px "Press Start 2P",monospace';ctx.textAlign='center';
+  CONSCIOUSNESS_PATH.forEach((c,i)=>{
+    const x=18+i*92;
+    ctx.fillStyle=c.color;ctx.fillRect(x-4,57,4,4);ctx.fillText(c.short,x+44,61);
+  });
+  ctx.textAlign='left';
 
   // Camino punteado animado
   ctx.save();
@@ -2313,6 +2343,13 @@ function renderUI(){
       <div class="lore-box" style="font-size:10px;line-height:1.45;text-align:left;margin-bottom:10px">
         <strong style="color:#f472b6;font-style:normal">La señal:</strong><br>
         Una entidad está infestando mentes y recuerdos. Cada memoria recuperada devuelve un fragmento de identidad; las amistades que encuentres te acompañarán hasta los niveles espirituales.
+      </div>
+      <div class="lore-box" style="font-size:9px;line-height:1.55;text-align:left;margin:8px 0">
+        <strong style="color:#fbbf24;font-style:normal">Ruta de conciencia:</strong><br>
+        <span style="color:#60a5fa">⚡ Electricidad</span> · <span style="color:#fb7185">🔥 Fuego</span> ·
+        <span style="color:#38bdf8">💧 Agua</span> · <span style="color:#a3e635">🐾 Instintos</span> ·
+        <span style="color:#fbbf24">✦ Súper Dios</span><br>
+        <span style="color:rgba(233,213,255,.65)">Cada nivel revela una nueva forma de resistir a la entidad.</span>
       </div>
       <div class="row" style="flex-direction:column">
         <button class="btn gold" id="btnShop">Tienda · PRÓXIMAMENTE</button>
