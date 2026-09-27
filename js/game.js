@@ -1039,7 +1039,7 @@ function updateMinigame(dt) {
   else if (rt) MG.vx += 7 * dt;
   else MG.vx *= 0.88;
 
-  MG.shipX = Math.max(10, Math.min(VW*0.6, MG.shipX + MG.vx));
+  MG.shipX = Math.max(10, Math.min(VW-18, MG.shipX + MG.vx));
   MG.shipY = Math.max(10, Math.min(VH-10, MG.shipY + MG.vy));
 
   // Cometas/asteroides — se vuelven más rápidos con el tiempo
@@ -1096,7 +1096,6 @@ function drawMinigame() {
     ctx.globalAlpha=.45;ctx.strokeStyle='#a78bfa';ctx.lineWidth=2;ctx.beginPath();ctx.arc(0,0,bh.r*1.65,t*.4,t*.4+Math.PI*1.3);ctx.stroke();ctx.globalAlpha=1;
     const core=ctx.createRadialGradient(0,0,0,0,0,bh.r*.75);core.addColorStop(0,'#000');core.addColorStop(.7,'#020106');core.addColorStop(1,'rgba(17,3,35,0)');ctx.fillStyle=core;ctx.beginPath();ctx.arc(0,0,bh.r*.82,0,Math.PI*2);ctx.fill();
     ctx.strokeStyle='#fff';ctx.lineWidth=1;ctx.beginPath();ctx.arc(0,0,bh.r*.84,0,Math.PI*2);ctx.stroke();ctx.restore();
-    ctx.fillStyle='#fbbf24';ctx.font='6px "Press Start 2P"';ctx.textAlign='center';ctx.fillText('HORIZONTE DE SUCESOS',bh.x,bh.y+bh.r+20);
   }
 
   // Cometas/asteroides
@@ -1151,7 +1150,7 @@ function drawMinigame() {
     ctx.fillStyle='rgba(0,0,0,0.5)'; ctx.fillRect(VW/2-80,VH/2-12,160,22);
     ctx.fillStyle='#fff'; ctx.font='6px "Press Start 2P"';
     ctx.textAlign='center';
-    ctx.fillText('PILOTA ENTRE METEORITOS · ENTRA AL AGUJERO NEGRO',VW/2,VH/2+2);
+    ctx.fillText('PILOTA ENTRE METEORITOS · SIGUE EL VÓRTICE',VW/2,VH/2+2);
     ctx.globalAlpha=1;
   }
 
@@ -1429,12 +1428,13 @@ function _furnitureSeed(x,index){
   return n-Math.floor(n);
 }
 function _drawFloatingFurniture(draw,sx,sy,w,h,seed){
-  const angle=(seed-.5)*.12;
-  const lift=Math.round((seed-.5)*6);
-  const scale=.94+seed*.12;
+  const angle=(seed-.5)*.28;
+  const lift=Math.round((seed-.5)*16);
+  const scatter=Math.round((seed-.5)*14);
+  const scale=.9+seed*.16;
   const cx=sx+w/2, cy=sy+h/2;
   ctx.save();
-  ctx.translate(Math.floor(cx),Math.floor(cy+lift));
+  ctx.translate(Math.floor(cx+scatter),Math.floor(cy+lift));
   ctx.rotate(angle);
   ctx.scale(scale,scale);
   draw(-w/2,-h/2,w,h);

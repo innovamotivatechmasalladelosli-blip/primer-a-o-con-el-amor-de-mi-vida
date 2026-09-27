@@ -74,20 +74,17 @@ const LEVELS={
     platforms:[
       {x:0,y:230,w:300,h:16}, // Inicio largo y seguro
       {x:360,y:200,w:100,h:12}, // Primer salto fácil
-      {x:520,y:170,w:120,h:12}, // Segundo salto un poco más alto
+      {x:520,y:166,w:120,h:12}, // Fragmento elevado
       {x:700,y:230,w:250,h:16}, // Zona de descanso
       {x:1000,y:190,w:90,h:12}, // Salto intermedio
-      {x:1140,y:160,w:90,h:12}, 
-      {x:1280,y:200,w:90,h:12},
+      {x:1140,y:150,w:90,h:12},
+      {x:1280,y:208,w:90,h:12}, // Fragmento descendido
       {x:1430,y:230,w:300,h:16}, // Otra zona segura
-      {x:1780,y:190,w:100,h:12},
-      {x:1930,y:150,w:100,h:12},
+      {x:1780,y:178,w:100,h:12},
+      {x:1930,y:142,w:100,h:12},
       {x:2100,y:230,w:300,h:16}, // Plataforma final hacia la nave
     ],
-    spikes:[
-      {x:750,y:222,w:40,h:8}, // Pinchos en la zona de descanso baja
-      {x:1550,y:222,w:40,h:8},
-    ],
+    spikes:[],
     meteorites:[
       {x:175,y:112,r:10,drift:.42,phase:.4},{x:300,y:88,r:8,drift:.28,phase:1.7},
       {x:610,y:112,r:11,drift:.42,phase:2.4},{x:880,y:92,r:8,drift:.28,phase:3.1},
@@ -134,10 +131,7 @@ const LEVELS={
       {x:1835,y:190,w:65,h:12},{x:1945,y:230,w:115,h:16},{x:2100,y:200,w:68,h:12},
       {x:2195,y:230,w:205,h:16},
     ],
-    spikes:[
-      {x:165,y:222,w:20,h:8},{x:995,y:222,w:36,h:8},
-      {x:1485,y:222,w:36,h:8},{x:1965,y:222,w:36,h:8},
-    ],
+    spikes:[],
     memories:[{x:295,y:138,id:4},{x:770,y:126,id:5},{x:1262,y:126,id:6}],
     items:[
       {x:200,y:168,type:'star'},{x:650,y:166,type:'star'},
@@ -172,10 +166,7 @@ const LEVELS={
       {x:1582,y:230,w:120,h:16},{x:1748,y:198,w:68,h:12},{x:1855,y:230,w:225,h:16},
       {x:2080,y:200,w:68,h:12},{x:2185,y:230,w:215,h:16},
     ],
-    spikes:[
-      {x:225,y:222,w:20,h:8},{x:600,y:222,w:36,h:8},
-      {x:1102,y:222,w:36,h:8},{x:1600,y:222,w:36,h:8},
-    ],
+    spikes:[],
     memories:[{x:372,y:138,id:7},{x:880,y:126,id:8},{x:1380,y:124,id:9}],
     items:[
       {x:260,y:178,type:'star'},{x:770,y:168,type:'star'},
@@ -211,10 +202,7 @@ const LEVELS={
       {x:1832,y:192,w:68,h:12},{x:1942,y:230,w:112,h:16},{x:2095,y:195,w:70,h:12},
       {x:2195,y:230,w:205,h:16},
     ],
-    spikes:[
-      {x:168,y:222,w:20,h:8},{x:1005,y:222,w:36,h:8},
-      {x:1480,y:222,w:36,h:8},{x:1960,y:222,w:36,h:8},
-    ],
+    spikes:[],
     memories:[{x:312,y:134,id:10},{x:785,y:126,id:11},{x:1265,y:126,id:12}],
     items:[
       {x:530,y:198,type:'heart'},{x:995,y:198,type:'heart'},
