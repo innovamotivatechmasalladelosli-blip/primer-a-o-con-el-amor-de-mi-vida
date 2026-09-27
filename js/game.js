@@ -843,7 +843,7 @@ class Boss{
 //   LEVEL STATE
 
 // ═══════════════════════════════════════════════════════════
-const LS={data:null,player:null,enemies:[],memories:[],items:[],boss:null,
+const LS={data:null,player:null,enemies:[],memories:[],items:[],meteorites:[],boss:null,
   goalReached:false,time:0,stars:[],flashT:0,scrollFx:0,};
 
 function startLevel(id){
@@ -859,6 +859,7 @@ function startLevel(id){
     bob:Math.random()*10,
   }));
   LS.items=(data.items||[]).map(it=>({...it,taken:false,bob:Math.random()*10}));
+  LS.meteorites=(data.meteorites||[]).map(m=>({...m,phase:m.phase||0}));
   LS.boss=data.boss?new Boss(data.width/2-26,90):null;
   LS.goalReached=false;LS.time=0;LS.flashT=.4;LS.scrollFx=0;
   // Stars bg
@@ -916,44 +917,52 @@ function finishLevel(){
 
 let CINE = { timer: 0 };
 function startCinematic() {
-  G.state = 'cinematic';
+  G.state='cinematic';
   updateTouchControls();
-  ui.innerHTML = '';
-  CINE = { timer: 0 };
+  ui.innerHTML='';
+  CINE={timer:0,allyX:-40,shipX:-70};
 }
-
-function updateCinematic(dt) {
-  CINE.timer += dt;
-  if (CINE.timer > 6) { // 6 seconds of cinematic
-     G.state = 'map';
-     renderUI();
-  }
+function updateCinematic(dt){
+  CINE.timer+=dt;
+  CINE.allyX=Math.min(245,CINE.allyX+dt*42);
+  CINE.shipX=Math.min(540,CINE.shipX+dt*78);
+  if(CINE.timer>10){G.state='map';renderUI();}
 }
-
-function drawCinematic() {
-  ctx.fillStyle = '#000';
-  ctx.fillRect(0,0,VW,VH);
-  
-  ctx.fillStyle = '#fbbf24';
-  ctx.font = '10px "Press Start 2P"';
-  ctx.textAlign = 'center';
-  
-  ctx.globalAlpha = Math.min(1, CINE.timer);
-  ctx.fillText("Nuestro viaje apenas comienza...", VW/2, VH/2 - 20);
-  
-  if (CINE.timer > 2) {
-    ctx.globalAlpha = Math.min(1, CINE.timer - 2);
-    ctx.fillStyle = '#f472b6';
-    ctx.fillText("Aterrizando en la ciudad...", VW/2, VH/2 + 10);
+function _drawAlly(x,y,col,accent){
+  ctx.fillStyle='rgba(0,0,0,.35)';ctx.fillRect(x-8,y+18,16,2);
+  ctx.fillStyle=col;ctx.fillRect(x-6,y-13,12,18);ctx.fillRect(x-9,y-8,18,8);
+  ctx.fillStyle=accent;ctx.fillRect(x-4,y-10,8,4);ctx.fillRect(x-3,y+5,3,8);ctx.fillRect(x+1,y+5,3,8);
+  ctx.fillStyle='#fbbf24';ctx.fillRect(x-3,y-7,2,2);ctx.fillRect(x+1,y-7,2,2);
+}
+function drawCinematic(){
+  const t=CINE.timer;
+  const g=ctx.createLinearGradient(0,0,0,VH);g.addColorStop(0,'#02010a');g.addColorStop(.55,'#12052a');g.addColorStop(1,'#32104f');
+  ctx.fillStyle=g;ctx.fillRect(0,0,VW,VH);
+  // Multiverso fracturado: rutas de recuerdos que la entidad intenta infectar.
+  ctx.globalAlpha=.45;
+  for(let i=0;i<8;i++){
+    ctx.strokeStyle=['#f472b6','#a78bfa','#60a5fa','#fbbf24'][i%4];ctx.lineWidth=i%3===0?2:1;
+    ctx.beginPath();ctx.moveTo(0,30+i*30);ctx.bezierCurveTo(140,10+i*34,280,70-i*20,480,25+i*27);ctx.stroke();
   }
-  
-  if (CINE.timer > 4) {
-    ctx.globalAlpha = Math.min(1, CINE.timer - 4);
-    ctx.fillStyle = '#fff';
-    ctx.fillText("♥", VW/2, VH/2 + 40);
+  ctx.globalAlpha=1;
+  // Entidad: silueta mental, ojos y recuerdos atrapados.
+  const ex=360,ey=112+Math.sin(t*2)*4, pulse=1+Math.sin(t*3)*.08;
+  ctx.globalAlpha=.2;ctx.fillStyle='#7e22ce';ctx.beginPath();ctx.arc(ex,ey,58*pulse,0,Math.PI*2);ctx.fill();ctx.globalAlpha=1;
+  ctx.fillStyle='#090313';ctx.beginPath();ctx.arc(ex,ey,37*pulse,0,Math.PI*2);ctx.fill();
+  ctx.strokeStyle='#e879f9';ctx.lineWidth=3;ctx.beginPath();ctx.arc(ex,ey,38*pulse,Math.PI*.1,Math.PI*1.9);ctx.stroke();
+  ctx.fillStyle='#f43f5e';ctx.fillRect(ex-17,ey-7,8,5);ctx.fillRect(ex+9,ey-7,8,5);
+  ctx.fillStyle='#fbbf24';ctx.fillRect(ex-14,ey-6,2,2);ctx.fillRect(ex+12,ey-6,2,2);
+  ctx.fillStyle='#c084fc';ctx.font='6px "Press Start 2P"';ctx.textAlign='center';ctx.fillText('LA ENTIDAD',ex,ey+57);
+  if(t>1){ctx.globalAlpha=Math.min(1,(t-1)*1.3);ctx.fillStyle='#fef3c7';ctx.font='8px "Press Start 2P"';ctx.fillText('La infestación llegó a los recuerdos...',VW/2,28);ctx.globalAlpha=1;}
+  if(t>3){
+    ctx.fillStyle='#f472b6';ctx.font='7px "Press Start 2P"';ctx.fillText('No te rindas. Despierta.',VW/2,48);
+    _drawAlly(CINE.allyX,190,'#2563eb','#93c5fd');
+    _drawAlly(CINE.allyX+30,190,'#15803d','#a3e635');
+    ctx.fillStyle='#93c5fd';ctx.font='5px "Press Start 2P"';ctx.textAlign='left';ctx.fillText('LUMEN',CINE.allyX-13,216);ctx.fillStyle='#a3e635';ctx.fillText('NARA',CINE.allyX+19,216);ctx.textAlign='center';
   }
-  
-  ctx.globalAlpha = 1;
+  if(t>5){ctx.save();ctx.translate(CINE.shipX,212);_drawRocket(0,0);ctx.restore();ctx.fillStyle='#fbbf24';ctx.font='7px "Press Start 2P"';ctx.fillText('Las amistades nos acompañan',VW/2,244);}
+  if(t>7){ctx.fillStyle='#fff';ctx.font='9px "Press Start 2P"';ctx.fillText('NIVEL ESPIRITUAL DESBLOQUEADO',VW/2,264);}
+  ctx.textAlign='left';
 }
 
 let MG = { active: false };
@@ -973,7 +982,8 @@ function startMinigame() {
     bgT: 0,
     spawnT: 0,
     won: false,
-    blackHole: null
+    blackHole: null,
+    entryT: 0
   };
 }
 
@@ -981,19 +991,22 @@ function updateMinigame(dt) {
   if (MG.won) return;
   MG.bgT += dt;
   MG.timer -= dt;
+  MG.entryT += dt;
 
   // Mostrar agujero negro en los últimos 5 segundos
   if (!MG.blackHole && MG.timer <= 5) {
-    MG.blackHole = { x: VW - 40, y: VH/2, r: 0 };
+    MG.blackHole = { x: VW - 52, y: VH/2, r: 0, spin: 0 };
   }
   if (MG.blackHole) {
     const bh = MG.blackHole;
-    bh.r = Math.min(50, bh.r + 60*dt); // crece hasta radio 50
+    bh.r = Math.min(54, bh.r + 60*dt); // crece hasta radio 54
+    bh.spin += dt*2.8;
 
     // ¿La nave entró en el agujero negro?
     const dx = MG.shipX - bh.x, dy = MG.shipY - bh.y;
     if (Math.hypot(dx,dy) < bh.r + 8) {
       MG.won = true;
+      MG.entryT=0;
       SFX.win();
       Px.burst(bh.x, bh.y, '#f472b6', 50, {heart:true, speed:3, up:2});
       Px.burst(bh.x, bh.y, '#fbbf24', 30, {star:true, speed:2.5});
@@ -1073,44 +1086,17 @@ function updateMinigame(dt) {
 function drawMinigame() {
   drawBG('galaxy', MG.bgT * 100, 0);
 
-  // Agujero negro de recuerdos
+  // Agujero negro: disco de acreción, sombra central, horizonte y lente gravitacional.
   if (MG.blackHole) {
-    const bh = MG.blackHole;
-    const t = performance.now()/1000;
-    // Vórtice
-    for (let ring=5; ring>=0; ring--) {
-      const r = bh.r * (ring/5);
-      const alpha = 0.15 + (5-ring)*0.1;
-      ctx.globalAlpha = alpha;
-      const gr = ctx.createRadialGradient(bh.x,bh.y,0,bh.x,bh.y,r);
-      gr.addColorStop(0,'#000');
-      gr.addColorStop(0.4,'#1e0535');
-      gr.addColorStop(0.7,'#7c3aed');
-      gr.addColorStop(1,'rgba(0,0,0,0)');
-      ctx.fillStyle=gr;
-      ctx.beginPath(); ctx.arc(bh.x,bh.y,r*1.5,0,Math.PI*2); ctx.fill();
-    }
-    // Espirales de color (recuerdos absorbidos)
-    ctx.globalAlpha=0.8;
-    for(let i=0;i<6;i++){
-      const a = t*2 + i*Math.PI/3;
-      const sr = bh.r*0.6;
-      const x2=bh.x+Math.cos(a)*sr, y2=bh.y+Math.sin(a)*sr;
-      ctx.fillStyle=['#f472b6','#fbbf24','#60a5fa','#4ade80','#a855f7','#fb923c'][i];
-      ctx.fillRect(x2-1,y2-1,3,3);
-    }
-    // Borde brillante
-    ctx.globalAlpha=0.9;
-    ctx.strokeStyle='#a855f7'; ctx.lineWidth=2;
-    ctx.beginPath(); ctx.arc(bh.x,bh.y,bh.r,0,Math.PI*2); ctx.stroke();
-    ctx.strokeStyle='#f472b6'; ctx.lineWidth=1;
-    ctx.beginPath(); ctx.arc(bh.x,bh.y,bh.r+4,0,Math.PI*2); ctx.stroke();
-    // Texto
-    ctx.globalAlpha=0.9+(Math.sin(t*4)*0.1);
-    ctx.fillStyle='#fbbf24'; ctx.font='6px "Press Start 2P"';
-    ctx.textAlign='center';
-    ctx.fillText('RECUERDOS',bh.x,bh.y-bh.r-8);
-    ctx.globalAlpha=1;
+    const bh=MG.blackHole,t=performance.now()/1000;
+    ctx.save();ctx.translate(bh.x,bh.y);
+    ctx.globalAlpha=.22;ctx.fillStyle='#f472b6';ctx.beginPath();ctx.ellipse(0,0,bh.r*1.75,bh.r*.48,-.18,0,Math.PI*2);ctx.fill();
+    ctx.globalAlpha=.85;ctx.strokeStyle='#fbbf24';ctx.lineWidth=4;ctx.beginPath();ctx.ellipse(0,0,bh.r*1.42,bh.r*.42,-.18,0,Math.PI*2);ctx.stroke();
+    ctx.strokeStyle='#f472b6';ctx.lineWidth=3;ctx.beginPath();ctx.ellipse(0,0,bh.r*1.12,bh.r*.28,-.18,0,Math.PI*2);ctx.stroke();
+    ctx.globalAlpha=.45;ctx.strokeStyle='#a78bfa';ctx.lineWidth=2;ctx.beginPath();ctx.arc(0,0,bh.r*1.65,t*.4,t*.4+Math.PI*1.3);ctx.stroke();ctx.globalAlpha=1;
+    const core=ctx.createRadialGradient(0,0,0,0,0,bh.r*.75);core.addColorStop(0,'#000');core.addColorStop(.7,'#020106');core.addColorStop(1,'rgba(17,3,35,0)');ctx.fillStyle=core;ctx.beginPath();ctx.arc(0,0,bh.r*.82,0,Math.PI*2);ctx.fill();
+    ctx.strokeStyle='#fff';ctx.lineWidth=1;ctx.beginPath();ctx.arc(0,0,bh.r*.84,0,Math.PI*2);ctx.stroke();ctx.restore();
+    ctx.fillStyle='#fbbf24';ctx.font='6px "Press Start 2P"';ctx.textAlign='center';ctx.fillText('HORIZONTE DE SUCESOS',bh.x,bh.y+bh.r+20);
   }
 
   // Cometas/asteroides
@@ -1165,7 +1151,7 @@ function drawMinigame() {
     ctx.fillStyle='rgba(0,0,0,0.5)'; ctx.fillRect(VW/2-80,VH/2-12,160,22);
     ctx.fillStyle='#fff'; ctx.font='6px "Press Start 2P"';
     ctx.textAlign='center';
-    ctx.fillText('↑↓←→ para mover la nave',VW/2,VH/2+2);
+    ctx.fillText('PILOTA ENTRE METEORITOS · ENTRA AL AGUJERO NEGRO',VW/2,VH/2+2);
     ctx.globalAlpha=1;
   }
 
@@ -1175,7 +1161,7 @@ function drawMinigame() {
     ctx.textAlign='center';
     ctx.fillText('¡RECUERDOS ENCONTRADOS!', VW/2, VH/2-10);
     ctx.fillStyle='#f472b6'; ctx.font='8px "Press Start 2P"';
-    ctx.fillText('♥ Pasando al siguiente nivel ♥', VW/2, VH/2+10);
+    ctx.fillText('♥ Has cruzado el horizonte · el despertar comienza ♥', VW/2, VH/2+10);
   }
 }
 
@@ -1230,12 +1216,7 @@ function drawBG(theme,cx,cy){
     ctx.strokeStyle='rgba(96,165,250,.4)';ctx.lineWidth=2;
     ctx.beginPath();ctx.ellipse(px,80+5,120,30,-.2,0,Math.PI*2);ctx.stroke();
     ctx.globalAlpha=1;
-    // Cohete BG
-    const rx=((t*40+200)%(LS.data.width+200)-100-cx*.08)*(VW/LS.data.width);
-    const ry=55+Math.sin(t*.8)*20;
-    ctx.globalAlpha=.6;
-    _drawRocket(rx,ry);
-    ctx.globalAlpha=1;
+    // El cohete solo aparece como nave jugable/meta; el fondo queda dedicado al vacío espacial.
   }
   else if(theme==='city'){
     const g=ctx.createLinearGradient(0,0,0,VH);
@@ -1385,13 +1366,15 @@ function drawBG(theme,cx,cy){
 }
 
 function _drawRocket(rx,ry){
-  // Pequeño cohete de fondo
-  ctx.fillStyle='#e5e7eb';ctx.fillRect(rx,ry-6,8,14);
-  ctx.fillStyle='#ef4444';
-  ctx.beginPath();ctx.moveTo(rx,ry-6);ctx.lineTo(rx+4,ry-13);ctx.lineTo(rx+8,ry-6);ctx.fill();
-  ctx.fillStyle='#7dd3fc';ctx.fillRect(rx+1,ry-3,6,5);
-  ctx.fillStyle='#fbbf24';ctx.fillRect(rx+2,ry+8,4,2);
-  ctx.fillStyle='#f97316';ctx.fillRect(rx+3,ry+10,2,3);
+  // Nave protagonista: silueta grande, cabina, alas y llama legibles en pixel art.
+  ctx.save();ctx.translate(Math.floor(rx),Math.floor(ry));
+  ctx.fillStyle='#111827';ctx.fillRect(-7,-13,15,25);
+  ctx.fillStyle='#e5e7eb';ctx.fillRect(-5,-14,11,23);ctx.fillRect(-8,-7,17,12);
+  ctx.fillStyle='#ef4444';ctx.beginPath();ctx.moveTo(-5,-14);ctx.lineTo(0,-22);ctx.lineTo(6,-14);ctx.fill();
+  ctx.fillStyle='#60a5fa';ctx.fillRect(-3,-9,7,6);ctx.fillStyle='#dbeafe';ctx.fillRect(-2,-8,3,2);
+  ctx.fillStyle='#dc2626';ctx.fillRect(-10,1,5,8);ctx.fillRect(6,1,5,8);
+  ctx.fillStyle='#fbbf24';ctx.fillRect(-4,10,8,4);ctx.fillStyle='#f97316';ctx.fillRect(-2,14,5,5);ctx.fillStyle='#fef3c7';ctx.fillRect(-1,17,2,3);
+  ctx.restore();
 }
 
 
@@ -1521,6 +1504,27 @@ function drawPlatforms(lvl,cx){
       }
     }
   }
+}
+
+function updateMeteorites(dt){
+  for(const m of LS.meteorites)m.phase+=dt*(m.drift||.3);
+}
+function drawMeteorites(){
+  const t=performance.now()/1000;
+  for(const m of LS.meteorites){
+    const y=m.y+Math.sin(t*(m.drift||.3)+m.phase)*7;
+    const sx=Math.floor(m.x),sy=Math.floor(y),r=m.r;
+    if(sx-Cam.cx<-r*2||sx-Cam.cx>VW+r*2)continue;
+    ctx.save();ctx.translate(sx,sy);ctx.rotate(Math.sin(m.phase)*.35);
+    ctx.fillStyle='rgba(249,115,22,.28)';ctx.beginPath();ctx.arc(-r*.7,0,r*.65,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='#4b5563';ctx.beginPath();ctx.moveTo(-r,-r*.35);ctx.lineTo(-r*.35,-r);ctx.lineTo(r*.8,-r*.65);ctx.lineTo(r,r*.4);ctx.lineTo(.25*r,r);ctx.lineTo(-r*.7,r*.7);ctx.closePath();ctx.fill();
+    ctx.fillStyle='#9ca3af';ctx.fillRect(-r*.35,-r*.35,Math.max(2,r*.32),Math.max(2,r*.24));ctx.fillStyle='#1f2937';ctx.fillRect(r*.25,r*.1,Math.max(2,r*.3),Math.max(2,r*.2));
+    ctx.fillStyle='#f97316';ctx.globalAlpha=.65;ctx.fillRect(-r*1.9,-2,r*.8,2);ctx.globalAlpha=1;ctx.restore();
+  }
+}
+function meteoriteHitsPlayer(p){
+  const t=performance.now()/1000;
+  return LS.meteorites.some(m=>{const y=m.y+Math.sin(t*(m.drift||.3)+m.phase)*7;return Math.hypot(p.x+p.w/2-m.x,p.y+p.h/2-y)<m.r+8;});
 }
 
 function drawSpikes(lvl,cx){
@@ -1689,6 +1693,7 @@ function drawHUD(){
   ctx.fillStyle='rgba(200,150,220,.6)';
   ctx.font='8px Nunito,sans-serif';
   ctx.fillText('"'+LS.data.subtitle+'"',6,22);
+  if(LS.data.spiritual){ctx.fillStyle='#a78bfa';ctx.font='6px "Press Start 2P",monospace';ctx.fillText('✦ '+LS.data.spiritual.toUpperCase(),VW/2-62,22);}
 
   // HP
   const hpX=VW/2-28;
@@ -1764,6 +1769,7 @@ function renderLevel(){
   ctx.save();
   ctx.translate(-Math.floor(cx),-Math.floor(cy));
   drawPlatforms(LS.data,cx);
+  drawMeteorites();
   drawSpikes(LS.data,cx);
   drawItems();
   drawMemories();
@@ -1880,8 +1886,12 @@ function drawMapFull(){
     const col=completed?'#86efac':(unlocked?'#f5d0fe':'#6d4c8a');
     ctx.fillStyle=col;ctx.font='bold 8px "Press Start 2P",monospace';
     ctx.textAlign='center';ctx.fillText(n.name,n.x,n.y+nr+13);
-    // Ícono
-    if(unlocked){ctx.font='11px monospace';ctx.fillText(n.icon,n.x,n.y+nr+26);}
+    // Ícono y nombre del sendero espiritual desbloqueable
+    if(unlocked){
+      ctx.font='11px monospace';ctx.fillText(n.icon,n.x,n.y+nr+26);
+      ctx.fillStyle=completed?'#86efac':'#c4b5fd';ctx.font='5px "Press Start 2P",monospace';
+      ctx.fillText('✦ '+(LEVELS[n.id].spiritual||'SENDERO'),n.x,n.y+nr+37);
+    }
     ctx.textAlign='left';
 
     // Corazón latiente en niveles completados
@@ -2079,7 +2089,9 @@ function loop(){
     const p=LS.player;
     p.update(dt,LS.data);
     for(const e of LS.enemies)e.update(dt,LS.data,p);
+    updateMeteorites(dt);
     if(LS.boss)LS.boss.update(dt,LS.data,p);
+    if(LS.data.theme==='galaxy'&&meteoriteHitsPlayer(p))p.hurt(p.x+p.w/2-1,p.y,true);
 
     // Enemy collision
     for(const e of LS.enemies){

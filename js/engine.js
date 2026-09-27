@@ -88,6 +88,13 @@ const LEVELS={
       {x:750,y:222,w:40,h:8}, // Pinchos en la zona de descanso baja
       {x:1550,y:222,w:40,h:8},
     ],
+    meteorites:[
+      {x:175,y:112,r:10,drift:.42,phase:.4},{x:300,y:88,r:8,drift:.28,phase:1.7},
+      {x:610,y:112,r:11,drift:.42,phase:2.4},{x:880,y:92,r:8,drift:.28,phase:3.1},
+      {x:1080,y:116,r:13,drift:.36,phase:2.4},{x:1370,y:86,r:9,drift:.5,phase:3.1},
+      {x:1670,y:112,r:12,drift:.3,phase:4.2},{x:2020,y:86,r:10,drift:.45,phase:5.5},
+      {x:2260,y:116,r:14,drift:.34,phase:.9},
+    ],
     memories:[
       {x:390,y:160,id:1}, // Fácil de agarrar
       {x:1170,y:120,id:2}, // Requiere salto preciso
@@ -111,7 +118,8 @@ const LEVELS={
       a:'Las llamadas que duraban horas hasta quedarse dormidos',
       b:'Los mensajes que me hacían sonreír sola en cualquier lugar',
     },
-    bgDesc:'Cohete entre nebulosas de colores',
+    bgDesc:'Cinturón de meteoritos y nebulosas profundas',
+    spiritual:'Umbral del Despertar',
   },
   2:{
     name:'La Ciudad',icon:'🌆',subtitle:'Neones y tu mano en la mía',theme:'city',
@@ -150,6 +158,7 @@ const LEVELS={
       b:'Una cabaña perdida en la montaña, lluvia y café caliente',
     },
     bgDesc:'Ciudad iluminada al atardecer',
+    spiritual:'La Alianza',
   },
   3:{
     name:'El Bosque',icon:'🌲',subtitle:'Nuestro lugar secreto',theme:'forest',
@@ -187,6 +196,7 @@ const LEVELS={
       b:'Viajando el mundo, dos mochilas y mil aventuras',
     },
     bgDesc:'Bosque mágico bajo la luna llena',
+    spiritual:'La Memoria Viva',
   },
   4:{
     name:'Las Estrellas',icon:'⭐',subtitle:'Bajo el mismo cielo',theme:'stars',
@@ -224,6 +234,7 @@ const LEVELS={
       b:'El poder de ver exactamente cuánto te amo cada vez que me miras',
     },
     bgDesc:'Océano de estrellas',
+    spiritual:'Más Allá del Multiverso',
   },
 };
 
