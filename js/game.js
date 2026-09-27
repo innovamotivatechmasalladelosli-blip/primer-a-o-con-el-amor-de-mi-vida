@@ -1835,8 +1835,11 @@ function renderLevel(){
 // ═══════════════════════════════════════════════════════════
 const MAP_NODES=[
   {id:1,name:'La Galaxia',icon:'🚀',x:72,y:215,color:'#7c3aed'},
+  {id:'story-1',name:'Historia I',icon:'📖',kind:'story',x:132,y:185,color:'#f59e0b'},
   {id:2,name:'La Ciudad',icon:'🌆',x:192,y:155,color:'#be185d'},
+  {id:'story-2',name:'Historia II',icon:'📖',kind:'story',x:252,y:133,color:'#f59e0b'},
   {id:3,name:'El Bosque',icon:'🌲',x:312,y:115,color:'#15803d'},
+  {id:'story-3',name:'Historia III',icon:'📖',kind:'story',x:372,y:94,color:'#f59e0b'},
   {id:4,name:'Las Estrellas',icon:'⭐',x:430,y:72,color:'#1d4ed8'},
 ];
 
@@ -1862,6 +1865,8 @@ function drawMapFull(){
   ctx.strokeRect(VW/2-129.5,4.5,259,27);
   ctx.fillStyle='#fbbf24';ctx.font='bold 10px "Press Start 2P",monospace';
   ctx.textAlign='center';ctx.fillText('✦ ELIGE UN NIVEL ✦',VW/2,23);ctx.textAlign='left';
+  ctx.fillStyle='#c4b5fd';ctx.font='6px "Press Start 2P",monospace';ctx.textAlign='center';
+  ctx.fillText('NUEVO MAPA CADA SEMANA · SIGUE LA SEÑAL',VW/2,40);ctx.textAlign='left';
 
   // Camino punteado animado
   ctx.save();
@@ -1877,12 +1882,14 @@ function drawMapFull(){
   G.mapNodePositions=MAP_NODES;
 
   for(const n of MAP_NODES){
-    const unlocked=n.id===1;
-    const completed=G.levelId>n.id;
-    const active=G.levelId===n.id;
+    const isStory=n.kind==='story';
+    const unlocked=!isStory&&n.id===1;
+    const completed=!isStory&&G.levelId>n.id;
+    const active=!isStory&&G.levelId===n.id;
 
     // Diorama
-    _drawDiorama(n.id,n.x-36,n.y-62,72,40,unlocked,t);
+    // Los capítulos de historia son nodos ligeros para no cubrir los dioramas de los mundos.
+    if(!isStory)_drawDiorama(n.id,n.x-36,n.y-62,72,40,unlocked,t);
 
     // Aura pulsante (nivel activo)
     if(active){
@@ -1912,6 +1919,8 @@ function drawMapFull(){
     }else if(unlocked){
       ctx.fillStyle='#0d0118';ctx.font='bold 11px "Press Start 2P",monospace';
       ctx.fillText(n.id,n.x,n.y+1);
+    }else if(isStory){
+      ctx.fillStyle='#fbbf24';ctx.font='bold 10px monospace';ctx.fillText('▤',n.x,n.y+2);
     }else{
       ctx.fillStyle='#6d28d9';ctx.fillRect(n.x-4,n.y-1,8,6);
       ctx.strokeStyle='#6d28d9';ctx.lineWidth=1.5;
@@ -1922,14 +1931,16 @@ function drawMapFull(){
 
     // Nombre
     const col=completed?'#86efac':(unlocked?'#f5d0fe':'#6d4c8a');
-    ctx.fillStyle=col;ctx.font='bold 8px "Press Start 2P",monospace';
+    ctx.fillStyle=col;ctx.font=isStory?'bold 6px "Press Start 2P",monospace':'bold 8px "Press Start 2P",monospace';
     ctx.textAlign='center';ctx.fillText(n.name,n.x,n.y+nr+13);
     if(!unlocked){
       ctx.fillStyle='#8b6aa8';ctx.font='5px "Press Start 2P",monospace';
       ctx.fillText('PRÓXIMAMENTE',n.x,n.y+nr+25);
     }
     // Ícono y nombre del sendero espiritual desbloqueable
-    if(unlocked){
+    if(isStory){
+      ctx.fillStyle='#c49a45';ctx.font='5px "Press Start 2P",monospace';ctx.fillText('MINI NIVEL · HISTORIA',n.x,n.y+nr+37);
+    }else if(unlocked){
       ctx.font='11px monospace';ctx.fillText(n.icon,n.x,n.y+nr+26);
       ctx.fillStyle=completed?'#86efac':'#c4b5fd';ctx.font='5px "Press Start 2P",monospace';
       ctx.fillText('✦ '+(LEVELS[n.id].spiritual||'SENDERO'),n.x,n.y+nr+37);
@@ -1946,7 +1957,7 @@ function drawMapFull(){
   }
 
   // Marcador jugador
-  const cn=MAP_NODES.find(n=>n.id===Math.min(G.levelId,4))||MAP_NODES[0];
+  const cn=MAP_NODES[0];
   const my2=cn.y+28+Math.sin(t*3.5)*2.5;
   ctx.fillStyle='#f43f5e';
   ctx.beginPath();ctx.arc(cn.x-4,my2-2,3,0,Math.PI*2);ctx.arc(cn.x+4,my2-2,3,0,Math.PI*2);ctx.fill();
@@ -1969,6 +1980,21 @@ function drawMapFull(){
     ctx.font='7px "Press Start 2P",monospace';
     ctx.fillText((on?'✓ ':' ✕ ')+lb,8+i*118,VH-12);
   });
+}
+
+function _drawStoryDiorama(x,y,w,h,t){
+  ctx.fillStyle='rgba(245,158,11,.55)';ctx.fillRect(x-1,y-1,w+2,h+2);
+  ctx.fillStyle='#160b20';ctx.fillRect(x,y,w,h);
+  ctx.globalAlpha=.55;
+  for(let i=0;i<12;i++){
+    ctx.fillStyle=i%2?'#fbbf24':'#f472b6';
+    ctx.fillRect(x+8+(i*19)%w,y+5+(i*7)%h,1,1);
+  }
+  ctx.globalAlpha=1;
+  ctx.strokeStyle='#fbbf24';ctx.lineWidth=2;ctx.strokeRect(x+20,y+6,16,17);
+  ctx.fillStyle='#fbbf24';ctx.fillRect(x+24,y+9,8,2);ctx.fillRect(x+24,y+14,8,2);ctx.fillRect(x+24,y+19,5,1);
+  ctx.fillStyle='#f472b6';ctx.fillRect(x+18,y+13,2,2);ctx.fillRect(x+36,y+13,2,2);
+  ctx.globalAlpha=.7+.2*Math.sin(t*3);ctx.strokeStyle='#e879f9';ctx.beginPath();ctx.arc(x+w/2,y+h/2,19,0,Math.PI*2);ctx.stroke();ctx.globalAlpha=1;
 }
 
 function _drawDiorama(id,x,y,w,h,unlocked,t){
@@ -2279,12 +2305,17 @@ function renderUI(){
       <div class="subtitle">Un año · Un amor · Un viaje</div>
       <div class="lore-box" style="font-size:12px;margin:12px 0;text-align:center;">
         Hecho a mano, pixel a pixel,<br>con todo mi amor para ti.<br>
-        <span style="color:#fbbf24;font-style:normal">Recoge los 12 recuerdos · Descubre el final.</span>
+        <span style="color:#fbbf24;font-style:normal">Recoge los 12 recuerdos · Despierta el multiverso.</span>
+      </div>
+      <div class="lore-box" style="font-size:11px;line-height:1.6;text-align:left;margin-bottom:12px">
+        <strong style="color:#f472b6;font-style:normal">La señal:</strong><br>
+        Una entidad está infestando mentes y recuerdos. Cada memoria recuperada devuelve un fragmento de identidad; las amistades que encuentres te acompañarán hasta los niveles espirituales.
       </div>
       <div class="row" style="flex-direction:column">
         <button class="btn" id="btnNew">Nueva Aventura</button>
         <button class="btn" id="btnCont" ${hasSave?'':'disabled'}>Continuar</button>
         <button class="btn gold" id="btnJrn">Diario de Recuerdos</button>
+        <button class="btn" id="btnShop">Tienda · PRÓXIMAMENTE</button>
       </div>
       <div class="row" style="margin-top:10px">
         <button class="btn sm" id="btnHelp">Ayuda</button>
@@ -2305,6 +2336,16 @@ function renderUI(){
       if(Save.load()){SFX.select();G.state='map';renderUI();}
     };
     id('btnJrn').onclick=openJournal;
+    id('btnShop').onclick=()=>{
+      SFX.select();
+      p.style.display='none';
+      const shop=mk('div','panel');
+      shop.innerHTML=`<h2 style="color:#fbbf24;font-size:14px;text-shadow:none">Tienda del Umbral</h2>
+        <div class="lore-box" style="line-height:1.8">Aquí podrás conseguir recuerdos cosméticos, compañeros y objetos para decorar tu viaje.<br><strong style="color:#f472b6">PRÓXIMAMENTE · UN NUEVO CONTENIDO CADA SEMANA</strong></div>
+        <button class="btn" id="btnShopBack">Volver</button>`;
+      ui.appendChild(shop);
+      id('btnShopBack').onclick=()=>{shop.remove();p.style.display='';};
+    };
     id('btnHelp').onclick=()=>{
       p.style.display='none';
       const h=mk('div','panel');
@@ -2324,7 +2365,7 @@ function renderUI(){
           <strong style="color:#fbbf24;font-style:normal">Objetivo:</strong><br>
           • Recoge las polaroids — son tus recuerdos.<br>
           • Esquiva a los enemigos.<br>
-          • Evita los pinchos.<br>
+          • Esquiva meteoritos y enemigos.<br>
           • Recoge corazones (+1 vida) y estrellas (+puntos).<br>
           • Usa el dash para atacar enemigos y jefes.<br>
           • Llega a la estrella final para completar el nivel.
@@ -2347,7 +2388,7 @@ function renderUI(){
   // ── MAPA ──
   if(G.state==='map'){
     const row=mk('div','map-actions');
-    ['Menú Principal','Diario'].forEach((lb,i)=>{
+    ['Salir al Menú','Diario'].forEach((lb,i)=>{
       const b=mk('button','btn sm');b.textContent=lb;
       b.onclick=[
         ()=>{SFX.select();G.state='menu';renderUI();},
@@ -2387,6 +2428,13 @@ function renderUI(){
       <button class="btn" id="btnMemOk">Continuar</button>
     `;
     ui.appendChild(p);
+    if(MEMORY_PHOTOS[G.currentMemory]){
+      const photo=mk('img');
+      photo.src=MEMORY_PHOTOS[G.currentMemory];
+      photo.alt='Fotografía del primer recuerdo';
+      photo.style.cssText='display:block;width:min(100%,280px);max-height:210px;object-fit:cover;margin:10px auto 14px;border:4px solid #fef3c7;box-shadow:4px 5px 0 rgba(0,0,0,.35);border-radius:2px;';
+      p.insertBefore(photo,p.children[1]);
+    }
     id('btnMemOk').onclick=()=>{G.state='level';renderUI();};
     id('btnMemOk').focus();
     return;
@@ -2445,14 +2493,22 @@ function renderUI(){
     for(let i=1;i<=12;i++){
       const owned=G.memories.includes(i);
       const c=mk('div','mem-card'+(owned?' owned':''));
-      c.innerHTML=`<div class="icon" style="font-size:12px;">${owned?'FOTO':'X'}</div><div class="num">${i}</div>`;
+      c.innerHTML=owned&&MEMORY_PHOTOS[i]?`<img src="${MEMORY_PHOTOS[i]}" alt="Recuerdo ${i}" style="width:42px;height:34px;object-fit:cover;border:2px solid #fef3c7"><div class="num">${i}</div>`:`<div class="icon" style="font-size:12px;">${owned?'FOTO':'X'}</div><div class="num">${i}</div>`;
       c.title=owned?`Recuerdo #${i}`:`Aún no encontrado`;
       c.onclick=()=>{
         const det=id('memDet');
         if(owned){
-          det.innerHTML=`<strong style="color:#fbbf24">Recuerdo #${i}:</strong><br><br><em>"${MEMORY_TEXTS[i]}"</em>`;
+          if(det.dataset.selected===String(i)){
+            det.innerHTML='<span style="color:rgba(130,90,160,.5)">Toca un recuerdo para leer su historia...</span>';
+            det.dataset.selected='';
+            return;
+          }
+          det.dataset.selected=String(i);
+          const photo=MEMORY_PHOTOS[i]?`<img src="${MEMORY_PHOTOS[i]}" alt="Fotografía del recuerdo ${i}" style="display:block;width:min(100%,220px);max-height:160px;object-fit:cover;margin:0 auto 10px;border:3px solid #fef3c7">`:'';
+          det.innerHTML=`${photo}<strong style="color:#fbbf24">Recuerdo #${i}:</strong><br><br><em>"${MEMORY_TEXTS[i]}"</em>`;
           SFX.select();
         }else{
+          det.dataset.selected='';
           det.innerHTML=`<span style="color:rgba(130,90,160,.6)">Aún no has vivido este momento...</span>`;
         }
       };
@@ -2465,6 +2521,9 @@ function renderUI(){
       <p style="font-size:11px;color:rgba(232,121,249,.8);letter-spacing:2px;margin-bottom:12px">
         ${G.memories.length} de 12 recuerdos encontrados
       </p>
+      <div class="lore-box" style="font-size:10px;line-height:1.65;text-align:left;margin-bottom:12px">
+        <strong style="color:#f472b6;font-style:normal">LORE · LA INFESTACIÓN</strong><br>${STORY_LORE}
+      </div>
     `;
     p.appendChild(grid);
     const det=mk('div');det.id='memDet';

@@ -64,6 +64,8 @@ const MEMORY_TEXTS={
   11:"Dormías y yo te miraba respirar. En ese silencio encontré algo que busqué toda la vida: un hogar.",
   12:"El futuro. Lo veo contigo, siempre contigo. Y cada día que pasa, esa imagen se vuelve más nítida y más bonita.",
 };
+const MEMORY_PHOTOS={1:'assets-recuerdo.jpg'};
+const STORY_LORE='Una entidad que se alimenta de mentes y recuerdos está infestando los caminos del multiverso. Cada recuerdo que recuperamos devuelve una parte de nuestra identidad. Quienes no se rinden despiertan niveles espirituales; en el trayecto, las amistades se convierten en brújula y juntos podremos llegar hasta la entidad.';
 
 // ─ Niveles ─
 const LEVELS={
