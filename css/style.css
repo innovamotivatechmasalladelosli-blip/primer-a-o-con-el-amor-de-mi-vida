@@ -97,7 +97,7 @@ button:focus-visible{outline:3px solid #fff;outline-offset:3px;}
 
 /* Mapa y recuerdos */
 #mapCanvas{display:block;image-rendering:pixelated;position:absolute;inset:0;width:100%;height:100%;}
-.map-actions{position:absolute;bottom:max(12px,env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);display:flex;gap:8px;pointer-events:auto;}
+.map-actions{position:absolute;bottom:max(12px,env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);display:flex;gap:8px;pointer-events:auto;z-index:12;padding:5px;border:1px solid rgba(232,121,249,.45);border-radius:10px;background:rgba(8,2,20,.82);box-shadow:0 5px 24px rgba(0,0,0,.55);}
 .map-notice{position:absolute;top:max(8px,env(safe-area-inset-top));left:50%;transform:translateX(-50%);z-index:11;padding:7px 12px;border:1px solid rgba(251,191,36,.6);border-radius:7px;background:rgba(10,3,28,.88);color:#fbbf24;font:7px 'Press Start 2P',monospace;letter-spacing:.4px;text-align:center;white-space:nowrap;box-shadow:0 0 18px rgba(244,114,182,.22);animation:loreNotice 2.8s ease-in-out infinite alternate;}
 .map-notice span{color:#f5d0fe;margin-left:5px;}
 @keyframes loreNotice{from{transform:translateX(-50%) translateY(0);opacity:.82}to{transform:translateX(-50%) translateY(2px);opacity:1}}
@@ -137,6 +137,9 @@ button:focus-visible{outline:3px solid #fff;outline-offset:3px;}
   .pixel-button{min-width:205px;min-height:54px;}
 }
 body.reduced-motion *,body.reduced-motion *::before,body.reduced-motion *::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;}
+body.high-contrast #ui{filter:contrast(1.22) saturate(1.16);}
+body.large-text .panel{font-size:15px;}
+body.large-text .panel .lore-box,body.large-text .panel .setting-row small{font-size:13px;}
 /* Dos modos visuales: controles compactos en equipos pequeños, composición amplia en monitores. */
 body[data-layout="small"] .title-actions{width:min(100%,280px);flex-direction:column;gap:10px;}
 body[data-layout="small"] .title-actions button{width:100%;}

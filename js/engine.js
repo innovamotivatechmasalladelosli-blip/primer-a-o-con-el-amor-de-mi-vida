@@ -233,9 +233,9 @@ const LEVELS={
 // ═══════════════════════════════════════════════════════════
 const GAME_SETTINGS_KEY='entre_recuerdos_settings_v1';
 const GameSettings={
-  sfx:true,music:true,vibration:true,reducedMotion:false,
+  sfx:true,music:true,vibration:true,reducedMotion:false,highContrast:false,largeText:false,
   load(){try{Object.assign(this,JSON.parse(localStorage.getItem(GAME_SETTINGS_KEY)||'{}'));}catch(e){}return this;},
-  save(){try{localStorage.setItem(GAME_SETTINGS_KEY,JSON.stringify({sfx:this.sfx,music:this.music,vibration:this.vibration,reducedMotion:this.reducedMotion}));}catch(e){}},
+  save(){try{localStorage.setItem(GAME_SETTINGS_KEY,JSON.stringify({sfx:this.sfx,music:this.music,vibration:this.vibration,reducedMotion:this.reducedMotion,highContrast:this.highContrast,largeText:this.largeText}));}catch(e){}},
   toggle(key){this[key]=!this[key];this.save();return this[key];}
 };
 GameSettings.load();

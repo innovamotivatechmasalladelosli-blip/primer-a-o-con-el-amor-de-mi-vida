@@ -976,17 +976,6 @@ const CONSCIOUSNESS_PATH=[
   {short:'IV · INSTINTOS',name:'Animal',hint:'Sentidos salvajes',color:'#a3e635'},
   {short:'V · SÚPER DIOS',name:'Trascendencia',hint:'El poder total',color:'#fbbf24'}
 ];
-function _drawMonitor(x,y,name,col,t,signal){
-  ctx.fillStyle='rgba(0,0,0,.55)';ctx.fillRect(x-3,y+48,62,4);ctx.fillRect(x+22,y+48,8,10);
-  ctx.fillStyle='#17122a';ctx.fillRect(x,y,56,48);ctx.strokeStyle=col;ctx.lineWidth=2;ctx.strokeRect(x+.5,y+.5,55,47);
-  ctx.fillStyle='rgba(16,185,129,.11)';ctx.fillRect(x+4,y+4,48,36);
-  ctx.globalAlpha=.35+.2*Math.sin(t*5+signal);
-  for(let i=0;i<6;i++){ctx.fillStyle=col;ctx.fillRect(x+6+i*8,y+8+(i%3)*8,2,2);}
-  ctx.globalAlpha=1;
-  ctx.strokeStyle=col;ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(x+6,y+31);ctx.lineTo(x+17,y+24);ctx.lineTo(x+24,y+29);ctx.lineTo(x+34,y+14);ctx.lineTo(x+49,y+22);ctx.stroke();
-  ctx.fillStyle='#f5d0fe';ctx.font='6px "Press Start 2P"';ctx.textAlign='center';ctx.fillText(name,x+28,y+45);
-  ctx.fillStyle=col;ctx.font='5px "Press Start 2P"';ctx.fillText('SEÑAL ACTIVA',x+28,y+66);
-}
 function drawCinematic(){
   const t=CINE.timer;
   const g=ctx.createLinearGradient(0,0,0,VH);g.addColorStop(0,'#02010a');g.addColorStop(.55,'#12052a');g.addColorStop(1,'#32104f');
@@ -1003,9 +992,6 @@ function drawCinematic(){
     ctx.beginPath();ctx.moveTo(0,30+i*30);ctx.bezierCurveTo(140,10+i*34,280,70-i*20,480,25+i*27);ctx.stroke();
   }
   ctx.globalAlpha=1;
-  // Monitores de la red de recuerdos: identifican a quienes resisten la infestación.
-  _drawMonitor(32,72,'URIEL','#60a5fa',t,1);
-  _drawMonitor(108,72,'ALISON','#f472b6',t,2);
   // Entidad: silueta mental, ojos y recuerdos atrapados.
   const ex=360,ey=112+Math.sin(t*2)*4, pulse=1+Math.sin(t*3)*.08;
   ctx.globalAlpha=.2;ctx.fillStyle='#7e22ce';ctx.beginPath();ctx.arc(ex,ey,58*pulse,0,Math.PI*2);ctx.fill();ctx.globalAlpha=1;
@@ -1019,7 +1005,7 @@ function drawCinematic(){
     ['LA FRACTURA','Los recuerdos del universo se están rompiendo.'],
     ['LA INFESTACIÓN','Una entidad se alimenta de mentes y recuerdos.'],
     ['LOS QUE RESISTEN','Quienes no se rinden conservan su identidad.'],
-    ['LA ALIANZA','Lumen y Nara cruzan el vacío para acompañarte.'],
+    ['LA ALIANZA','Uriel y Alison cruzan el vacío para resistir juntos.'],
     ['EL PRIMER UMBRAL','El viaje espiritual comienza. El multiverso aún puede salvarse.']
   ];
   const story=stories[CINE.page||0];
@@ -1034,14 +1020,18 @@ function drawCinematic(){
   ctx.globalAlpha=1;
   ctx.fillStyle='#f5d0fe';ctx.font='6px "Press Start 2P"';ctx.textAlign='center';
   ctx.fillText(CINE.page<4?'TOCA PARA CONTINUAR':'TOCA PARA VER EL MAPA',VW/2,58);
-  if(CINE.page>=2){
+  if(CINE.page>=2&&CINE.page<4){
     ctx.fillStyle='#f472b6';ctx.font='7px "Press Start 2P"';ctx.textAlign='center';ctx.fillText('NO TE RINDAS · DESPIERTA',VW/2,48);
     _drawAlly(CINE.allyX,190,'#2563eb','#93c5fd');
     _drawAlly(CINE.allyX+30,190,'#15803d','#a3e635');
-    ctx.fillStyle='#93c5fd';ctx.font='5px "Press Start 2P"';ctx.textAlign='left';ctx.fillText('LUMEN',CINE.allyX-13,216);ctx.fillStyle='#a3e635';ctx.fillText('NARA',CINE.allyX+19,216);ctx.textAlign='center';
+    ctx.fillStyle='#93c5fd';ctx.font='5px "Press Start 2P"';ctx.textAlign='left';ctx.fillText('URIEL',CINE.allyX-13,216);ctx.fillStyle='#a3e635';ctx.fillText('ALISON',CINE.allyX+19,216);ctx.textAlign='center';
   }
   if(CINE.page>=3){ctx.save();ctx.translate(CINE.shipX,188);_drawRocket(0,0);ctx.restore();}
-  if(CINE.page>=4){ctx.fillStyle='#fff';ctx.font='8px "Press Start 2P"';ctx.textAlign='center';ctx.fillText('✦ UMBRAL DEL DESPERTAR ✦',VW/2,202);}
+  if(CINE.page>=4){
+    ctx.fillStyle='rgba(4,2,14,.88)';ctx.fillRect(18,158,444,46);ctx.strokeStyle='#fbbf24';ctx.strokeRect(18.5,158.5,443,45);
+    ctx.fillStyle='#fff';ctx.font='6px "Press Start 2P"';ctx.textAlign='center';ctx.fillText('PISTAS DE LOS PODERES · RUTA DE CONCIENCIA',VW/2,170);
+    CONSCIOUSNESS_PATH.forEach((c,i)=>{const x=62+i*89;ctx.fillStyle=c.color;ctx.fillRect(x-2,179,4,4);ctx.font='5px "Press Start 2P"';ctx.fillText(c.short.split('·')[1].trim(),x,190);ctx.fillStyle='#d8b4fe';ctx.font='5px Nunito,sans-serif';ctx.fillText(c.hint,x,199);});
+  }
   ctx.textAlign='left';
 }
 
@@ -2294,6 +2284,8 @@ function renderUI(){
   ui.innerHTML='';
   canvas.onclick=null;
   document.body.classList.toggle('reduced-motion',!!GameSettings.reducedMotion);
+  document.body.classList.toggle('high-contrast',!!GameSettings.highContrast);
+  document.body.classList.toggle('large-text',!!GameSettings.largeText);
   updateTouchControls();
 
   if(G.state==='settings'){
@@ -2307,11 +2299,15 @@ function renderUI(){
       ${settingRow('music','Música y ambiente','Reservado para la música de futuros capítulos')}
       ${settingRow('vibration','Vibración táctil','Respuesta breve al tocar botones en celular')}
       ${settingRow('reducedMotion','Reducir animaciones','Menos movimiento y destellos visuales')}
+      ${settingRow('highContrast','Alto contraste','Bordes y textos más visibles')}
+      ${settingRow('largeText','Texto grande','Aumenta la lectura de los paneles')}
       <button class="btn" id="btnSettingsBack">Volver</button>`;
     ui.appendChild(p);
     p.querySelectorAll('[data-setting]').forEach(b=>b.onclick=()=>{
       GameSettings.toggle(b.dataset.setting);b.textContent=GameSettings[b.dataset.setting]?'ACTIVADO':'DESACTIVADO';
       document.body.classList.toggle('reduced-motion',!!GameSettings.reducedMotion);
+      document.body.classList.toggle('high-contrast',!!GameSettings.highContrast);
+      document.body.classList.toggle('large-text',!!GameSettings.largeText);
     });
     id('btnSettingsBack').onclick=()=>{G.state=back;renderUI();};
     return;
@@ -2452,7 +2448,7 @@ function renderUI(){
       b.onclick=[
         ()=>{SFX.select();G.state='menu';renderUI();},
         ()=>{G.settingsReturn='map';G.state='settings';renderUI();},
-        ()=>openJournal
+        ()=>openJournal(),
       ][i];
       row.appendChild(b);
     });
