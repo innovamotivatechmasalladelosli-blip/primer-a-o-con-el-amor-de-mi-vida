@@ -43,33 +43,44 @@ const touchMap = {
 };
 const touchControls=document.getElementById('touch-controls');
 const hasTouchInput=navigator.maxTouchPoints>0||window.matchMedia('(pointer: coarse)').matches;
+const activeTouchPointers=new Map();
+const touchKeyCounts=Object.fromEntries(Object.values(touchMap).map(key=>[key,0]));
 function updateTouchControls(){
   touchControls.classList.toggle('is-visible',hasTouchInput&&(G.state==='level'||G.state==='minigame'));
 }
-function releaseTouchKey(e){
-  const button=e.target.closest?.('.t-btn');
-  if(!button)return;
-  const key=touchMap[button.id];
-  if(key)keys[key]=false;
-}
-function releaseAllTouchKeys(){
-  for(const key of Object.values(touchMap))keys[key]=false;
-}
-touchControls.addEventListener('pointerdown',e=>{
+function pressTouchKey(e){
   const button=e.target.closest?.('.t-btn');
   if(!button)return;
   const key=touchMap[button.id];
   if(!key)return;
+  if(!activeTouchPointers.has(e.pointerId)){
+    activeTouchPointers.set(e.pointerId,key);
+    touchKeyCounts[key]=(touchKeyCounts[key]||0)+1;
+  }
   keys[key]=true;
   button.setPointerCapture?.(e.pointerId);
   e.preventDefault();
-},{passive:false});
+}
+function releaseTouchPointer(e){
+  const key=activeTouchPointers.get(e.pointerId);
+  if(!key)return;
+  activeTouchPointers.delete(e.pointerId);
+  touchKeyCounts[key]=Math.max(0,(touchKeyCounts[key]||1)-1);
+  if(touchKeyCounts[key]===0)keys[key]=false;
+}
+function releaseAllTouchKeys(){
+  activeTouchPointers.clear();
+  for(const key of Object.values(touchMap)){
+    touchKeyCounts[key]=0;
+    keys[key]=false;
+  }
+}
+touchControls.addEventListener('pointerdown',pressTouchKey,{passive:false});
+// Cada dedo se libera por separado; soltar salto ya no apaga izquierda/derecha.
 ['pointerup','pointercancel','lostpointercapture'].forEach(type=>
-  touchControls.addEventListener(type,releaseTouchKey)
+  window.addEventListener(type,releaseTouchPointer,{passive:true})
 );
-// Release touch actions even if the finger ends outside the button or the browser changes focus.
-window.addEventListener('pointerup',releaseAllTouchKeys,{passive:true});
-window.addEventListener('pointercancel',releaseAllTouchKeys,{passive:true});
+// Release all actions only when the browser loses focus or cancels the whole touch session.
 window.addEventListener('blur',releaseAllTouchKeys,{passive:true});
 
 
