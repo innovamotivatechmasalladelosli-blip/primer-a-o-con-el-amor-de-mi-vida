@@ -98,7 +98,10 @@ button:focus-visible{outline:3px solid #fff;outline-offset:3px;}
 /* Mapa y recuerdos */
 #mapCanvas{display:block;image-rendering:pixelated;position:absolute;inset:0;width:100%;height:100%;}
 .map-actions{position:absolute;bottom:max(12px,env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);display:flex;gap:8px;pointer-events:auto;z-index:12;padding:5px;border:1px solid rgba(232,121,249,.45);border-radius:10px;background:rgba(8,2,20,.82);box-shadow:0 5px 24px rgba(0,0,0,.55);}
-.level-menu-button{position:absolute;top:max(12px,env(safe-area-inset-top));right:max(12px,env(safe-area-inset-right));z-index:31;min-width:106px!important;margin:0;border:2px solid #fbbf24;background:linear-gradient(135deg,#7c2d12,#4c1d95);box-shadow:0 0 0 2px rgba(10,3,28,.85),0 4px 18px rgba(0,0,0,.7);font-weight:900;}
+.level-menu-button{position:fixed;top:max(10px,env(safe-area-inset-top));right:max(10px,env(safe-area-inset-right));z-index:31;min-width:104px!important;margin:0;border:2px solid #fbbf24;background:linear-gradient(135deg,rgba(124,45,18,.96),rgba(76,29,149,.96));box-shadow:0 0 0 2px rgba(10,3,28,.85),0 4px 18px rgba(0,0,0,.7);font-weight:900;gap:5px;}
+.level-menu-icon{font-size:14px;line-height:1;}
+@keyframes menuHint{0%,100%{filter:brightness(1);transform:translateY(0)}50%{filter:brightness(1.13);transform:translateY(-1px)}}
+.level-menu-button{animation:menuHint 3.2s ease-in-out infinite;}
 .map-notice{position:absolute;top:max(8px,env(safe-area-inset-top));left:50%;transform:translateX(-50%);z-index:11;padding:7px 12px;border:1px solid rgba(251,191,36,.6);border-radius:7px;background:rgba(10,3,28,.88);color:#fbbf24;font:7px 'Press Start 2P',monospace;letter-spacing:.4px;text-align:center;white-space:nowrap;box-shadow:0 0 18px rgba(244,114,182,.22);animation:loreNotice 2.8s ease-in-out infinite alternate;}
 .map-notice span{color:#f5d0fe;margin-left:5px;}
 @keyframes loreNotice{from{transform:translateX(-50%) translateY(0);opacity:.82}to{transform:translateX(-50%) translateY(2px);opacity:1}}
@@ -133,7 +136,7 @@ button:focus-visible{outline:3px solid #fff;outline-offset:3px;}
   .mem-card .icon{font-size:17px;}
   .map-actions{gap:3px;}
   .map-actions .btn{min-width:110px;padding-inline:8px;font-size:11px;}
-  .level-menu-button{top:8px;right:8px;min-width:72px!important;padding:6px 10px;font-size:11px;border-width:1px;opacity:.9;}
+  .level-menu-button{top:7px;right:7px;min-width:78px!important;min-height:32px;padding:5px 8px;font-size:10px;border-width:1px;opacity:.88;box-shadow:0 0 0 2px rgba(10,3,28,.78),0 3px 12px rgba(0,0,0,.6);}
   .map-notice{font-size:5px;max-width:92vw;white-space:normal;line-height:1.5;}
   .title-logo{font-size:clamp(18px,7vw,30px);}
   .pixel-button{min-width:205px;min-height:54px;}

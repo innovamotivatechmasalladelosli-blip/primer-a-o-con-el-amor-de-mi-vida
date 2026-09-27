@@ -12,6 +12,7 @@ const KM={
 };
 let prevKeys={};
 window.addEventListener('keydown',e=>{
+  SFX.unlockAudio();
   const k=KM[e.code];
   if(k){keys[k]=true;e.preventDefault();}
   if(k==='ESC'){
@@ -31,7 +32,7 @@ function toggleFS(){
   else document.exitFullscreen();
   setTimeout(fitCanvas,200);
 }
-window.addEventListener('click',()=>{try{SFX.jump();}catch(e){}},{once:true});
+window.addEventListener('click',()=>{try{SFX.unlockAudio();SFX.startMusic();}catch(e){}},{once:true});
 document.addEventListener('fullscreenchange',fitCanvas);
 
 // ── Touch Controls ──
@@ -53,6 +54,7 @@ function pressTouchKey(e){
   if(!button)return;
   const key=touchMap[button.id];
   if(!key)return;
+  SFX.unlockAudio();SFX.startMusic();
   if(!activeTouchPointers.has(e.pointerId)){
     activeTouchPointers.set(e.pointerId,key);
     touchKeyCounts[key]=(touchKeyCounts[key]||0)+1;
@@ -256,7 +258,7 @@ class Player{
       }
 
       // Move; mientras se agacha no avanza, así no puede caerse de una plataforma firme.
-      const spd=2.8,acc=.5;
+      const spd=2.8,acc=Math.min(1,.5*dt*60);
       if(this.crouching){this.vx=0;}
       else if(wL&&!wR){this.vx=Math.max(-spd,this.vx-acc);this.facing=-1;}
       else if(wR&&!wL){this.vx=Math.min(spd,this.vx+acc);this.facing=1;}
@@ -269,7 +271,7 @@ class Player{
         G.shakeT=.1;G.shakeAmt=3;
       }
 
-      this.vy=Math.min(this.vy+GRAVITY*(gliding?.25:1),MAX_FALL);
+    this.vy=Math.min(this.vy+GRAVITY*(gliding?.25:1)*dt*60,MAX_FALL);
     }
 
     // Jump buffer
@@ -625,6 +627,7 @@ class Walker{
     const bob=Math.sin(this.animT*6)*1;
     const cx=Math.floor(this.x+this.w/2),cy=Math.floor(this.y+this.h/2+bob);
     const flash=this.hitT>0&&Math.floor(this.hitT*28)%2===0;
+    if(this.alertT>0){ctx.globalAlpha=.22+.12*Math.sin(this.animT*12);ctx.fillStyle='#fb7185';ctx.fillRect(cx-11,cy-11,22,22);ctx.globalAlpha=1;}
     const body=flash?'#fff':'#6b21a8';
     const dark=flash?'#fff':'#3b0764';
     const eye=flash?'#fff':'#f43f5e';
@@ -684,6 +687,7 @@ class Flyer{
     const flash=this.hitT>0&&Math.floor(this.hitT*28)%2===0;
     const cx=Math.floor(this.x+this.w/2),cy=Math.floor(this.y+this.h/2);
     const flap=Math.sin(this.animT*14)*2.5;
+    if(this.alertT>0){ctx.globalAlpha=.18+.12*Math.sin(this.animT*10);ctx.fillStyle='#fbbf24';ctx.beginPath();ctx.arc(cx,cy,12+Math.sin(this.animT*8)*2,0,Math.PI*2);ctx.fill();ctx.globalAlpha=1;}
     ctx.fillStyle=flash?'#fff':'#3b0764';
     ctx.beginPath();
     ctx.moveTo(cx-5,cy);ctx.lineTo(cx-14,cy-5+flap);ctx.lineTo(cx-9,cy+3);ctx.fill();
@@ -2182,10 +2186,12 @@ function drawMenuBG(){
 
 // ═══════════════════════════════════════════════════════════
 let lastTime=performance.now();
+document.addEventListener('visibilitychange',()=>{lastTime=performance.now();releaseAllTouchKeys();});
 
 function loop(){
   const now=performance.now();
-  const dt=Math.min((now-lastTime)/1000,.05);
+  // Reloj limitado: evita saltos de física al volver de segundo plano.
+  const dt=Math.min(Math.max((now-lastTime)/1000,0),.033);
   lastTime=now;
 
   if(G.state==='level'&&!G.paused){
@@ -2316,7 +2322,7 @@ function renderUI(){
       <h2 style="color:#fbbf24;font-size:14px;text-shadow:none">Configuración</h2>
       <p style="font-size:11px;color:rgba(233,213,255,.7);margin-bottom:10px">Ajusta tu viaje por el multiverso.</p>
       ${settingRow('sfx','Efectos de sonido','Saltos, recuerdos, enemigos y menús')}
-      ${settingRow('music','Música y ambiente','Reservado para la música de futuros capítulos')}
+      ${settingRow('music','Música y ambiente','Melodía espacial procedural durante la aventura')}
       ${settingRow('vibration','Vibración táctil','Respuesta breve al tocar botones en celular')}
       ${settingRow('reducedMotion','Reducir animaciones','Menos movimiento y destellos visuales')}
       ${settingRow('highContrast','Alto contraste','Bordes y textos más visibles')}
@@ -2325,6 +2331,7 @@ function renderUI(){
     ui.appendChild(p);
     p.querySelectorAll('[data-setting]').forEach(b=>b.onclick=()=>{
       GameSettings.toggle(b.dataset.setting);b.textContent=GameSettings[b.dataset.setting]?'ACTIVADO':'DESACTIVADO';
+      if(b.dataset.setting==='music')SFX.refreshMusic();
       document.body.classList.toggle('reduced-motion',!!GameSettings.reducedMotion);
       document.body.classList.toggle('high-contrast',!!GameSettings.highContrast);
       document.body.classList.toggle('large-text',!!GameSettings.largeText);
@@ -2336,7 +2343,7 @@ function renderUI(){
   // ── ACCESO DIRECTO DENTRO DEL NIVEL ──
   if(G.state==='level'||G.state==='minigame'){
     const levelMenu=mk('button','btn sm level-menu-button');
-    levelMenu.textContent='Menú';
+    levelMenu.innerHTML='<span class="level-menu-icon" aria-hidden="true">☰</span><span>Menú</span>';
     levelMenu.setAttribute('aria-label','Salir al menú principal');
     levelMenu.onclick=()=>{Save.save();SFX.select();G.paused=false;G.state='menu';renderUI();};
     ui.appendChild(levelMenu);
@@ -2362,7 +2369,7 @@ function renderUI(){
       SFX.select();
       const hasSave=Save.load();
       // Por ahora la aventura jugable comienza en La Galaxia; los demás capítulos quedan como próximos.
-      startLevel(1);
+      SFX.startMusic();startLevel(1);
       try{
         if(!document.fullscreenElement){
           document.documentElement.requestFullscreen?.()?.catch(()=>{});
