@@ -400,6 +400,12 @@ class Player{
 //   Chica: pelo negro largo ondulado, chaqueta café, jeans, botas
 
 // ═══════════════════════════════════════════════════════════
+function _shade(hex,amount){
+  const h=String(hex||'#8b5e3c').replace('#','');
+  const n=parseInt(h.length===3?h.split('').map(x=>x+x).join(''):h,16)||0;
+  const c=[n>>16,(n>>8)&255,n&255].map(v=>Math.max(0,Math.min(255,Math.round(v*amount))));
+  return '#'+c.map(v=>v.toString(16).padStart(2,'0')).join('');
+}
 function _drawChar(cx,by,f,state,frame,dashing){
   // Helper: dibuja pixel en coordenadas relativas al personaje
   // x positivo = adelante (según facing), y negativo = arriba
@@ -411,6 +417,7 @@ function _drawChar(cx,by,f,state,frame,dashing){
   const custom=G.character||{};
   const customHair=custom.hair||PAL.hair;
   const customJacket=custom.jacket||PAL.jkt;
+  const jacketHi=_shade(customJacket,1.24),jacketSh=_shade(customJacket,.68),jacketDeep=_shade(customJacket,.48);
 
   // Animación
   let legL=0,legR=0,armL=0,armR=0,bodyY=0,hairFlow=0,lean=0;
@@ -472,13 +479,13 @@ function _drawChar(cx,by,f,state,frame,dashing){
 
   // ── TORSO: CHAQUETA ──
   r(-7+bx,-20+bodyY,14,11,customJacket);
-  r(-7+bx,-20+bodyY,14,1,PAL.jktHi);   // highlight top
-  r(-7+bx,-10+bodyY,14,1,PAL.jktSh);   // shadow bottom
-  r(-7+bx,-20+bodyY,1,11,PAL.jktSh);   // shadow left
-  r(6+bx,-20+bodyY,1,11,PAL.jktSh);    // shadow right
+  r(-7+bx,-20+bodyY,14,1,jacketHi);   // highlight top
+  r(-7+bx,-10+bodyY,14,1,jacketSh);   // shadow bottom
+  r(-7+bx,-20+bodyY,1,11,jacketDeep);   // shadow left
+  r(6+bx,-20+bodyY,1,11,jacketSh);    // shadow right
 
   // Forro de la capucha / collar
-  r(-5+bx,-22+bodyY,10,2,PAL.jktSh);
+  r(-5+bx,-22+bodyY,10,2,jacketSh);
   r(-4+bx,-23+bodyY,8,1,customJacket);
   // Forro interior (crema) visible en el frente
   r(-1+bx,-22+bodyY,3,3,PAL.fur);
@@ -489,17 +496,23 @@ function _drawChar(cx,by,f,state,frame,dashing){
   r(-2+bx,-12+bodyY,5,1,PAL.shirtSh);
 
   // Bolsillo / detalle chaqueta
-  r(-5+bx,-15+bodyY,2,2,PAL.jktSh);
-  r(3+bx,-15+bodyY,2,2,PAL.jktSh);
+  r(-5+bx,-15+bodyY,2,2,jacketSh);
+  r(3+bx,-15+bodyY,2,2,jacketSh);
+  // Cierre y cordones de la sudadera: pequeños píxeles que definen mejor la silueta.
+  r(bx,-19+bodyY,1,7,jacketSh);
+  r(-3+bx,-22+bodyY,1,4,PAL.fur);
+  r(2+bx,-22+bodyY,1,4,PAL.fur);
+  r(-4+bx,-13+bodyY,3,1,jacketDeep);
+  r(2+bx,-13+bodyY,3,1,jacketDeep);
 
   // ── BRAZOS ──
   // Brazo trasero
-  r(-9+bx,-19+bodyY-armL,2,9,PAL.jktSh);
+  r(-9+bx,-19+bodyY-armL,2,9,jacketSh);
   r(-9+bx,-11+bodyY-armL,2,2,PAL.skinSh); // mano
 
   // Brazo delantero
   r(7+bx,-19+bodyY+armR,2,9,customJacket);
-  r(7+bx,-19+bodyY+armR,2,1,PAL.jktHi);  // highlight
+  r(7+bx,-19+bodyY,2,1,jacketHi);  // highlight
   r(7+bx,-11+bodyY+armR,2,2,PAL.skin);    // mano
 
   // ── CABEZA ──
@@ -1026,7 +1039,7 @@ const BASIC_POWER_CATALOG=[
   {id:'recall',name:'Llamado',icon:'♥',hint:'Encuentra memorias',price:180}
 ];
 const OUTFIT_CATALOG=[
-  {id:'aurora',name:'Aurora',price:0,jacket:'#7c3aed',hair:'#d97832',trail:'#f472b6'},
+  {id:'aurora',name:'Aurora',price:0,jacket:'#8b5e3c',hair:'#d97832',trail:'#f472b6'},
   {id:'cosmic',name:'Cosmos',price:120,jacket:'#0f766e',hair:'#f59e0b',trail:'#38bdf8'},
   {id:'ember',name:'Brasa',price:150,jacket:'#b45309',hair:'#ef4444',trail:'#fb7185'},
   {id:'void',name:'Vacío',price:200,jacket:'#312e81',hair:'#c084fc',trail:'#a78bfa'},
@@ -1065,8 +1078,8 @@ function drawCustomizationPreview(canvasEl){
   px(-8,-28,16,18,hair);px(-10,-20,2,12,hair);px(8,-20,2,12,hair);
   px(-5,-22,11,8,PAL.skin);px(-4,-23,9,1,PAL.skinHi);px(-5,-16,11,1,PAL.skinSh);
   px(-6,-29,12,8,hair);px(-5,-29,10,1,PAL.hairHi);px(-6,-23,3,2,hair);px(3,-23,3,2,hair);
-  px(-7,-14,14,11,jacket);px(-7,-14,14,1,PAL.jktHi);px(-7,-4,14,1,PAL.jktSh);
-  px(-2,-13,5,8,PAL.shirt);px(-9,-13,2,9,PAL.jktSh);px(7,-13,2,9,jacket);
+  px(-7,-14,14,11,jacket);px(-7,-14,14,1,_shade(jacket,1.24));px(-7,-4,14,1,_shade(jacket,.68));px(0,-14,1,7,_shade(jacket,.68));
+  px(-2,-13,5,8,PAL.shirt);px(-9,-13,2,9,_shade(jacket,.68));px(7,-13,2,9,jacket);px(-4,-7,3,1,_shade(jacket,.48));px(2,-7,3,1,_shade(jacket,.48));
   px(-5,-3,4,8,PAL.jeansSh);px(1,-3,4,8,PAL.jeans);px(-5,5,5,3,PAL.bootSh);px(1,5,5,3,PAL.boot);
   // Brillo de selección, sin suavizado para conservar el acabado pixel art.
   c.strokeStyle='rgba(251,191,36,.65)';c.lineWidth=2;c.strokeRect(x-12*s,y-33*s,24*s,43*s);
@@ -2510,7 +2523,7 @@ function renderUI(){
 
     id('btnNew').onclick=()=>{
       Object.assign(G,{memories:[],decisions:{},
-        powers:{double_jump:false,dash:false,glide:false,rocket:false},equippedBasic:['double_jump','dash'],equippedConsciousness:{},consciousnessUnlocked:0,character:{accent:'#fbbf24',trail:'#f472b6',hair:'#d97832',jacket:'#7c3aed',outfit:'aurora'},ownedBasic:['double_jump','dash','glide','rocket'],ownedOutfits:['aurora'],
+        powers:{double_jump:false,dash:false,glide:false,rocket:false},equippedBasic:['double_jump','dash'],equippedConsciousness:{},consciousnessUnlocked:0,character:{accent:'#fbbf24',trail:'#f472b6',hair:'#d97832',jacket:'#8b5e3c',outfit:'aurora'},ownedBasic:['double_jump','dash','glide','rocket'],ownedOutfits:['aurora'],
         levelId:1,timePlayed:0,unlockedEndings:[],score:0,coins:0});
       Save.clear();SFX.select();G.state='map';renderUI();
     };
