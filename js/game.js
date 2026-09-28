@@ -100,7 +100,7 @@ const Save={
     consciousnessUnlocked:G.consciousnessUnlocked,character:G.character,
     ownedBasic:G.ownedBasic,ownedOutfits:G.ownedOutfits,
     timePlayed:G.timePlayed,levelId:G.levelId,
-    unlockedEndings:G.unlockedEndings,score:G.score,coins:G.coins,
+    unlockedEndings:G.unlockedEndings,score:G.score,coins:G.coins,storySeen:G.storySeen,
   }));}catch(e){}},
   load(){try{
     const d=JSON.parse(localStorage.getItem(SAVE_KEY)||'null');
@@ -111,10 +111,10 @@ const Save={
       equippedConsciousness:d.equippedConsciousness||{I:[]},
       consciousnessUnlocked:0,
       character:Object.assign({accent:'#d4c4a0',detail:'heart',trail:'#f472b6',hair:'#d97832',jacket:'#8b5e3c',outfit:'aurora'},d.character||{}),
-      ownedBasic:Array.isArray(d.ownedBasic)?d.ownedBasic:['double_jump','dash','glide','rocket'],
+      ownedBasic:Array.isArray(d.ownedBasic)?d.ownedBasic:['double_jump','dash'],
       ownedOutfits:Array.isArray(d.ownedOutfits)?d.ownedOutfits:['aurora'],
       timePlayed:d.timePlayed||0,levelId:d.levelId||1,
-      unlockedEndings:d.unlockedEndings||[],score:d.score||0,coins:d.coins||0});
+      unlockedEndings:d.unlockedEndings||[],score:d.score||0,coins:d.coins||0,storySeen:Array.isArray(d.storySeen)?d.storySeen:[]});
     return true;
   }catch(e){return false;}},
   clear(){try{localStorage.removeItem(SAVE_KEY);}catch(e){}},
@@ -997,6 +997,9 @@ function startCinematic() {
   updateTouchControls();
   ui.innerHTML='';
   CINE={timer:0,page:0,pageT:0,allyX:-40,shipX:-70};
+  G.storySeen=Array.isArray(G.storySeen)?G.storySeen:[];
+  if(!G.storySeen.includes(0))G.storySeen.push(0);
+  Save.save();
   canvas.onclick=advanceCinematic;
 }
 function updateCinematic(dt){
@@ -1010,6 +1013,8 @@ function advanceCinematic(){
   SFX.select();
   if(CINE.page<4){
     CINE.page++;
+    if(!G.storySeen.includes(CINE.page))G.storySeen.push(CINE.page);
+    Save.save();
     CINE.pageT=0;
     if(CINE.page===2)CINE.allyX=-40;
     if(CINE.page===3)CINE.shipX=-70;
@@ -1030,11 +1035,18 @@ const CONSCIOUSNESS_PATH=[
   {short:'IV · INSTINTOS',name:'Animal',hint:'Sentidos salvajes',color:'#a3e635'},
   {short:'V · SÚPER DIOS',name:'Trascendencia',hint:'El poder total',color:'#fbbf24'}
 ];
+const STORY_CHAPTERS=[
+  ['La fractura','Los recuerdos del universo se rompen.'],
+  ['La infestación','Una entidad invade mentes y recuerdos.'],
+  ['Los que resisten','Alison conserva su identidad.'],
+  ['La alianza','Uriel y Alison cruzan el vacío.'],
+  ['El primer umbral','El viaje espiritual comienza.']
+];
 const BASIC_POWER_CATALOG=[
   {id:'double_jump',name:'Doble salto',icon:'↑↑',hint:'Salta dos veces',price:0},
   {id:'dash',name:'Impulso',icon:'➜',hint:'Cruza una grieta',price:0},
-  {id:'glide',name:'Planeo',icon:'◇',hint:'Flota al caer',price:0},
-  {id:'rocket',name:'Propulsión',icon:'🚀',hint:'Controla el cohete',price:0},
+  {id:'glide',name:'Planeo',icon:'◇',hint:'Flota al caer',price:80},
+  {id:'rocket',name:'Propulsión',icon:'🚀',hint:'Controla el cohete',price:100},
   {id:'wall_jump',name:'Salto mural',icon:'↕',hint:'Rebota en paredes',price:80},
   {id:'magnet',name:'Imán',icon:'✦',hint:'Atrae recuerdos',price:100},
   {id:'shield',name:'Escudo',icon:'◈',hint:'Resiste un golpe',price:120},
@@ -1048,7 +1060,11 @@ const OUTFIT_CATALOG=[
   {id:'ember',name:'Brasa',price:150,jacket:'#b45309',hair:'#ef4444',trail:'#fb7185'},
   {id:'void',name:'Vacío',price:200,jacket:'#312e81',hair:'#c084fc',trail:'#a78bfa'},
   {id:'mint',name:'Menta',price:170,jacket:'#15803d',hair:'#f0abfc',trail:'#67e8f9'},
-  {id:'solar',name:'Solar',price:230,jacket:'#be123c',hair:'#facc15',trail:'#fb923c'}
+  {id:'solar',name:'Solar',price:230,jacket:'#be123c',hair:'#facc15',trail:'#fb923c'},
+  {id:'stitch',name:'Stitch',price:260,jacket:'#2563eb',hair:'#1e3a8a',trail:'#60a5fa'},
+  {id:'pompompurin',name:'Pompompurin',price:280,jacket:'#d97706',hair:'#facc15',trail:'#fde68a'},
+  {id:'kuromi',name:'Kuromi',price:300,jacket:'#4c1d95',hair:'#111827',trail:'#f9a8d4'},
+  {id:'forest',name:'Bosque',price:220,jacket:'#166534',hair:'#92400e',trail:'#86efac'}
 ];
 const CUSTOM_COLORS={
   jacket:[['Café base','#8b5e3c'],['Cacao','#4b2e20'],['Canela','#a8653f'],['Terracota','#b4533c'],['Arena','#b88962'],['Cobre','#9a4f24'],['Noche','#35251f']],
@@ -1057,6 +1073,7 @@ const CUSTOM_COLORS={
   accent:[['Crema','#d4c4a0'],['Dorado','#fbbf24'],['Rosa','#f9a8d4'],['Cielo','#7dd3fc'],['Menta','#86efac']]
 };
 const HOODIE_DETAILS=[['heart','Corazón','♥'],['star','Estrella','✦'],['moon','Luna','☾'],['plain','Liso','·']];
+const BASE_COLORS={jacket:[['Café base','#8b5e3c']],hair:[['Cobre','#d97832']],trail:[['Rosa','#f472b6']],accent:[['Crema','#d4c4a0']]};
 const CONSCIOUSNESS_POWERS=Object.fromEntries(CONSCIOUSNESS_PATH.map((c,i)=>[String.fromCharCode(73+i),Array.from({length:10},(_,n)=>({id:`c${i+1}_${n+1}`,name:`${c.name} ${n+1}`,icon:c.short.split('·')[1].trim().slice(0,2),hint:c.hint}))]));
 const POWER_COMBOS={double_jump_dash:'Salto relámpago',dash_glide:'Vuelo rasante',magnet_recall:'Memoria brújula',shield_slow_time:'Burbuja de calma'};
 function toggleLoadout(group,id){
@@ -1840,6 +1857,8 @@ function drawItems(){
       ctx.fillRect(sx+1,sy+11,8,3);ctx.fillRect(sx+2,sy+14,6,2);
       ctx.fillRect(sx+4,sy+16,2,1);
       ctx.fillStyle='#fda4af';ctx.fillRect(sx+1,sy+5,2,2);
+    }else if(it.type==='fragment'){
+      ctx.fillStyle='#c084fc';ctx.fillRect(sx+7,sy+1,5,4);ctx.fillRect(sx+4,sy+5,10,7);ctx.fillRect(sx+6,sy+12,6,4);ctx.fillStyle='#f5d0fe';ctx.fillRect(sx+8,sy+3,2,5);ctx.fillStyle='#7c3aed';ctx.fillRect(sx+5,sy+9,2,3);
     }else{
       // Estrella (puntos extra)
       ctx.fillStyle='#fbbf24';
@@ -1935,6 +1954,8 @@ function drawHUD(){
   ctx.fillStyle='rgba(200,150,220,.55)';
   ctx.font='7px Nunito,sans-serif';
   ctx.fillText('RECUERDOS',memX,23);
+  ctx.fillStyle='#c084fc';ctx.font='bold 7px "Press Start 2P",monospace';ctx.fillText('✦ '+G.coins,memX-2,34);
+  ctx.fillStyle='rgba(200,150,220,.55)';ctx.font='7px Nunito,sans-serif';ctx.fillText('FRAGMENTOS',memX-2,44);
 
   // Tiempo
   const sec=Math.floor(LS.time);
@@ -2339,6 +2360,7 @@ function loop(){
       if(p.x<it.x+18&&p.x+p.w>it.x&&p.y<it.y+18&&p.y+p.h>it.y){
         it.taken=true;
         if(it.type==='heart'){p.heal(1);SFX.collectHeart();Px.burst(it.x+9,it.y+9,'#f472b6',28,{heart:true,speed:1.8,up:2});}
+        else if(it.type==='fragment'){G.coins+=1;SFX.collectStar();Px.burst(it.x+9,it.y+9,'#c084fc',22,{star:true,speed:1.6,up:1.5});Save.save();}
         else{G.score+=100;SFX.collectStar();Px.burst(it.x+9,it.y+9,'#fbbf24',22,{star:true,speed:1.6,up:1.5});}
       }
     }
@@ -2437,25 +2459,34 @@ function renderUI(){
     const p=mk('div','panel customize-panel');
     const basic=(G.equippedBasic||[]);
     const slot=(id,group)=>((group==='basic'?basic:(G.equippedConsciousness?.[group]||[])).includes(id));
-    const cards=(items,group)=>items.map(x=>{const owned=group==='basic'&&G.ownedBasic.includes(x.id);return `<button class="power-card ${slot(x.id,group)?'equipped':''} ${owned?'':'locked'}" data-power="${x.id}" data-group="${group}" ${group==='basic'&&!owned?'disabled':''}><b>${x.icon}</b><strong>${x.name}</strong><small>${owned?(slot(x.id,group)?'Activo':'Usar'):'Tienda'}</small></button>`}).join('');
-    const colors=(type)=>CUSTOM_COLORS[type].map(([name,value])=>`<button class="color-chip ${G.character[type]===value?'selected':''}" data-color-type="${type}" data-color="${value}" style="--swatch:${value}" aria-label="${name}"><i></i><small>${name}</small></button>`).join('');
-    p.innerHTML=`<div class="custom-top"><div><div class="eyebrow">ARMARIO</div><h2>Tu personaje</h2><p class="custom-subtitle">Toca algo para verlo al instante.</p></div><div class="live-badge">● EN VIVO</div></div>
-      <div class="custom-stage"><canvas id="custom-preview" width="180" height="220" aria-label="Vista previa del personaje"></canvas><div class="stage-copy"><strong>${OUTFIT_CATALOG.find(o=>o.id===G.character.outfit)?.name||'Alison'}</strong><small>Tu estilo actual</small><span class="stage-combo">${activeCombo()?`Combo: ${activeCombo()}`:'Elige hasta 4 poderes'}</span></div></div>
+    const cards=(items,group)=>items.map(x=>{const owned=group==='basic'&&G.ownedBasic.includes(x.id);return `<button class="power-card ${slot(x.id,group)?'equipped':''}" data-power="${x.id}" data-group="${group}"><b>${x.icon}</b><strong>${x.name}</strong><small>${slot(x.id,group)?'Activo':'Usar'}</small></button>`}).join('');
+    const colors=(type)=>(BASE_COLORS[type]||[]).map(([name,value])=>`<button class="color-chip ${G.character[type]===value?'selected':''}" data-color-type="${type}" data-color="${value}" style="--swatch:${value}" aria-label="${name}"><i></i><small>${name}</small></button>`).join('');
+    p.innerHTML=`<div class="custom-top"><div><div class="eyebrow">ARMARIO</div><h2>Alison</h2><p class="custom-subtitle">Ropa, colores y emblemas.</p></div></div>
+      <div class="custom-stage"><canvas id="custom-preview" width="180" height="220" aria-label="Vista previa de Alison"></canvas><div class="stage-copy"><strong>Alison</strong><small>${OUTFIT_CATALOG.find(o=>o.id===G.character.outfit)?.name||'Conjunto base'}</small><span class="stage-combo">${activeCombo()?`Combo: ${activeCombo()}`:'Sin combo'}</span></div></div>
       <div class="loadout-head"><strong>ROPA</strong><span>Elige tu conjunto</span></div>
       <div class="outfit-grid">${OUTFIT_CATALOG.map(o=>`<button class="outfit-card ${G.character.outfit===o.id?'selected':''}" data-outfit="${o.id}" ${G.ownedOutfits.includes(o.id)?'':'disabled'}><i style="--j:${o.jacket};--h:${o.hair}"></i><strong>${o.name}</strong><small>${G.ownedOutfits.includes(o.id)?(G.character.outfit===o.id?'Usando':'Usar'):'Tienda'}</small></button>`).join('')}</div>
       <div class="color-pickers"><div><label>Sudadera</label><div class="color-row">${colors('jacket')}</div></div><div><label>Pelo</label><div class="color-row">${colors('hair')}</div></div><div><label>Estela</label><div class="color-row">${colors('trail')}</div></div><div><label>Detalle</label><div class="color-row">${colors('accent')}</div></div></div>
       <div class="detail-picker"><label>Emblema</label><div class="detail-row">${HOODIE_DETAILS.map(([id,name,icon])=>`<button class="detail-chip ${G.character.detail===id?'selected':''}" data-detail="${id}"><b>${icon}</b><small>${name}</small></button>`).join('')}</div></div>
-      <div class="loadout-head powers-head"><strong>PODERES</strong><span>${basic.length}/4 activos</span></div>
-      <div class="power-grid">${cards(BASIC_POWER_CATALOG,'basic')}</div>
+      <div class="loadout-head powers-head"><strong>PODERES</strong><span>${G.loadoutNotice||`${basic.length}/4 activos`}</span></div>
+      <div class="power-grid">${cards(BASIC_POWER_CATALOG.filter(x=>G.ownedBasic.includes(x.id)),'basic')}</div>
       <div class="sealed-title">CONCIENCIA <span>Bloqueado</span></div><div class="consciousness-list">${CONSCIOUSNESS_PATH.map((c)=>`<div class="sealed-consciousness" style="--c:${c.color}"><b>▣ ${c.name}</b><small>Se desbloquea en la historia</small></div>`).join('')}</div>
       <button class="btn" id="btnCustomizeBack">Volver</button>`;
     ui.appendChild(p);
     startCustomizationPreview();
-    p.querySelectorAll('[data-power]').forEach(b=>b.onclick=()=>{toggleLoadout(b.dataset.group,b.dataset.power);renderUI();});
+    p.querySelectorAll('[data-power]').forEach(b=>b.onclick=()=>{const ok=toggleLoadout(b.dataset.group,b.dataset.power);if(!ok){G.loadoutNotice='No.';renderUI();setTimeout(()=>{G.loadoutNotice='';if(G.state==='customize')renderUI();},900);}else{G.loadoutNotice='';renderUI();}});
     p.querySelectorAll('[data-outfit]').forEach(b=>b.onclick=()=>{const o=OUTFIT_CATALOG.find(x=>x.id===b.dataset.outfit);Object.assign(G.character,{outfit:o.id,jacket:o.jacket,hair:o.hair,trail:o.trail});Save.save();SFX.select();renderUI();});
     p.querySelectorAll('[data-color-type]').forEach(b=>b.onclick=()=>{G.character[b.dataset.colorType]=b.dataset.color;Save.save();SFX.select();renderUI();});
     p.querySelectorAll('[data-detail]').forEach(b=>b.onclick=()=>{G.character.detail=b.dataset.detail;Save.save();SFX.select();renderUI();});
     id('btnCustomizeBack').onclick=()=>{G.state=G.settingsReturn||'menu';renderUI();};
+    return;
+  }
+
+  if(G.state==='story'){
+    const p=mk('div','panel story-panel');
+    const seen=Array.isArray(G.storySeen)?G.storySeen:[];
+    p.innerHTML=`<div class="eyebrow">HISTORIA</div><h2>El viaje</h2><p class="custom-subtitle">${seen.length}/${STORY_CHAPTERS.length} capítulos</p><div class="story-list">${STORY_CHAPTERS.map((s,i)=>seen.includes(i)?`<article class="story-entry"><span>${String(i+1).padStart(2,'0')}</span><div><strong>${s[0]}</strong><small>${s[1]}</small></div></article>`:`<article class="story-entry locked"><span>??</span><div><strong>Bloqueado</strong><small>Avanza para descubrirlo.</small></div></article>`).join('')}</div><button class="btn" id="btnStoryBack">Volver</button>`;
+    ui.appendChild(p);
+    id('btnStoryBack').onclick=()=>{G.state='menu';renderUI();};
     return;
   }
 
@@ -2510,13 +2541,9 @@ function renderUI(){
     const p=mk('div','panel');
     p.innerHTML=`
       <div class="subtitle">Un año · Un amor · Un viaje</div>
-      <div class="menu-lore">
-        <strong>LA SEÑAL DESPERTÓ</strong>
-        <span>Recupera recuerdos, encuentra amistades y resiste a la entidad que invade las mentes.</span>
-        <small>✦ Los rangos de conciencia permanecen sellados</small>
-      </div>
       <div class="row" style="flex-direction:column">
         <button class="btn gold" id="btnShop">Tienda</button>
+        <button class="btn" id="btnStory">Historia</button>
         <button class="btn" id="btnNew">Nueva Aventura</button>
         <button class="btn" id="btnCont" ${hasSave?'':'disabled'}>Continuar</button>
         <button class="btn gold" id="btnJrn">Diario de Recuerdos</button>
@@ -2534,14 +2561,15 @@ function renderUI(){
 
     id('btnNew').onclick=()=>{
       Object.assign(G,{memories:[],decisions:{},
-        powers:{double_jump:false,dash:false,glide:false,rocket:false},equippedBasic:['double_jump','dash'],equippedConsciousness:{},consciousnessUnlocked:0,character:{accent:'#d4c4a0',detail:'heart',trail:'#f472b6',hair:'#d97832',jacket:'#8b5e3c',outfit:'aurora'},ownedBasic:['double_jump','dash','glide','rocket'],ownedOutfits:['aurora'],
-        levelId:1,timePlayed:0,unlockedEndings:[],score:0,coins:0});
+        powers:{double_jump:false,dash:false,glide:false,rocket:false},equippedBasic:['double_jump','dash'],equippedConsciousness:{},consciousnessUnlocked:0,character:{accent:'#d4c4a0',detail:'heart',trail:'#f472b6',hair:'#d97832',jacket:'#8b5e3c',outfit:'aurora'},ownedBasic:['double_jump','dash'],ownedOutfits:['aurora'],
+        levelId:1,timePlayed:0,unlockedEndings:[],score:0,coins:0,storySeen:[]});
       Save.clear();SFX.select();G.state='map';renderUI();
     };
     id('btnCont').onclick=()=>{
       if(Save.load()){SFX.select();G.state='map';renderUI();}
     };
     id('btnJrn').onclick=openJournal;
+    id('btnStory').onclick=()=>{G.state='story';renderUI();};
     id('btnCustomize').onclick=()=>{G.settingsReturn='menu';G.state='customize';renderUI();};
     id('btnSettings').onclick=()=>{G.settingsReturn='menu';G.state='settings';renderUI();};
     id('btnShop').onclick=()=>{

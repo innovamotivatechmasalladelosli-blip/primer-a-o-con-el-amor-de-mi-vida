@@ -1,12 +1,4 @@
 
-/* Personalización extra de Alison */
-.color-pickers{grid-template-columns:repeat(4,minmax(0,1fr));}
-.detail-picker{margin:10px 0;text-align:left;padding-top:8px;border-top:1px solid rgba(192,132,252,.16);}
-.detail-picker>label{display:block;margin-bottom:5px;color:#c4b5fd;font:8px 'Press Start 2P',monospace;}
-.detail-row{display:flex;gap:6px;flex-wrap:wrap;}
-.detail-chip{display:flex;align-items:center;gap:5px;padding:5px 8px;border:1px solid rgba(192,132,252,.28);border-radius:2px;background:rgba(8,2,20,.65);color:#f5d0fe;cursor:pointer;}
-.detail-chip b{color:#fbbf24;font-size:16px;}.detail-chip small{font-size:9px;}.detail-chip.selected{border-color:#fbbf24;background:rgba(180,100,20,.22);}
-@media(max-width:600px){
-  .color-pickers{grid-template-columns:1fr;}
-  .detail-picker>label{font-size:7px;}.detail-chip{padding:4px 6px;}.detail-chip small{font-size:8px;}
-}
+/* Historia y personalización simple */
+.story-panel{width:min(94%,580px);}.story-list{display:flex;flex-direction:column;gap:7px;margin:14px 0;text-align:left;}.story-entry{display:flex;align-items:center;gap:12px;padding:11px 12px;border:1px solid rgba(192,132,252,.28);background:rgba(8,2,20,.62);}.story-entry>span{color:#fbbf24;font:10px 'Press Start 2P',monospace;}.story-entry strong{display:block;color:#fff;font-size:12px;}.story-entry small{display:block;color:#c4b5fd;font-size:10px;margin-top:2px;}.story-entry.locked{opacity:.48;}.detail-picker{margin:10px 0;text-align:left;padding-top:8px;border-top:1px solid rgba(192,132,252,.16);}.detail-picker>label{display:block;margin-bottom:5px;color:#c4b5fd;font:8px 'Press Start 2P',monospace;}.detail-row{display:flex;gap:6px;flex-wrap:wrap;}.detail-chip{display:flex;align-items:center;gap:5px;padding:5px 8px;border:1px solid rgba(192,132,252,.28);border-radius:2px;background:rgba(8,2,20,.65);color:#f5d0fe;cursor:pointer;}.detail-chip b{color:#fbbf24;font-size:16px;}.detail-chip small{font-size:9px;}.detail-chip.selected{border-color:#fbbf24;background:rgba(180,100,20,.22);}
+@media(max-width:600px){.detail-chip{padding:4px 6px;}.detail-chip small{font-size:8px;}}

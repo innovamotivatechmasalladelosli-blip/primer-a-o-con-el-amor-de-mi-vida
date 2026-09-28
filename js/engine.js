@@ -42,13 +42,13 @@ const G={
   powers:{double_jump:false,dash:false,glide:false,rocket:false},
   equippedBasic:['double_jump','dash'],equippedConsciousness:{I:[]},
   consciousnessUnlocked:0,character:{accent:'#d4c4a0',detail:'heart',trail:'#f472b6',hair:'#d97832',jacket:'#8b5e3c',outfit:'aurora'},
-  ownedBasic:['double_jump','dash','glide','rocket'],ownedOutfits:['aurora'],
+  ownedBasic:['double_jump','dash'],ownedOutfits:['aurora'],
   timePlayed:0,currentMemory:null,
   paused:false,
   shakeT:0,shakeAmt:0,
   mapNodePositions:[],
   unlockedEndings:[],
-  score:0,coins:0,
+  score:0,coins:0,storySeen:[],
   totalStars:0,
 };
 
@@ -101,10 +101,12 @@ const LEVELS={
       {x:390,y:160,id:1} // Recuerdo fotográfico
     ],
     items:[
-      {x:560,y:140,type:'star'},
-      {x:850,y:200,type:'heart'},
-      {x:1310,y:170,type:'star'},
-      {x:1810,y:160,type:'heart'},
+      {x:145,y:190,type:'fragment'},{x:220,y:150,type:'fragment'},{x:315,y:120,type:'fragment'},
+      {x:560,y:140,type:'star'},{x:620,y:120,type:'fragment'},{x:760,y:190,type:'fragment'},
+      {x:850,y:200,type:'heart'},{x:920,y:175,type:'fragment'},{x:1060,y:150,type:'fragment'},
+      {x:1310,y:170,type:'star'},{x:1380,y:130,type:'fragment'},{x:1580,y:190,type:'fragment'},
+      {x:1810,y:160,type:'heart'},{x:1880,y:110,type:'fragment'},{x:2050,y:190,type:'fragment'},
+      {x:2220,y:180,type:'fragment'},
     ],
     enemies:[
       {x:790,y:208,type:'walker',range:60,dir:1,spd:.5}, // Enemigos lentos
