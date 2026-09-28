@@ -1029,8 +1029,15 @@ const OUTFIT_CATALOG=[
   {id:'aurora',name:'Aurora',price:0,jacket:'#7c3aed',hair:'#d97832',trail:'#f472b6'},
   {id:'cosmic',name:'Cosmos',price:120,jacket:'#0f766e',hair:'#f59e0b',trail:'#38bdf8'},
   {id:'ember',name:'Brasa',price:150,jacket:'#b45309',hair:'#ef4444',trail:'#fb7185'},
-  {id:'void',name:'Vacío',price:200,jacket:'#312e81',hair:'#c084fc',trail:'#a78bfa'}
+  {id:'void',name:'Vacío',price:200,jacket:'#312e81',hair:'#c084fc',trail:'#a78bfa'},
+  {id:'mint',name:'Menta',price:170,jacket:'#15803d',hair:'#f0abfc',trail:'#67e8f9'},
+  {id:'solar',name:'Solar',price:230,jacket:'#be123c',hair:'#facc15',trail:'#fb923c'}
 ];
+const CUSTOM_COLORS={
+  jacket:[['Violeta','#7c3aed'],['Océano','#0f766e'],['Cereza','#be123c'],['Noche','#312e81'],['Menta','#15803d']],
+  hair:[['Cobre','#d97832'],['Dorado','#f59e0b'],['Rojo','#ef4444'],['Lila','#c084fc'],['Rosa','#f0abfc']],
+  trail:[['Rosa','#f472b6'],['Cielo','#38bdf8'],['Fuego','#fb7185'],['Luz','#fbbf24'],['Cian','#67e8f9']]
+};
 const CONSCIOUSNESS_POWERS=Object.fromEntries(CONSCIOUSNESS_PATH.map((c,i)=>[String.fromCharCode(73+i),Array.from({length:10},(_,n)=>({id:`c${i+1}_${n+1}`,name:`${c.name} ${n+1}`,icon:c.short.split('·')[1].trim().slice(0,2),hint:c.hint}))]));
 const POWER_COMBOS={double_jump_dash:'Salto relámpago',dash_glide:'Vuelo rasante',magnet_recall:'Memoria brújula',shield_slow_time:'Burbuja de calma'};
 function toggleLoadout(group,id){
@@ -1044,6 +1051,30 @@ function activeCombo(){
   const all=[...(G.equippedBasic||[]),...Object.values(G.equippedConsciousness||{}).flat()];
   for(const [ids,name] of Object.entries(POWER_COMBOS)){const [a,b]=ids.split('_');if(all.includes(a)&&all.includes(b))return name;}
   return '';
+}
+function drawCustomizationPreview(canvasEl){
+  const c=canvasEl.getContext('2d'),d=G.character||{},w=canvasEl.width,h=canvasEl.height;
+  c.clearRect(0,0,w,h);c.imageSmoothingEnabled=false;
+  const s=5,x=90,y=188, jacket=d.jacket||PAL.jkt,hair=d.hair||PAL.hair,trail=d.trail||'#f472b6';
+  c.fillStyle='rgba(3,1,14,.55)';c.fillRect(24,194,132,5);
+  const px=(rx,ry,rw,rh,col)=>{c.fillStyle=col;c.fillRect(Math.round(x+rx*s),Math.round(y+ry*s),rw*s,rh*s);};
+  // Estela y emblema cambian junto con la configuración.
+  c.fillStyle=trail;c.globalAlpha=.75;
+  for(let i=1;i<5;i++)c.fillRect(x-(12+i*5)*s,y-18*s+i*2,2*s,8*s);
+  c.globalAlpha=1;
+  px(-8,-28,16,18,hair);px(-10,-20,2,12,hair);px(8,-20,2,12,hair);
+  px(-5,-22,11,8,PAL.skin);px(-4,-23,9,1,PAL.skinHi);px(-5,-16,11,1,PAL.skinSh);
+  px(-6,-29,12,8,hair);px(-5,-29,10,1,PAL.hairHi);px(-6,-23,3,2,hair);px(3,-23,3,2,hair);
+  px(-7,-14,14,11,jacket);px(-7,-14,14,1,PAL.jktHi);px(-7,-4,14,1,PAL.jktSh);
+  px(-2,-13,5,8,PAL.shirt);px(-9,-13,2,9,PAL.jktSh);px(7,-13,2,9,jacket);
+  px(-5,-3,4,8,PAL.jeansSh);px(1,-3,4,8,PAL.jeans);px(-5,5,5,3,PAL.bootSh);px(1,5,5,3,PAL.boot);
+  // Brillo de selección, sin suavizado para conservar el acabado pixel art.
+  c.strokeStyle='rgba(251,191,36,.65)';c.lineWidth=2;c.strokeRect(x-12*s,y-33*s,24*s,43*s);
+}
+function startCustomizationPreview(){
+  const preview=document.querySelector('#custom-preview');if(!preview)return;
+  const paint=()=>{if(G.state!=='customize'||!document.body.contains(preview))return;drawCustomizationPreview(preview);requestAnimationFrame(paint);};
+  paint();
 }
 function drawCinematic(){
   const t=CINE.timer;
@@ -2384,20 +2415,22 @@ function renderUI(){
     const p=mk('div','panel customize-panel');
     const basic=(G.equippedBasic||[]);
     const slot=(id,group)=>((group==='basic'?basic:(G.equippedConsciousness?.[group]||[])).includes(id));
-    const cards=(items,group)=>items.map(x=>{const owned=group==='basic'&&G.ownedBasic.includes(x.id);return `<button class="power-card ${slot(x.id,group)?'equipped':''} ${owned?'':'locked'}" data-power="${x.id}" data-group="${group}" ${group==='basic'&&!owned?'disabled':''}><b>${x.icon}</b><strong>${x.name}</strong><small>${owned?(x.hint||'Equipar'):'Disponible en tienda'}</small></button>`}).join('');
-    p.innerHTML=`<h2 style="color:#fbbf24;font-size:14px;text-shadow:none">Personalizar personaje</h2>
-      <p class="custom-subtitle">Arma tu estilo. Cada rama permite equipar hasta <b>4 poderes</b>.</p>
-      <div class="loadout-head"><strong>BÁSICOS</strong><span>${basic.length}/4 equipados</span></div>
+    const cards=(items,group)=>items.map(x=>{const owned=group==='basic'&&G.ownedBasic.includes(x.id);return `<button class="power-card ${slot(x.id,group)?'equipped':''} ${owned?'':'locked'}" data-power="${x.id}" data-group="${group}" ${group==='basic'&&!owned?'disabled':''}><b>${x.icon}</b><strong>${x.name}</strong><small>${owned?(slot(x.id,group)?'Activo':'Usar'):'Tienda'}</small></button>`}).join('');
+    const colors=(type)=>CUSTOM_COLORS[type].map(([name,value])=>`<button class="color-chip ${G.character[type]===value?'selected':''}" data-color-type="${type}" data-color="${value}" style="--swatch:${value}" aria-label="${name}"><i></i><small>${name}</small></button>`).join('');
+    p.innerHTML=`<div class="custom-top"><div><div class="eyebrow">ARMARIO</div><h2>Tu personaje</h2><p class="custom-subtitle">Toca algo para verlo al instante.</p></div><div class="live-badge">● EN VIVO</div></div>
+      <div class="custom-stage"><canvas id="custom-preview" width="180" height="220" aria-label="Vista previa del personaje"></canvas><div class="stage-copy"><strong>${OUTFIT_CATALOG.find(o=>o.id===G.character.outfit)?.name||'Aurora'}</strong><small>Tu estilo actual</small><span class="stage-combo">${activeCombo()?`Combo: ${activeCombo()}`:'Elige hasta 4 poderes'}</span></div></div>
+      <div class="loadout-head"><strong>ROPA</strong><span>Elige tu conjunto</span></div>
+      <div class="outfit-grid">${OUTFIT_CATALOG.map(o=>`<button class="outfit-card ${G.character.outfit===o.id?'selected':''}" data-outfit="${o.id}" ${G.ownedOutfits.includes(o.id)?'':'disabled'}><i style="--j:${o.jacket};--h:${o.hair}"></i><strong>${o.name}</strong><small>${G.ownedOutfits.includes(o.id)?(G.character.outfit===o.id?'Usando':'Usar'):'Tienda'}</small></button>`).join('')}</div>
+      <div class="color-pickers"><div><label>Chaqueta</label><div class="color-row">${colors('jacket')}</div></div><div><label>Pelo</label><div class="color-row">${colors('hair')}</div></div><div><label>Estela</label><div class="color-row">${colors('trail')}</div></div></div>
+      <div class="loadout-head powers-head"><strong>PODERES</strong><span>${basic.length}/4 activos</span></div>
       <div class="power-grid">${cards(BASIC_POWER_CATALOG,'basic')}</div>
-      <div class="loadout-head"><strong>NIVELES DE CONCIENCIA</strong><span>Todos bloqueados</span></div>
-      <div class="consciousness-list">${CONSCIOUSNESS_PATH.map((c)=>`<div class="sealed-consciousness" style="--c:${c.color}"><b>▣ ${c.short}</b><small>Habilidades selladas · Descúbrelo en la historia</small></div>`).join('')}</div>
-      <div class="loadout-head"><strong>VESTIMENTA EN VIVO</strong><span>Se refleja al instante</span></div>
-      <div class="outfit-grid">${OUTFIT_CATALOG.map(o=>`<button class="outfit-card ${G.character.outfit===o.id?'selected':''}" data-outfit="${o.id}" ${G.ownedOutfits.includes(o.id)?'':'disabled'}><i style="--j:${o.jacket};--h:${o.hair}"></i><strong>${o.name}</strong><small>${G.ownedOutfits.includes(o.id)?'Usar':'Comprar en tienda'}</small></button>`).join('')}</div>
-      <div class="combo-preview">${activeCombo()?`✦ COMBINACIÓN ACTIVA: <b>${activeCombo()}</b>`:'Combina poderes equipados para descubrir habilidades nuevas.'}</div>
+      <div class="sealed-title">CONCIENCIA <span>Bloqueado</span></div><div class="consciousness-list">${CONSCIOUSNESS_PATH.map((c)=>`<div class="sealed-consciousness" style="--c:${c.color}"><b>▣ ${c.name}</b><small>Se desbloquea en la historia</small></div>`).join('')}</div>
       <button class="btn" id="btnCustomizeBack">Volver</button>`;
     ui.appendChild(p);
+    startCustomizationPreview();
     p.querySelectorAll('[data-power]').forEach(b=>b.onclick=()=>{toggleLoadout(b.dataset.group,b.dataset.power);renderUI();});
     p.querySelectorAll('[data-outfit]').forEach(b=>b.onclick=()=>{const o=OUTFIT_CATALOG.find(x=>x.id===b.dataset.outfit);Object.assign(G.character,{outfit:o.id,jacket:o.jacket,hair:o.hair,trail:o.trail});Save.save();SFX.select();renderUI();});
+    p.querySelectorAll('[data-color-type]').forEach(b=>b.onclick=()=>{G.character[b.dataset.colorType]=b.dataset.color;Save.save();SFX.select();renderUI();});
     id('btnCustomizeBack').onclick=()=>{G.state=G.settingsReturn||'menu';renderUI();};
     return;
   }
@@ -2459,7 +2492,7 @@ function renderUI(){
         <small>✦ Los rangos de conciencia permanecen sellados</small>
       </div>
       <div class="row" style="flex-direction:column">
-        <button class="btn gold" id="btnShop">Tienda · PRÓXIMAMENTE</button>
+        <button class="btn gold" id="btnShop">Tienda</button>
         <button class="btn" id="btnNew">Nueva Aventura</button>
         <button class="btn" id="btnCont" ${hasSave?'':'disabled'}>Continuar</button>
         <button class="btn gold" id="btnJrn">Diario de Recuerdos</button>
