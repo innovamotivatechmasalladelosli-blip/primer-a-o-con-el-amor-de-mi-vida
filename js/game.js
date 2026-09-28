@@ -176,11 +176,12 @@ const Px={
 const Cam={
   x:0,y:0,tx:0,ty:0,
   sx:0,sy:0,
-  follow(p,lvl){
+  follow(p,lvl,dt=1/60){
     this.tx=p.x+p.w/2-VW/2;
     this.ty=p.y+p.h/2-VH/2;
-    this.x+=(this.tx-this.x)*.12;
-    this.y+=(this.ty-this.y)*.12;
+    const blend=1-Math.pow(.88,Math.min(.1,Math.max(0,dt))*60);
+    this.x+=(this.tx-this.x)*blend;
+    this.y+=(this.ty-this.y)*blend;
     this.x=Math.max(0,Math.min(lvl.width-VW,this.x));
     this.y=Math.max(-30,Math.min(lvl.height-VH+30,this.y));
     if(G.shakeT>0){
@@ -412,8 +413,9 @@ function _drawChar(cx,by,f,state,frame,dashing){
   }else if(state==='dash'){
     lean=f*4;legL=-5;legR=-4;hairFlow=f*3;bodyY=-1;
   }else{
-    bodyY=Math.round(Math.sin(frame*1.5)*.5);
-    hairFlow=Math.round(Math.sin(frame*.7)*.3);
+    const breathe=Math.sin(performance.now()/260);
+    bodyY=Math.round(breathe*.7);
+    hairFlow=Math.round(Math.sin(performance.now()/380)*1.2);
   }
   const bx=lean;
 
@@ -1055,8 +1057,7 @@ function drawCinematic(){
 let MG = { active: false };
 function startMinigame() {
   G.state = 'minigame';
-  ui.innerHTML = '';
-  updateTouchControls();
+  renderUI();
   MG = {
     active: true,
     shipY: VH / 2,
@@ -1217,7 +1218,7 @@ function drawMinigame() {
   // Nave
   ctx.save();
   ctx.translate(MG.shipX, MG.shipY);
-  _drawRocket(0, 0);
+  _drawRocket(0, 0, MG.vx, MG.vy, MG.entryT);
   ctx.restore();
 
   // HUD — corazones
@@ -1453,15 +1454,27 @@ function drawBG(theme,cx,cy){
   }
 }
 
-function _drawRocket(rx,ry){
-  // Nave protagonista: silueta grande, cabina, alas y llama legibles en pixel art.
-  ctx.save();ctx.translate(Math.floor(rx),Math.floor(ry));
-  ctx.fillStyle='#111827';ctx.fillRect(-7,-13,15,25);
-  ctx.fillStyle='#e5e7eb';ctx.fillRect(-5,-14,11,23);ctx.fillRect(-8,-7,17,12);
-  ctx.fillStyle='#ef4444';ctx.beginPath();ctx.moveTo(-5,-14);ctx.lineTo(0,-22);ctx.lineTo(6,-14);ctx.fill();
-  ctx.fillStyle='#60a5fa';ctx.fillRect(-3,-9,7,6);ctx.fillStyle='#dbeafe';ctx.fillRect(-2,-8,3,2);
-  ctx.fillStyle='#dc2626';ctx.fillRect(-10,1,5,8);ctx.fillRect(6,1,5,8);
-  ctx.fillStyle='#fbbf24';ctx.fillRect(-4,10,8,4);ctx.fillStyle='#f97316';ctx.fillRect(-2,14,5,5);ctx.fillStyle='#fef3c7';ctx.fillRect(-1,17,2,3);
+function _drawRocket(rx,ry,vx=0,vy=0,phase=0){
+  // Nave protagonista: cuerpo reconocible, cabina grande y propulsión viva.
+  const tilt=Math.max(-.18,Math.min(.18,vx*.018));
+  const pulse=2+Math.sin(phase*18)*1.6+Math.min(2,Math.abs(vy)*.08);
+  ctx.save();ctx.translate(Math.floor(rx),Math.floor(ry));ctx.rotate(tilt);
+  // Estela energética detrás del motor.
+  ctx.globalAlpha=.24;ctx.fillStyle='#60a5fa';ctx.fillRect(-3,18,6,10+pulse);ctx.globalAlpha=.42;ctx.fillStyle='#f472b6';ctx.fillRect(-2,17,4,8+pulse*.7);ctx.globalAlpha=1;
+  // Aletas oscuras y alas rojas, con borde para distinguirlas del fondo.
+  ctx.fillStyle='#111827';ctx.fillRect(-12,-1,5,14);ctx.fillRect(7,-1,5,14);
+  ctx.fillStyle='#dc2626';ctx.fillRect(-11,1,5,9);ctx.fillRect(7,1,5,9);
+  ctx.fillStyle='#f87171';ctx.fillRect(-10,2,2,5);ctx.fillRect(8,2,2,5);
+  // Cuerpo central y punta.
+  ctx.fillStyle='#0f172a';ctx.fillRect(-7,-10,14,24);
+  ctx.fillStyle='#e5e7eb';ctx.fillRect(-5,-12,10,25);ctx.fillRect(-7,-5,14,13);
+  ctx.fillStyle='#cbd5e1';ctx.fillRect(-4,-10,8,18);ctx.fillStyle='#94a3b8';ctx.fillRect(-6,6,12,3);
+  ctx.fillStyle='#ef4444';ctx.beginPath();ctx.moveTo(-5,-12);ctx.lineTo(0,-21);ctx.lineTo(5,-12);ctx.closePath();ctx.fill();
+  ctx.fillStyle='#fca5a5';ctx.fillRect(-1,-17,2,4);
+  // Cabina con reflejo y marco dorado.
+  ctx.fillStyle='#1e3a8a';ctx.fillRect(-4,-7,8,7);ctx.fillStyle='#38bdf8';ctx.fillRect(-3,-6,6,5);ctx.fillStyle='#dbeafe';ctx.fillRect(-2,-5,2,2);ctx.fillStyle='#172554';ctx.fillRect(-4,-1,8,2);
+  // Motor y llama en tres capas para que se perciba el movimiento.
+  ctx.fillStyle='#fbbf24';ctx.fillRect(-4,12,8,4);ctx.fillStyle='#f97316';ctx.fillRect(-3,15,6,Math.ceil(4+pulse));ctx.fillStyle='#fef3c7';ctx.fillRect(-1,16,2,Math.ceil(3+pulse*.65));
   ctx.restore();
 }
 
@@ -2267,7 +2280,7 @@ function loop(){
 
   if(G.state==='level'||G.state==='paused'||G.state==='minigame'){
     Px.update(dt);
-    if(LS.player&&LS.data&&G.state!=='minigame')Cam.follow(LS.player,LS.data);
+    if(LS.player&&LS.data&&G.state!=='minigame')Cam.follow(LS.player,LS.data,dt);
   }
   if(!G.paused)G.timePlayed+=dt;
 
