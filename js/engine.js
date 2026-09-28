@@ -40,6 +40,8 @@ const G={
   levelId:1,
   memories:[],decisions:{},
   powers:{double_jump:false,dash:false,glide:false,rocket:false},
+  equippedBasic:['double_jump','dash'],equippedConsciousness:{I:[]},
+  consciousnessUnlocked:1,character:{accent:'#fbbf24',trail:'#f472b6'},
   timePlayed:0,currentMemory:null,
   paused:false,
   shakeT:0,shakeAmt:0,

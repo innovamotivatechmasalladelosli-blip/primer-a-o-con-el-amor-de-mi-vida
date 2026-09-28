@@ -96,6 +96,8 @@ const SAVE_KEY='entre_recuerdos_v1';
 const Save={
   save(){try{localStorage.setItem(SAVE_KEY,JSON.stringify({
     memories:G.memories,decisions:G.decisions,powers:G.powers,
+    equippedBasic:G.equippedBasic,equippedConsciousness:G.equippedConsciousness,
+    consciousnessUnlocked:G.consciousnessUnlocked,character:G.character,
     timePlayed:G.timePlayed,levelId:G.levelId,
     unlockedEndings:G.unlockedEndings,score:G.score,coins:G.coins,
   }));}catch(e){}},
@@ -104,6 +106,10 @@ const Save={
     if(!d)return false;
     Object.assign(G,{memories:(d.memories||[]).map(Number).filter(n=>n>=1&&n<=12),decisions:d.decisions||{},
       powers:d.powers||{double_jump:false,dash:false,glide:false,rocket:false},
+      equippedBasic:Array.isArray(d.equippedBasic)?d.equippedBasic:['double_jump','dash'],
+      equippedConsciousness:d.equippedConsciousness||{I:[]},
+      consciousnessUnlocked:Math.max(1,Math.min(5,d.consciousnessUnlocked||1)),
+      character:d.character||{accent:'#fbbf24',trail:'#f472b6'},
       timePlayed:d.timePlayed||0,levelId:d.levelId||1,
       unlockedEndings:d.unlockedEndings||[],score:d.score||0,coins:d.coins||0});
     return true;
@@ -998,6 +1004,31 @@ const CONSCIOUSNESS_PATH=[
   {short:'IV · INSTINTOS',name:'Animal',hint:'Sentidos salvajes',color:'#a3e635'},
   {short:'V · SÚPER DIOS',name:'Trascendencia',hint:'El poder total',color:'#fbbf24'}
 ];
+const BASIC_POWER_CATALOG=[
+  {id:'double_jump',name:'Doble salto',icon:'↑↑',hint:'Salta dos veces'},
+  {id:'dash',name:'Impulso',icon:'➜',hint:'Cruza una grieta'},
+  {id:'glide',name:'Planeo',icon:'◇',hint:'Flota al caer'},
+  {id:'rocket',name:'Propulsión',icon:'🚀',hint:'Controla el cohete'},
+  {id:'wall_jump',name:'Salto mural',icon:'↕',hint:'Rebota en paredes'},
+  {id:'magnet',name:'Imán',icon:'✦',hint:'Atrae recuerdos'},
+  {id:'shield',name:'Escudo',icon:'◈',hint:'Resiste un golpe'},
+  {id:'slow_time',name:'Pulso lento',icon:'◌',hint:'Ralentiza el peligro'},
+  {id:'air_step',name:'Paso aéreo',icon:'·',hint:'Corrige tu caída'},
+  {id:'recall',name:'Llamado',icon:'♥',hint:'Encuentra memorias'}
+];
+const CONSCIOUSNESS_POWERS=Object.fromEntries(CONSCIOUSNESS_PATH.map((c,i)=>[String.fromCharCode(73+i),Array.from({length:10},(_,n)=>({id:`c${i+1}_${n+1}`,name:`${c.name} ${n+1}`,icon:c.short.split('·')[1].trim().slice(0,2),hint:c.hint}))]));
+const POWER_COMBOS={double_jump_dash:'Salto relámpago',dash_glide:'Vuelo rasante',magnet_recall:'Memoria brújula',shield_slow_time:'Burbuja de calma'};
+function toggleLoadout(group,id){
+  const target=group==='basic'?(G.equippedBasic||(G.equippedBasic=[])):((G.equippedConsciousness||(G.equippedConsciousness={}))[group]||(G.equippedConsciousness[group]=[]));
+  const at=target.indexOf(id);if(at>=0)target.splice(at,1);else if(target.length<4)target.push(id);else return false;
+  if(group==='basic')G.powers[id]=target.includes(id);
+  Save.save();SFX.select();return true;
+}
+function activeCombo(){
+  const all=[...(G.equippedBasic||[]),...Object.values(G.equippedConsciousness||{}).flat()];
+  for(const [ids,name] of Object.entries(POWER_COMBOS)){const [a,b]=ids.split('_');if(all.includes(a)&&all.includes(b))return name;}
+  return '';
+}
 function drawCinematic(){
   const t=CINE.timer;
   const g=ctx.createLinearGradient(0,0,0,VH);g.addColorStop(0,'#02010a');g.addColorStop(.55,'#12052a');g.addColorStop(1,'#32104f');
@@ -1930,16 +1961,7 @@ function drawMapFull(){
   ctx.fillStyle='#fbbf24';ctx.font='bold 10px "Press Start 2P",monospace';
   ctx.textAlign='center';ctx.fillText('✦ ELIGE UN NIVEL ✦',VW/2,23);ctx.textAlign='left';
   ctx.fillStyle='#c4b5fd';ctx.font='6px "Press Start 2P",monospace';ctx.textAlign='center';
-  ctx.fillText('RUTA DE CONCIENCIA · SIGUE LA SEÑAL',VW/2,40);ctx.textAlign='left';
-  // Ruta de conciencia: pistas de los poderes que se desbloquearán en futuros mundos.
-  ctx.fillStyle='rgba(4,2,14,.72)';ctx.fillRect(16,51,VW-32,19);
-  ctx.strokeStyle='rgba(196,181,253,.3)';ctx.strokeRect(16.5,51.5,VW-33,18);
-  ctx.font='5px "Press Start 2P",monospace';ctx.textAlign='center';
-  CONSCIOUSNESS_PATH.forEach((c,i)=>{
-    const x=18+i*92;
-    ctx.fillStyle=c.color;ctx.fillRect(x-4,57,4,4);ctx.fillText(c.short,x+44,61);
-  });
-  ctx.textAlign='left';
+  ctx.fillText('ELIGE TU SIGUIENTE UMBRAL',VW/2,40);ctx.textAlign='left';
 
   // Camino punteado animado
   ctx.save();
@@ -2356,6 +2378,25 @@ function renderUI(){
     return;
   }
 
+  if(G.state==='customize'){
+    const p=mk('div','panel customize-panel');
+    const basic=(G.equippedBasic||[]);
+    const slot=(id,group)=>((group==='basic'?basic:(G.equippedConsciousness?.[group]||[])).includes(id));
+    const cards=(items,group)=>items.map(x=>`<button class="power-card ${slot(x.id,group)?'equipped':''}" data-power="${x.id}" data-group="${group}" ${group!=='basic'&&Number(group.charCodeAt(0)-64)>G.consciousnessUnlocked?'disabled':''}><b>${x.icon}</b><strong>${x.name}</strong><small>${x.hint}</small></button>`).join('');
+    p.innerHTML=`<h2 style="color:#fbbf24;font-size:14px;text-shadow:none">Personalizar personaje</h2>
+      <p class="custom-subtitle">Arma tu estilo. Cada rama permite equipar hasta <b>4 poderes</b>.</p>
+      <div class="loadout-head"><strong>BÁSICOS</strong><span>${basic.length}/4 equipados</span></div>
+      <div class="power-grid">${cards(BASIC_POWER_CATALOG,'basic')}</div>
+      <div class="loadout-head"><strong>NIVELES DE CONCIENCIA</strong><span>10 poderes por nivel</span></div>
+      <div class="consciousness-list">${CONSCIOUSNESS_PATH.map((c,i)=>{const g=String.fromCharCode(73+i);return `<details ${i===0?'open':''}><summary style="--c:${c.color}">${c.short} <small>${i+1<=G.consciousnessUnlocked?'DESPIERTO':'BLOQUEADO'}</small></summary><div class="power-grid">${cards(CONSCIOUSNESS_POWERS[g],g)}</div></details>`}).join('')}</div>
+      <div class="combo-preview">${activeCombo()?`✦ COMBINACIÓN ACTIVA: <b>${activeCombo()}</b>`:'Combina poderes equipados para descubrir habilidades nuevas.'}</div>
+      <button class="btn" id="btnCustomizeBack">Volver</button>`;
+    ui.appendChild(p);
+    p.querySelectorAll('[data-power]').forEach(b=>b.onclick=()=>{toggleLoadout(b.dataset.group,b.dataset.power);renderUI();});
+    id('btnCustomizeBack').onclick=()=>{G.state=G.settingsReturn||'menu';renderUI();};
+    return;
+  }
+
   // ── ACCESO DIRECTO DENTRO DEL NIVEL ──
   if(G.state==='level'||G.state==='minigame'){
     const levelMenu=mk('button','btn sm level-menu-button');
@@ -2420,6 +2461,7 @@ function renderUI(){
       </div>
       <div class="row" style="margin-top:10px">
         <button class="btn sm" id="btnHelp">Ayuda</button>
+        <button class="btn sm" id="btnCustomize">Personalizar</button>
         <button class="btn sm" id="btnSettings">Configuración</button>
       </div>
       <p style="font-size:10px;color:rgba(130,90,160,.6);margin-top:14px;letter-spacing:2px">
@@ -2430,7 +2472,7 @@ function renderUI(){
 
     id('btnNew').onclick=()=>{
       Object.assign(G,{memories:[],decisions:{},
-        powers:{double_jump:false,dash:false,glide:false,rocket:false},
+        powers:{double_jump:false,dash:false,glide:false,rocket:false},equippedBasic:['double_jump','dash'],equippedConsciousness:{I:[]},consciousnessUnlocked:1,character:{accent:'#fbbf24',trail:'#f472b6'},
         levelId:1,timePlayed:0,unlockedEndings:[],score:0,coins:0});
       Save.clear();SFX.select();G.state='map';renderUI();
     };
@@ -2438,6 +2480,7 @@ function renderUI(){
       if(Save.load()){SFX.select();G.state='map';renderUI();}
     };
     id('btnJrn').onclick=openJournal;
+    id('btnCustomize').onclick=()=>{G.settingsReturn='menu';G.state='customize';renderUI();};
     id('btnSettings').onclick=()=>{G.settingsReturn='menu';G.state='settings';renderUI();};
     id('btnShop').onclick=()=>{
       SFX.select();
@@ -2571,7 +2614,7 @@ function renderUI(){
     ui.appendChild(p);
     id('btnRes').onclick=()=>{G.state='level';G.paused=false;renderUI();};
     id('btnPSettings').onclick=()=>{G.settingsReturn='paused';G.state='settings';renderUI();};
-    id('btnPMenu').onclick=()=>{Save.save();G.state='menu';G.paused=false;renderUI();};
+    id('btnPMenu').onclick=()=>{Save.save();G.state='map';G.paused=false;renderUI();};
     return;
   }
 
