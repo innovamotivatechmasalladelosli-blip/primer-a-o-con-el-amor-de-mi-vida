@@ -2360,8 +2360,8 @@ function renderUI(){
   if(G.state==='level'||G.state==='minigame'){
     const levelMenu=mk('button','btn sm level-menu-button');
     levelMenu.innerHTML='<span class="level-menu-icon" aria-hidden="true">☰</span><span>Menú</span>';
-    levelMenu.setAttribute('aria-label','Salir al menú principal');
-    levelMenu.onclick=()=>{Save.save();SFX.select();G.paused=false;G.state='menu';renderUI();};
+    levelMenu.setAttribute('aria-label','Abrir menú del nivel');
+    levelMenu.onclick=()=>{Save.save();SFX.select();G.paused=true;G.state='paused';renderUI();};
     ui.appendChild(levelMenu);
   }
 
@@ -2407,20 +2407,10 @@ function renderUI(){
     const p=mk('div','panel');
     p.innerHTML=`
       <div class="subtitle">Un año · Un amor · Un viaje</div>
-      <div class="lore-box" style="font-size:12px;margin:12px 0;text-align:center;">
-        Hecho a mano, pixel a pixel,<br>con todo mi amor para ti.<br>
-        <span style="color:#fbbf24;font-style:normal">Recoge los 12 recuerdos · Despierta el multiverso.</span>
-      </div>
-      <div class="lore-box" style="font-size:10px;line-height:1.45;text-align:left;margin-bottom:10px">
-        <strong style="color:#f472b6;font-style:normal">La señal:</strong><br>
-        Una entidad está infestando mentes y recuerdos. Cada memoria recuperada devuelve un fragmento de identidad; las amistades que encuentres te acompañarán hasta los niveles espirituales.
-      </div>
-      <div class="lore-box" style="font-size:9px;line-height:1.55;text-align:left;margin:8px 0">
-        <strong style="color:#fbbf24;font-style:normal">Ruta de conciencia:</strong><br>
-        <span style="color:#60a5fa">⚡ Electricidad</span> · <span style="color:#fb7185">🔥 Fuego</span> ·
-        <span style="color:#38bdf8">💧 Agua</span> · <span style="color:#a3e635">🐾 Instintos</span> ·
-        <span style="color:#fbbf24">✦ Súper Dios</span><br>
-        <span style="color:rgba(233,213,255,.65)">Cada nivel revela una nueva forma de resistir a la entidad.</span>
+      <div class="menu-lore">
+        <strong>LA SEÑAL DESPERTÓ</strong>
+        <span>Recupera recuerdos, encuentra amistades y resiste a la entidad que invade las mentes.</span>
+        <small>⚡ Fuego · 💧 Agua · 🐾 Instintos · ✦ Súper Dios</small>
       </div>
       <div class="row" style="flex-direction:column">
         <button class="btn gold" id="btnShop">Tienda · PRÓXIMAMENTE</button>
@@ -2572,23 +2562,16 @@ function renderUI(){
     const p=mk('div','panel');
     p.innerHTML=`
       <h2 style="color:#fff;font-size:14px;text-shadow:none;">Pausa</h2>
-      <div class="info-row">
-        <div class="chip"><span>Recuerdos:</span><span style="color:#fbbf24">${G.memories.length}/12</span></div>
-        <div class="chip"><span>Puntos:</span><span style="color:#fbbf24">${G.score}</span></div>
-        <div class="chip"><span>Tiempo:</span><span>${Math.floor(LS.time/60)}:${String(Math.floor(LS.time%60)).padStart(2,'0')}</span></div>
-      </div>
       <div class="row" style="flex-direction:column;margin-top:6px">
-        <button class="btn" id="btnRes">Reanudar</button>
-        <button class="btn" id="btnPJrn">Diario</button>
-        <button class="btn" id="btnPMap">Volver al Mapa</button>
-        <button class="btn sm" id="btnPMenu" style="min-width:200px">Menú Principal</button>
+        <button class="btn" id="btnRes">▶ Continuar</button>
+        <button class="btn" id="btnPSettings">⚙ Configuración</button>
+        <button class="btn gold" id="btnPMenu">Salir</button>
       </div>
     `;
     ui.appendChild(p);
     id('btnRes').onclick=()=>{G.state='level';G.paused=false;renderUI();};
-    id('btnPJrn').onclick=openJournal;
-    id('btnPMap').onclick=()=>{G.state='map';G.paused=false;renderUI();};
-    id('btnPMenu').onclick=()=>{G.state='title';G.paused=false;renderUI();};
+    id('btnPSettings').onclick=()=>{G.settingsReturn='paused';G.state='settings';renderUI();};
+    id('btnPMenu').onclick=()=>{Save.save();G.state='menu';G.paused=false;renderUI();};
     return;
   }
 
