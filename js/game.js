@@ -110,7 +110,7 @@ const Save={
       equippedBasic:Array.isArray(d.equippedBasic)?d.equippedBasic:['double_jump','dash'],
       equippedConsciousness:d.equippedConsciousness||{I:[]},
       consciousnessUnlocked:0,
-      character:Object.assign({accent:'#fbbf24',trail:'#f472b6',hair:'#d97832',jacket:'#7c3aed',outfit:'aurora'},d.character||{}),
+      character:Object.assign({accent:'#fbbf24',trail:'#f472b6',hair:'#d97832',jacket:'#8b5e3c',outfit:'aurora'},d.character||{}),
       ownedBasic:Array.isArray(d.ownedBasic)?d.ownedBasic:['double_jump','dash','glide','rocket'],
       ownedOutfits:Array.isArray(d.ownedOutfits)?d.ownedOutfits:['aurora'],
       timePlayed:d.timePlayed||0,levelId:d.levelId||1,
@@ -1039,7 +1039,7 @@ const BASIC_POWER_CATALOG=[
   {id:'recall',name:'Llamado',icon:'♥',hint:'Encuentra memorias',price:180}
 ];
 const OUTFIT_CATALOG=[
-  {id:'aurora',name:'Aurora',price:0,jacket:'#8b5e3c',hair:'#d97832',trail:'#f472b6'},
+  {id:'aurora',name:'Alison',price:0,jacket:'#8b5e3c',hair:'#d97832',trail:'#f472b6'},
   {id:'cosmic',name:'Cosmos',price:120,jacket:'#0f766e',hair:'#f59e0b',trail:'#38bdf8'},
   {id:'ember',name:'Brasa',price:150,jacket:'#b45309',hair:'#ef4444',trail:'#fb7185'},
   {id:'void',name:'Vacío',price:200,jacket:'#312e81',hair:'#c084fc',trail:'#a78bfa'},
@@ -2431,7 +2431,7 @@ function renderUI(){
     const cards=(items,group)=>items.map(x=>{const owned=group==='basic'&&G.ownedBasic.includes(x.id);return `<button class="power-card ${slot(x.id,group)?'equipped':''} ${owned?'':'locked'}" data-power="${x.id}" data-group="${group}" ${group==='basic'&&!owned?'disabled':''}><b>${x.icon}</b><strong>${x.name}</strong><small>${owned?(slot(x.id,group)?'Activo':'Usar'):'Tienda'}</small></button>`}).join('');
     const colors=(type)=>CUSTOM_COLORS[type].map(([name,value])=>`<button class="color-chip ${G.character[type]===value?'selected':''}" data-color-type="${type}" data-color="${value}" style="--swatch:${value}" aria-label="${name}"><i></i><small>${name}</small></button>`).join('');
     p.innerHTML=`<div class="custom-top"><div><div class="eyebrow">ARMARIO</div><h2>Tu personaje</h2><p class="custom-subtitle">Toca algo para verlo al instante.</p></div><div class="live-badge">● EN VIVO</div></div>
-      <div class="custom-stage"><canvas id="custom-preview" width="180" height="220" aria-label="Vista previa del personaje"></canvas><div class="stage-copy"><strong>${OUTFIT_CATALOG.find(o=>o.id===G.character.outfit)?.name||'Aurora'}</strong><small>Tu estilo actual</small><span class="stage-combo">${activeCombo()?`Combo: ${activeCombo()}`:'Elige hasta 4 poderes'}</span></div></div>
+      <div class="custom-stage"><canvas id="custom-preview" width="180" height="220" aria-label="Vista previa del personaje"></canvas><div class="stage-copy"><strong>${OUTFIT_CATALOG.find(o=>o.id===G.character.outfit)?.name||'Alison'}</strong><small>Tu estilo actual</small><span class="stage-combo">${activeCombo()?`Combo: ${activeCombo()}`:'Elige hasta 4 poderes'}</span></div></div>
       <div class="loadout-head"><strong>ROPA</strong><span>Elige tu conjunto</span></div>
       <div class="outfit-grid">${OUTFIT_CATALOG.map(o=>`<button class="outfit-card ${G.character.outfit===o.id?'selected':''}" data-outfit="${o.id}" ${G.ownedOutfits.includes(o.id)?'':'disabled'}><i style="--j:${o.jacket};--h:${o.hair}"></i><strong>${o.name}</strong><small>${G.ownedOutfits.includes(o.id)?(G.character.outfit===o.id?'Usando':'Usar'):'Tienda'}</small></button>`).join('')}</div>
       <div class="color-pickers"><div><label>Chaqueta</label><div class="color-row">${colors('jacket')}</div></div><div><label>Pelo</label><div class="color-row">${colors('hair')}</div></div><div><label>Estela</label><div class="color-row">${colors('trail')}</div></div></div>
