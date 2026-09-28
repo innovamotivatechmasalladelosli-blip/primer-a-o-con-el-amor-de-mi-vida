@@ -44,6 +44,7 @@ const touchMap = {
 };
 const touchControls=document.getElementById('touch-controls');
 const hasTouchInput=navigator.maxTouchPoints>0||window.matchMedia('(pointer: coarse)').matches;
+const isMobileUI=()=>hasTouchInput||document.body.dataset.layout==='small';
 const activeTouchPointers=new Map();
 const touchKeyCounts=Object.fromEntries(Object.values(touchMap).map(key=>[key,0]));
 function updateTouchControls(){
@@ -1850,7 +1851,7 @@ function drawHUD(){
   ctx.fillText('⏱ '+mm+':'+ss,6,VH-10);
 
   // En celular los botones táctiles ya muestran las acciones; no duplicar controles de computadora.
-  if(document.body.dataset.layout!=='small'){
+  if(!isMobileUI()){
     ctx.fillStyle='rgba(200,150,220,.4)';ctx.font='7px Nunito,sans-serif';
     ctx.textAlign='right';
     ctx.fillText('A/D mover · ESPACIO saltar · J diario · ESC pausa',VW-4,VH-10);
@@ -1897,13 +1898,13 @@ function renderLevel(){
 
 // ═══════════════════════════════════════════════════════════
 const MAP_NODES=[
-  {id:1,name:'GALAXIA',icon:'🚀',x:58,y:205,color:'#7c3aed'},
-  {id:'story-1',name:'HISTORIA I',icon:'📖',kind:'story',x:130,y:205,color:'#f59e0b'},
-  {id:2,name:'CIUDAD',icon:'🌆',x:202,y:205,color:'#be185d'},
-  {id:'story-2',name:'HISTORIA II',icon:'📖',kind:'story',x:274,y:205,color:'#f59e0b'},
-  {id:3,name:'BOSQUE',icon:'🌲',x:346,y:205,color:'#15803d'},
-  {id:'story-3',name:'HISTORIA III',icon:'📖',kind:'story',x:274,y:140,color:'#f59e0b'},
-  {id:4,name:'ESTRELLAS',icon:'⭐',x:410,y:140,color:'#1d4ed8'},
+  {id:1,name:'GALAXIA',icon:'🚀',x:55,y:190,color:'#7c3aed'},
+  {id:'story-1',name:'HISTORIA I',icon:'📖',kind:'story',x:125,y:190,color:'#f59e0b'},
+  {id:2,name:'CIUDAD',icon:'🌆',x:195,y:190,color:'#be185d'},
+  {id:'story-2',name:'HISTORIA II',icon:'📖',kind:'story',x:265,y:190,color:'#f59e0b'},
+  {id:3,name:'BOSQUE',icon:'🌲',x:335,y:190,color:'#15803d'},
+  {id:'story-3',name:'HISTORIA III',icon:'📖',kind:'story',x:215,y:112,color:'#f59e0b'},
+  {id:4,name:'ESTRELLAS',icon:'⭐',x:355,y:112,color:'#1d4ed8'},
 ];
 
 function drawMapFull(){
@@ -1929,7 +1930,7 @@ function drawMapFull(){
   ctx.fillStyle='#fbbf24';ctx.font='bold 10px "Press Start 2P",monospace';
   ctx.textAlign='center';ctx.fillText('✦ ELIGE UN NIVEL ✦',VW/2,23);ctx.textAlign='left';
   ctx.fillStyle='#c4b5fd';ctx.font='6px "Press Start 2P",monospace';ctx.textAlign='center';
-  ctx.fillText('NUEVO MAPA CADA SEMANA · SIGUE LA SEÑAL',VW/2,40);ctx.textAlign='left';
+  ctx.fillText('RUTA DE CONCIENCIA · SIGUE LA SEÑAL',VW/2,40);ctx.textAlign='left';
   // Ruta de conciencia: pistas de los poderes que se desbloquearán en futuros mundos.
   ctx.fillStyle='rgba(4,2,14,.72)';ctx.fillRect(16,51,VW-32,19);
   ctx.strokeStyle='rgba(196,181,253,.3)';ctx.strokeRect(16.5,51.5,VW-33,18);
@@ -2432,7 +2433,7 @@ function renderUI(){
         <button class="btn sm" id="btnSettings">Configuración</button>
       </div>
       <p style="font-size:10px;color:rgba(130,90,160,.6);margin-top:14px;letter-spacing:2px">
-        Presiona J para el diario
+        ${isMobileUI()?'Toca los botones para comenzar':'Presiona J para el diario'}
       </p>
     `;
     ui.appendChild(p);
@@ -2463,20 +2464,21 @@ function renderUI(){
       const h=mk('div','panel');
       h.style.maxWidth='540px';
       h.innerHTML=`
-        <h2 style="color:#fff;font-size:14px;text-shadow:none;">Cómo Jugar</h2>
-        <div class="info-row">
+        <h2 style="color:#fff;font-size:14px;text-shadow:none;">Cómo jugar</h2>
+        ${isMobileUI()?`<div class="mobile-guide">
+          <div class="mobile-guide-card"><span class="guide-icon">◀ ▶</span><strong>Mover</strong><small>Usa los botones morados</small></div>
+          <div class="mobile-guide-card"><span class="guide-icon">▲</span><strong>Saltar</strong><small>Toca para elevarte</small></div>
+          <div class="mobile-guide-card"><span class="guide-icon">▼</span><strong>Agacharse</strong><small>Mantén para bajar</small></div>
+        </div>`:`<div class="info-row">
           <div class="chip"><span>A / D</span><span>Mover</span></div>
           <div class="chip"><span>ESPACIO</span><span>Saltar</span></div>
           <div class="chip"><span>ESC</span><span>Pausa</span></div>
         </div>
-        <div class="info-row">
-          <div class="chip"><span>J</span><span>Diario</span></div>
-        </div>
+        <div class="info-row"><div class="chip"><span>J</span><span>Diario</span></div></div>`}
         <div class="lore-box" style="text-align:left">
           <strong style="color:#fbbf24;font-style:normal">Objetivo:</strong><br>
           • Recoge las polaroids — son tus recuerdos.<br>
-          • Esquiva a los enemigos.<br>
-          • Esquiva meteoritos y enemigos.<br>
+          • Esquiva a los enemigos y meteoritos.<br>
           • Recoge corazones (+1 vida) y estrellas (+puntos).<br>
           • Llega a la estrella final para completar el nivel.
         </div>
@@ -2491,7 +2493,7 @@ function renderUI(){
   // ── MAPA ──
   if(G.state==='map'){
     const row=mk('div','map-actions');
-    ['Menú','Configuración','Diario'].forEach((lb,i)=>{
+    ['⌂ Menú','⚙ Ajustes','✦ Diario'].forEach((lb,i)=>{
       const b=mk('button','btn sm');b.textContent=lb;
       b.onclick=[
         ()=>{SFX.select();G.state='menu';renderUI();},
