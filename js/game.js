@@ -428,18 +428,18 @@ function _drawChar(cx,by,f,state,frame,dashing){
   // ── PELO TRASERO (cae detrás, largo y ondulado) ──
   const hb=-28+bodyY;
   // Masa principal del pelo (detrás del cuerpo)
-  r(-8+bx,hb,16,22,PAL.hair);
+  r(-8+bx,hb,16,18,PAL.hair);
   // Mechón izquierdo exterior
-  r(-9+bx+hairFlow,hb+5,2,20,PAL.hair);
-  r(-10+bx,hb+12,2,14,PAL.hairLo);
+  r(-9+bx+hairFlow,hb+5,2,16,PAL.hair);
+  r(-10+bx,hb+10,2,11,PAL.hairLo);
   // Mechón derecho exterior
-  r(7+bx-hairFlow,hb+5,2,20,PAL.hair);
-  r(8+bx,hb+12,2,14,PAL.hairLo);
+  r(7+bx-hairFlow,hb+5,2,16,PAL.hair);
+  r(8+bx,hb+10,2,11,PAL.hairLo);
   // Puntas onduladas
-  r(-8+bx+hairFlow,hb+21,3,3,PAL.hairLo);
-  r(5+bx-hairFlow,hb+21,3,3,PAL.hairLo);
-  r(-6+bx,hb+24,2,2,PAL.hairEdge);
-  r(4+bx,hb+24,2,2,PAL.hairEdge);
+  r(-8+bx+hairFlow,hb+17,3,3,PAL.hairLo);
+  r(5+bx-hairFlow,hb+17,3,3,PAL.hairLo);
+  r(-6+bx,hb+20,2,2,PAL.hairEdge);
+  r(4+bx,hb+20,2,2,PAL.hairEdge);
   // Volumen del pelo en la espalda (más gordo)
   r(-8+bx,hb+8,16,1,PAL.hairLo);
 
@@ -545,10 +545,10 @@ function _drawChar(cx,by,f,state,frame,dashing){
   r(1+bx,hy+6,2,1,PAL.hair);
   r(4+bx,hy+6,2,2,PAL.hair);
   // Mechones laterales que enmarcan
-  r(-7+bx,hy+2,1,9,PAL.hair);
-  r(-7+bx,hy+9,1,4,PAL.hairEdge);
-  r(6+bx,hy+2,1,9,PAL.hair);
-  r(6+bx,hy+9,1,4,PAL.hairEdge);
+  r(-7+bx,hy+2,1,7,PAL.hair);
+  r(-7+bx,hy+7,1,3,PAL.hairEdge);
+  r(6+bx,hy+2,1,7,PAL.hair);
+  r(6+bx,hy+7,1,3,PAL.hairEdge);
   // Sombra debajo del flequillo
   r(-5+bx,hy+6,10,1,PAL.hairLo);
   // Relieve en el pelo
@@ -587,11 +587,12 @@ class Walker{
     this.dir=o.dir||1;this.range=o.range||60;
     this.ox=x;this.spd=o.spd||.65;
     this.dead=false;this.hp=2;this.hitT=0;this.onGround=false;this.alertT=0;
-    this.animT=Math.random()*10;this.kbT=0;
+    this.animT=Math.random()*10;this.kbT=0;this.jumpCd=0;
   }
   update(dt,lvl,p){
     if(this.dead)return;
     if(this.hitT>0)this.hitT-=dt;
+    if(this.jumpCd>0)this.jumpCd-=dt;
     if(this.kbT>0){this.kbT-=dt;this.x+=this.vx*60*dt;}
     else{
       const dx=p.x-(this.x+this.w/2),dy=Math.abs(p.y-this.y);
@@ -600,6 +601,7 @@ class Walker{
       const probeX=this.dir>0?this.x+this.w+3:this.x-3;
       const support=lvl.platforms.some(pl=>probeX>pl.x&&probeX<pl.x+pl.w&&Math.abs((this.y+this.h)-pl.y)<9);
       if(this.onGround&&!support){this.dir*=-1;this.vx=this.dir*this.spd;}
+      if(this.onGround&&this.alertT>0&&this.jumpCd<=0&&p.y<this.y-18&&Math.abs(dx)<130){this.vy=-4.1;this.onGround=false;this.jumpCd=1.15;}
       if(Math.abs(this.x-this.ox)>this.range){
         this.dir*=-1;this.x=this.ox+Math.sign(this.x-this.ox)*this.range;
       }

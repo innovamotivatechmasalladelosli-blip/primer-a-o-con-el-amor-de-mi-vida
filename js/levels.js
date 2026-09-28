@@ -2,8 +2,8 @@
 const PAL={
   // Piel clara cálida (un poco más blanca)
   skin:'#e8b89a',skinHi:'#f5d4b8',skinSh:'#c48a68',
-  // Pelo rubio con toque pelirrojo
-  hair:'#d4a040',hairHi:'#e8c068',hairLo:'#b07828',hairEdge:'#c48838',
+  // Pelo anaranjado cálido, con luces cobrizas
+  hair:'#d97832',hairHi:'#f0a34a',hairLo:'#a84d1e',hairEdge:'#c56728',
   // Chaqueta café/marrón
   jkt:'#8B5E3C',jktHi:'#a87048',jktSh:'#5a3820',jktDk:'#3d2010',
   // Forro de la chaqueta (crema)
@@ -20,4 +20,3 @@ const PAL={
   // Arete
   earring:'#d4a020',
 };
-

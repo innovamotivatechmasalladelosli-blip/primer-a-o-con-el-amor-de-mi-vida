@@ -173,8 +173,20 @@ body[data-layout="large"] .touch-cluster{gap:12px;}
   .lore-box{margin:7px 0;padding:8px 10px;}
   .touch-cluster{bottom:max(8px,env(safe-area-inset-bottom));}
 }
+@media(max-height:600px) and (orientation:landscape){
+  .level-menu-button{top:6px;right:6px;min-width:40px!important;width:40px;height:40px;min-height:40px;padding:0;font-size:0;border-width:1px;border-radius:50%;opacity:.78;}
+  .level-menu-button .level-menu-icon{font-size:18px;}
+  .level-menu-button>span:not(.level-menu-icon){display:none;}
+}
 @media(prefers-reduced-motion:reduce){
   *,*::before,*::after{scroll-behavior:auto!important;animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;}
+}
+
+/* En móvil horizontal el ancho puede superar 600px; pointer:coarse mantiene el HUD compacto. */
+@media(pointer:coarse){
+  .level-menu-button{top:max(7px,env(safe-area-inset-top));right:max(7px,env(safe-area-inset-right));min-width:40px!important;width:40px;height:40px;min-height:40px;padding:0;font-size:0;border-width:1px;border-radius:50%;opacity:.78;}
+  .level-menu-button .level-menu-icon{font-size:18px;}
+  .level-menu-button>span:not(.level-menu-icon){display:none;}
 }
 
 /* Controles táctiles: respuesta consistente y sin gestos accidentales del navegador. */
