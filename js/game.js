@@ -98,6 +98,7 @@ const Save={
     memories:G.memories,decisions:G.decisions,powers:G.powers,
     equippedBasic:G.equippedBasic,equippedConsciousness:G.equippedConsciousness,
     consciousnessUnlocked:G.consciousnessUnlocked,character:G.character,
+    ownedBasic:G.ownedBasic,ownedOutfits:G.ownedOutfits,
     timePlayed:G.timePlayed,levelId:G.levelId,
     unlockedEndings:G.unlockedEndings,score:G.score,coins:G.coins,
   }));}catch(e){}},
@@ -108,8 +109,10 @@ const Save={
       powers:d.powers||{double_jump:false,dash:false,glide:false,rocket:false},
       equippedBasic:Array.isArray(d.equippedBasic)?d.equippedBasic:['double_jump','dash'],
       equippedConsciousness:d.equippedConsciousness||{I:[]},
-      consciousnessUnlocked:Math.max(1,Math.min(5,d.consciousnessUnlocked||1)),
-      character:d.character||{accent:'#fbbf24',trail:'#f472b6'},
+      consciousnessUnlocked:0,
+      character:Object.assign({accent:'#fbbf24',trail:'#f472b6',hair:'#d97832',jacket:'#7c3aed',outfit:'aurora'},d.character||{}),
+      ownedBasic:Array.isArray(d.ownedBasic)?d.ownedBasic:['double_jump','dash','glide','rocket'],
+      ownedOutfits:Array.isArray(d.ownedOutfits)?d.ownedOutfits:['aurora'],
       timePlayed:d.timePlayed||0,levelId:d.levelId||1,
       unlockedEndings:d.unlockedEndings||[],score:d.score||0,coins:d.coins||0});
     return true;
@@ -405,6 +408,9 @@ function _drawChar(cx,by,f,state,frame,dashing){
     const dx=f===1?cx+x:cx-x-w;
     ctx.fillRect(Math.floor(dx),Math.floor(by+y),w,h);
   };
+  const custom=G.character||{};
+  const customHair=custom.hair||PAL.hair;
+  const customJacket=custom.jacket||PAL.jkt;
 
   // Animación
   let legL=0,legR=0,armL=0,armR=0,bodyY=0,hairFlow=0,lean=0;
@@ -435,12 +441,12 @@ function _drawChar(cx,by,f,state,frame,dashing){
   // ── PELO TRASERO (cae detrás, largo y ondulado) ──
   const hb=-28+bodyY;
   // Masa principal del pelo (detrás del cuerpo)
-  r(-8+bx,hb,16,18,PAL.hair);
+  r(-8+bx,hb,16,18,customHair);
   // Mechón izquierdo exterior
-  r(-9+bx+hairFlow,hb+5,2,16,PAL.hair);
+  r(-9+bx+hairFlow,hb+5,2,16,customHair);
   r(-10+bx,hb+10,2,11,PAL.hairLo);
   // Mechón derecho exterior
-  r(7+bx-hairFlow,hb+5,2,16,PAL.hair);
+  r(7+bx-hairFlow,hb+5,2,16,customHair);
   r(8+bx,hb+10,2,11,PAL.hairLo);
   // Puntas onduladas
   r(-8+bx+hairFlow,hb+17,3,3,PAL.hairLo);
@@ -465,7 +471,7 @@ function _drawChar(cx,by,f,state,frame,dashing){
   r(2+legR,-2+bodyY,4,1,PAL.bootHi);
 
   // ── TORSO: CHAQUETA ──
-  r(-7+bx,-20+bodyY,14,11,PAL.jkt);
+  r(-7+bx,-20+bodyY,14,11,customJacket);
   r(-7+bx,-20+bodyY,14,1,PAL.jktHi);   // highlight top
   r(-7+bx,-10+bodyY,14,1,PAL.jktSh);   // shadow bottom
   r(-7+bx,-20+bodyY,1,11,PAL.jktSh);   // shadow left
@@ -473,7 +479,7 @@ function _drawChar(cx,by,f,state,frame,dashing){
 
   // Forro de la capucha / collar
   r(-5+bx,-22+bodyY,10,2,PAL.jktSh);
-  r(-4+bx,-23+bodyY,8,1,PAL.jkt);
+  r(-4+bx,-23+bodyY,8,1,customJacket);
   // Forro interior (crema) visible en el frente
   r(-1+bx,-22+bodyY,3,3,PAL.fur);
 
@@ -492,7 +498,7 @@ function _drawChar(cx,by,f,state,frame,dashing){
   r(-9+bx,-11+bodyY-armL,2,2,PAL.skinSh); // mano
 
   // Brazo delantero
-  r(7+bx,-19+bodyY+armR,2,9,PAL.jkt);
+  r(7+bx,-19+bodyY+armR,2,9,customJacket);
   r(7+bx,-19+bodyY+armR,2,1,PAL.jktHi);  // highlight
   r(7+bx,-11+bodyY+armR,2,2,PAL.skin);    // mano
 
@@ -544,17 +550,17 @@ function _drawChar(cx,by,f,state,frame,dashing){
 
   // ── PELO FRONTAL (encima de la cara) ──
   // Flequillo
-  r(-6+bx,hy,12,7,PAL.hair);
+  r(-6+bx,hy,12,7,customHair);
   r(-5+bx,hy,10,1,PAL.hairHi);
   // Puntas irregulares del flequillo
-  r(-6+bx,hy+6,3,2,PAL.hair);
-  r(-2+bx,hy+6,2,1,PAL.hair);
-  r(1+bx,hy+6,2,1,PAL.hair);
-  r(4+bx,hy+6,2,2,PAL.hair);
+  r(-6+bx,hy+6,3,2,customHair);
+  r(-2+bx,hy+6,2,1,customHair);
+  r(1+bx,hy+6,2,1,customHair);
+  r(4+bx,hy+6,2,2,customHair);
   // Mechones laterales que enmarcan
-  r(-7+bx,hy+2,1,7,PAL.hair);
+  r(-7+bx,hy+2,1,7,customHair);
   r(-7+bx,hy+7,1,3,PAL.hairEdge);
-  r(6+bx,hy+2,1,7,PAL.hair);
+  r(6+bx,hy+2,1,7,customHair);
   r(6+bx,hy+7,1,3,PAL.hairEdge);
   // Sombra debajo del flequillo
   r(-5+bx,hy+6,10,1,PAL.hairLo);
@@ -562,6 +568,9 @@ function _drawChar(cx,by,f,state,frame,dashing){
   r(-4+bx,hy+1,2,2,PAL.hairHi);
 
   // ── Corazón flotante (idle) ──
+  if(custom.outfit==='cosmic'){r(-9+bx,-18+bodyY,2,6,'#38bdf8');r(7+bx,-18+bodyY,2,6,'#38bdf8');}
+  if(custom.outfit==='ember'){r(-8+bx,-11+bodyY,16,2,'#f59e0b');}
+  if(custom.outfit==='void'){r(-8+bx,-21+bodyY,16,2,'#c084fc');}
   if(state==='idle'&&Math.floor(performance.now()/500)%2===0){
     const hx=Math.floor(cx-f*11);
     const hy2=Math.floor(by+hy-8+Math.sin(performance.now()/350)*1.5);
@@ -575,7 +584,7 @@ function _drawChar(cx,by,f,state,frame,dashing){
   if(dashing){
     ctx.globalAlpha=.55;
     for(let i=1;i<=5;i++){
-      ctx.fillStyle=i%2?'#ffc857':'#f472b6';
+      ctx.fillStyle=i%2?'#ffc857':(custom.trail||'#f472b6');
       ctx.fillRect(cx-f*(10+i*4),by-18-i*1,2,12);
     }
     ctx.globalAlpha=1;
@@ -1005,21 +1014,28 @@ const CONSCIOUSNESS_PATH=[
   {short:'V · SÚPER DIOS',name:'Trascendencia',hint:'El poder total',color:'#fbbf24'}
 ];
 const BASIC_POWER_CATALOG=[
-  {id:'double_jump',name:'Doble salto',icon:'↑↑',hint:'Salta dos veces'},
-  {id:'dash',name:'Impulso',icon:'➜',hint:'Cruza una grieta'},
-  {id:'glide',name:'Planeo',icon:'◇',hint:'Flota al caer'},
-  {id:'rocket',name:'Propulsión',icon:'🚀',hint:'Controla el cohete'},
-  {id:'wall_jump',name:'Salto mural',icon:'↕',hint:'Rebota en paredes'},
-  {id:'magnet',name:'Imán',icon:'✦',hint:'Atrae recuerdos'},
-  {id:'shield',name:'Escudo',icon:'◈',hint:'Resiste un golpe'},
-  {id:'slow_time',name:'Pulso lento',icon:'◌',hint:'Ralentiza el peligro'},
-  {id:'air_step',name:'Paso aéreo',icon:'·',hint:'Corrige tu caída'},
-  {id:'recall',name:'Llamado',icon:'♥',hint:'Encuentra memorias'}
+  {id:'double_jump',name:'Doble salto',icon:'↑↑',hint:'Salta dos veces',price:0},
+  {id:'dash',name:'Impulso',icon:'➜',hint:'Cruza una grieta',price:0},
+  {id:'glide',name:'Planeo',icon:'◇',hint:'Flota al caer',price:0},
+  {id:'rocket',name:'Propulsión',icon:'🚀',hint:'Controla el cohete',price:0},
+  {id:'wall_jump',name:'Salto mural',icon:'↕',hint:'Rebota en paredes',price:80},
+  {id:'magnet',name:'Imán',icon:'✦',hint:'Atrae recuerdos',price:100},
+  {id:'shield',name:'Escudo',icon:'◈',hint:'Resiste un golpe',price:120},
+  {id:'slow_time',name:'Pulso lento',icon:'◌',hint:'Ralentiza el peligro',price:140},
+  {id:'air_step',name:'Paso aéreo',icon:'·',hint:'Corrige tu caída',price:160},
+  {id:'recall',name:'Llamado',icon:'♥',hint:'Encuentra memorias',price:180}
+];
+const OUTFIT_CATALOG=[
+  {id:'aurora',name:'Aurora',price:0,jacket:'#7c3aed',hair:'#d97832',trail:'#f472b6'},
+  {id:'cosmic',name:'Cosmos',price:120,jacket:'#0f766e',hair:'#f59e0b',trail:'#38bdf8'},
+  {id:'ember',name:'Brasa',price:150,jacket:'#b45309',hair:'#ef4444',trail:'#fb7185'},
+  {id:'void',name:'Vacío',price:200,jacket:'#312e81',hair:'#c084fc',trail:'#a78bfa'}
 ];
 const CONSCIOUSNESS_POWERS=Object.fromEntries(CONSCIOUSNESS_PATH.map((c,i)=>[String.fromCharCode(73+i),Array.from({length:10},(_,n)=>({id:`c${i+1}_${n+1}`,name:`${c.name} ${n+1}`,icon:c.short.split('·')[1].trim().slice(0,2),hint:c.hint}))]));
 const POWER_COMBOS={double_jump_dash:'Salto relámpago',dash_glide:'Vuelo rasante',magnet_recall:'Memoria brújula',shield_slow_time:'Burbuja de calma'};
 function toggleLoadout(group,id){
   const target=group==='basic'?(G.equippedBasic||(G.equippedBasic=[])):((G.equippedConsciousness||(G.equippedConsciousness={}))[group]||(G.equippedConsciousness[group]=[]));
+  if(group==='basic'&&!G.ownedBasic.includes(id))return false;
   const at=target.indexOf(id);if(at>=0)target.splice(at,1);else if(target.length<4)target.push(id);else return false;
   if(group==='basic')G.powers[id]=target.includes(id);
   Save.save();SFX.select();return true;
@@ -1082,8 +1098,8 @@ function drawCinematic(){
   if(CINE.page>=3){ctx.save();ctx.translate(CINE.shipX,188);_drawRocket(0,0);ctx.restore();}
   if(CINE.page>=4){
     ctx.fillStyle='rgba(4,2,14,.88)';ctx.fillRect(18,158,444,46);ctx.strokeStyle='#fbbf24';ctx.strokeRect(18.5,158.5,443,45);
-    ctx.fillStyle='#fff';ctx.font='6px "Press Start 2P"';ctx.textAlign='center';ctx.fillText('PISTAS DE LOS PODERES · RUTA DE CONCIENCIA',VW/2,170);
-    CONSCIOUSNESS_PATH.forEach((c,i)=>{const x=62+i*89;ctx.fillStyle=c.color;ctx.fillRect(x-2,179,4,4);ctx.font='5px "Press Start 2P"';ctx.fillText(c.short.split('·')[1].trim(),x,190);ctx.fillStyle='#d8b4fe';ctx.font='5px Nunito,sans-serif';ctx.fillText(c.hint,x,199);});
+    ctx.fillStyle='#fff';ctx.font='6px "Press Start 2P"';ctx.textAlign='center';ctx.fillText('RANGOS DE CONCIENCIA · SELLADOS',VW/2,170);
+    ctx.fillStyle='#d8b4fe';ctx.font='6px Nunito,sans-serif';ctx.fillText('Sus habilidades se revelarán cuando llegue el momento.',VW/2,190);
   }
   ctx.textAlign='left';
 }
@@ -1831,10 +1847,7 @@ function drawHUD(){
   const p=LS.player;
   const t=performance.now()/1000;
 
-  // ── Barra superior ──
-  ctx.fillStyle='rgba(9,3,22,.88)';ctx.fillRect(0,0,VW,30);
-  ctx.fillStyle='rgba(109,40,217,.5)';ctx.fillRect(0,29,VW,1);
-  ctx.fillStyle='rgba(232,121,249,.4)';ctx.fillRect(0,30,VW,1);
+  // HUD flotante: no pinta bandas para conservar toda la visibilidad del nivel.
   // Título del nivel — esquina izquierda
   ctx.fillStyle='rgba(255,200,87,.9)';
   ctx.font='bold 7px "Press Start 2P",monospace';
@@ -1869,10 +1882,6 @@ function drawHUD(){
   ctx.fillStyle='rgba(200,150,220,.55)';
   ctx.font='7px Nunito,sans-serif';
   ctx.fillText('RECUERDOS',memX,23);
-
-  // ── Barra inferior ──
-  ctx.fillStyle='rgba(9,3,22,.75)';ctx.fillRect(0,VH-24,VW,24);
-  ctx.fillStyle='rgba(109,40,217,.4)';ctx.fillRect(0,VH-24,VW,1);
 
   // Tiempo
   const sec=Math.floor(LS.time);
@@ -1914,13 +1923,6 @@ function renderLevel(){
   ctx.restore();
   if(LS.flashT>0){ctx.globalAlpha=LS.flashT;ctx.fillStyle='#d8b4fe';ctx.fillRect(0,0,VW,VH);ctx.globalAlpha=1;}
   drawHUD();
-  // CRT
-  ctx.globalAlpha=.04;ctx.fillStyle='#000';
-  for(let y=0;y<VH;y+=2)ctx.fillRect(0,y,VW,1);
-  ctx.globalAlpha=1;
-  const vg=ctx.createRadialGradient(VW/2,VH/2,VH*.45,VW/2,VH/2,VH);
-  vg.addColorStop(0,'rgba(0,0,0,0)');vg.addColorStop(1,'rgba(30,5,50,.55)');
-  ctx.fillStyle=vg;ctx.fillRect(0,0,VW,VH);
 }
 
 
@@ -2382,17 +2384,20 @@ function renderUI(){
     const p=mk('div','panel customize-panel');
     const basic=(G.equippedBasic||[]);
     const slot=(id,group)=>((group==='basic'?basic:(G.equippedConsciousness?.[group]||[])).includes(id));
-    const cards=(items,group)=>items.map(x=>`<button class="power-card ${slot(x.id,group)?'equipped':''}" data-power="${x.id}" data-group="${group}" ${group!=='basic'&&Number(group.charCodeAt(0)-64)>G.consciousnessUnlocked?'disabled':''}><b>${x.icon}</b><strong>${x.name}</strong><small>${x.hint}</small></button>`).join('');
+    const cards=(items,group)=>items.map(x=>{const owned=group==='basic'&&G.ownedBasic.includes(x.id);return `<button class="power-card ${slot(x.id,group)?'equipped':''} ${owned?'':'locked'}" data-power="${x.id}" data-group="${group}" ${group==='basic'&&!owned?'disabled':''}><b>${x.icon}</b><strong>${x.name}</strong><small>${owned?(x.hint||'Equipar'):'Disponible en tienda'}</small></button>`}).join('');
     p.innerHTML=`<h2 style="color:#fbbf24;font-size:14px;text-shadow:none">Personalizar personaje</h2>
       <p class="custom-subtitle">Arma tu estilo. Cada rama permite equipar hasta <b>4 poderes</b>.</p>
       <div class="loadout-head"><strong>BÁSICOS</strong><span>${basic.length}/4 equipados</span></div>
       <div class="power-grid">${cards(BASIC_POWER_CATALOG,'basic')}</div>
-      <div class="loadout-head"><strong>NIVELES DE CONCIENCIA</strong><span>10 poderes por nivel</span></div>
-      <div class="consciousness-list">${CONSCIOUSNESS_PATH.map((c,i)=>{const g=String.fromCharCode(73+i);return `<details ${i===0?'open':''}><summary style="--c:${c.color}">${c.short} <small>${i+1<=G.consciousnessUnlocked?'DESPIERTO':'BLOQUEADO'}</small></summary><div class="power-grid">${cards(CONSCIOUSNESS_POWERS[g],g)}</div></details>`}).join('')}</div>
+      <div class="loadout-head"><strong>NIVELES DE CONCIENCIA</strong><span>Todos bloqueados</span></div>
+      <div class="consciousness-list">${CONSCIOUSNESS_PATH.map((c)=>`<div class="sealed-consciousness" style="--c:${c.color}"><b>▣ ${c.short}</b><small>Habilidades selladas · Descúbrelo en la historia</small></div>`).join('')}</div>
+      <div class="loadout-head"><strong>VESTIMENTA EN VIVO</strong><span>Se refleja al instante</span></div>
+      <div class="outfit-grid">${OUTFIT_CATALOG.map(o=>`<button class="outfit-card ${G.character.outfit===o.id?'selected':''}" data-outfit="${o.id}" ${G.ownedOutfits.includes(o.id)?'':'disabled'}><i style="--j:${o.jacket};--h:${o.hair}"></i><strong>${o.name}</strong><small>${G.ownedOutfits.includes(o.id)?'Usar':'Comprar en tienda'}</small></button>`).join('')}</div>
       <div class="combo-preview">${activeCombo()?`✦ COMBINACIÓN ACTIVA: <b>${activeCombo()}</b>`:'Combina poderes equipados para descubrir habilidades nuevas.'}</div>
       <button class="btn" id="btnCustomizeBack">Volver</button>`;
     ui.appendChild(p);
     p.querySelectorAll('[data-power]').forEach(b=>b.onclick=()=>{toggleLoadout(b.dataset.group,b.dataset.power);renderUI();});
+    p.querySelectorAll('[data-outfit]').forEach(b=>b.onclick=()=>{const o=OUTFIT_CATALOG.find(x=>x.id===b.dataset.outfit);Object.assign(G.character,{outfit:o.id,jacket:o.jacket,hair:o.hair,trail:o.trail});Save.save();SFX.select();renderUI();});
     id('btnCustomizeBack').onclick=()=>{G.state=G.settingsReturn||'menu';renderUI();};
     return;
   }
@@ -2451,7 +2456,7 @@ function renderUI(){
       <div class="menu-lore">
         <strong>LA SEÑAL DESPERTÓ</strong>
         <span>Recupera recuerdos, encuentra amistades y resiste a la entidad que invade las mentes.</span>
-        <small>⚡ Fuego · 💧 Agua · 🐾 Instintos · ✦ Súper Dios</small>
+        <small>✦ Los rangos de conciencia permanecen sellados</small>
       </div>
       <div class="row" style="flex-direction:column">
         <button class="btn gold" id="btnShop">Tienda · PRÓXIMAMENTE</button>
@@ -2472,7 +2477,7 @@ function renderUI(){
 
     id('btnNew').onclick=()=>{
       Object.assign(G,{memories:[],decisions:{},
-        powers:{double_jump:false,dash:false,glide:false,rocket:false},equippedBasic:['double_jump','dash'],equippedConsciousness:{I:[]},consciousnessUnlocked:1,character:{accent:'#fbbf24',trail:'#f472b6'},
+        powers:{double_jump:false,dash:false,glide:false,rocket:false},equippedBasic:['double_jump','dash'],equippedConsciousness:{},consciousnessUnlocked:0,character:{accent:'#fbbf24',trail:'#f472b6',hair:'#d97832',jacket:'#7c3aed',outfit:'aurora'},ownedBasic:['double_jump','dash','glide','rocket'],ownedOutfits:['aurora'],
         levelId:1,timePlayed:0,unlockedEndings:[],score:0,coins:0});
       Save.clear();SFX.select();G.state='map';renderUI();
     };
@@ -2486,10 +2491,15 @@ function renderUI(){
       SFX.select();
       p.style.display='none';
       const shop=mk('div','panel');
+      const price=(n)=>n===0?'GRATIS':`${n} ✦`;
       shop.innerHTML=`<h2 style="color:#fbbf24;font-size:14px;text-shadow:none">Tienda del Umbral</h2>
-        <div class="lore-box" style="line-height:1.8">Aquí podrás conseguir recuerdos cosméticos, compañeros y objetos para decorar tu viaje.<br><strong style="color:#f472b6">PRÓXIMAMENTE · UN NUEVO CONTENIDO CADA SEMANA</strong></div>
+        <div class="shop-balance">Fragmentos disponibles: <b>${G.coins} ✦</b></div>
+        <h3 class="shop-section-title">VESTIMENTA</h3><div class="shop-grid">${OUTFIT_CATALOG.map(o=>{const owned=G.ownedOutfits.includes(o.id);return `<button class="shop-card" data-buy-outfit="${o.id}" ${owned?'disabled':''}><i style="--j:${o.jacket};--h:${o.hair}"></i><strong>${o.name}</strong><small>${owned?'ADQUIRIDA':price(o.price)}</small></button>`}).join('')}</div>
+        <h3 class="shop-section-title">PODERES BÁSICOS</h3><div class="shop-grid">${BASIC_POWER_CATALOG.map(x=>{const owned=G.ownedBasic.includes(x.id);return `<button class="shop-card" data-buy-power="${x.id}" ${owned?'disabled':''}><b>${x.icon}</b><strong>${x.name}</strong><small>${owned?'ADQUIRIDO':price(x.price)}</small></button>`}).join('')}</div>
         <button class="btn" id="btnShopBack">Volver</button>`;
       ui.appendChild(shop);
+      shop.querySelectorAll('[data-buy-outfit]').forEach(b=>b.onclick=()=>{const o=OUTFIT_CATALOG.find(x=>x.id===b.dataset.buyOutfit);if(G.coins>=o.price){G.coins-=o.price;G.ownedOutfits.push(o.id);Save.save();b.disabled=true;b.querySelector('small').textContent='ADQUIRIDA';shop.querySelector('.shop-balance b').textContent=`${G.coins} ✦`;SFX.unlock();}});
+      shop.querySelectorAll('[data-buy-power]').forEach(b=>b.onclick=()=>{const x=BASIC_POWER_CATALOG.find(v=>v.id===b.dataset.buyPower);if(G.coins>=x.price){G.coins-=x.price;G.ownedBasic.push(x.id);Save.save();b.disabled=true;b.querySelector('small').textContent='ADQUIRIDO';shop.querySelector('.shop-balance b').textContent=`${G.coins} ✦`;SFX.unlock();}});
       id('btnShopBack').onclick=()=>{shop.remove();p.style.display='';};
     };
     id('btnHelp').onclick=()=>{
