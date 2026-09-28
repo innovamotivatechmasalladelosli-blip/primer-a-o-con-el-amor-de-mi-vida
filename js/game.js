@@ -110,7 +110,7 @@ const Save={
       equippedBasic:Array.isArray(d.equippedBasic)?d.equippedBasic:['double_jump','dash'],
       equippedConsciousness:d.equippedConsciousness||{I:[]},
       consciousnessUnlocked:0,
-      character:Object.assign({accent:'#fbbf24',trail:'#f472b6',hair:'#d97832',jacket:'#8b5e3c',outfit:'aurora'},d.character||{}),
+      character:Object.assign({accent:'#d4c4a0',detail:'heart',trail:'#f472b6',hair:'#d97832',jacket:'#8b5e3c',outfit:'aurora'},d.character||{}),
       ownedBasic:Array.isArray(d.ownedBasic)?d.ownedBasic:['double_jump','dash','glide','rocket'],
       ownedOutfits:Array.isArray(d.ownedOutfits)?d.ownedOutfits:['aurora'],
       timePlayed:d.timePlayed||0,levelId:d.levelId||1,
@@ -417,6 +417,7 @@ function _drawChar(cx,by,f,state,frame,dashing){
   const custom=G.character||{};
   const customHair=custom.hair||PAL.hair;
   const customJacket=custom.jacket||PAL.jkt;
+  const customAccent=custom.accent||PAL.fur;
   const jacketHi=_shade(customJacket,1.24),jacketSh=_shade(customJacket,.68),jacketDeep=_shade(customJacket,.48);
 
   // Animación
@@ -500,10 +501,13 @@ function _drawChar(cx,by,f,state,frame,dashing){
   r(3+bx,-15+bodyY,2,2,jacketSh);
   // Cierre y cordones de la sudadera: pequeños píxeles que definen mejor la silueta.
   r(bx,-19+bodyY,1,7,jacketSh);
-  r(-3+bx,-22+bodyY,1,4,PAL.fur);
-  r(2+bx,-22+bodyY,1,4,PAL.fur);
+  r(-3+bx,-22+bodyY,1,4,customAccent);
+  r(2+bx,-22+bodyY,1,4,customAccent);
   r(-4+bx,-13+bodyY,3,1,jacketDeep);
   r(2+bx,-13+bodyY,3,1,jacketDeep);
+  if(custom.detail==='heart'){r(-1+bx,-17+bodyY,1,1,customAccent);r(1+bx,-17+bodyY,1,1,customAccent);r(-2+bx,-16+bodyY,4,2,customAccent);r(-1+bx,-14+bodyY,2,1,customAccent);}
+  if(custom.detail==='star'){r(bx,-17+bodyY,1,5,customAccent);r(-2+bx,-15+bodyY,5,1,customAccent);r(-1+bx,-16+bodyY,3,3,customAccent);}
+  if(custom.detail==='moon'){r(-1+bx,-17+bodyY,3,1,customAccent);r(-2+bx,-16+bodyY,3,2,customAccent);r(-1+bx,-14+bodyY,3,1,customJacket);}
 
   // ── BRAZOS ──
   // Brazo trasero
@@ -1047,10 +1051,12 @@ const OUTFIT_CATALOG=[
   {id:'solar',name:'Solar',price:230,jacket:'#be123c',hair:'#facc15',trail:'#fb923c'}
 ];
 const CUSTOM_COLORS={
-  jacket:[['Violeta','#7c3aed'],['Océano','#0f766e'],['Cereza','#be123c'],['Noche','#312e81'],['Menta','#15803d']],
+  jacket:[['Café base','#8b5e3c'],['Cacao','#4b2e20'],['Canela','#a8653f'],['Terracota','#b4533c'],['Arena','#b88962'],['Cobre','#9a4f24'],['Noche','#35251f']],
   hair:[['Cobre','#d97832'],['Dorado','#f59e0b'],['Rojo','#ef4444'],['Lila','#c084fc'],['Rosa','#f0abfc']],
-  trail:[['Rosa','#f472b6'],['Cielo','#38bdf8'],['Fuego','#fb7185'],['Luz','#fbbf24'],['Cian','#67e8f9']]
+  trail:[['Rosa','#f472b6'],['Cielo','#38bdf8'],['Fuego','#fb7185'],['Luz','#fbbf24'],['Cian','#67e8f9']],
+  accent:[['Crema','#d4c4a0'],['Dorado','#fbbf24'],['Rosa','#f9a8d4'],['Cielo','#7dd3fc'],['Menta','#86efac']]
 };
+const HOODIE_DETAILS=[['heart','Corazón','♥'],['star','Estrella','✦'],['moon','Luna','☾'],['plain','Liso','·']];
 const CONSCIOUSNESS_POWERS=Object.fromEntries(CONSCIOUSNESS_PATH.map((c,i)=>[String.fromCharCode(73+i),Array.from({length:10},(_,n)=>({id:`c${i+1}_${n+1}`,name:`${c.name} ${n+1}`,icon:c.short.split('·')[1].trim().slice(0,2),hint:c.hint}))]));
 const POWER_COMBOS={double_jump_dash:'Salto relámpago',dash_glide:'Vuelo rasante',magnet_recall:'Memoria brújula',shield_slow_time:'Burbuja de calma'};
 function toggleLoadout(group,id){
@@ -1068,7 +1074,7 @@ function activeCombo(){
 function drawCustomizationPreview(canvasEl){
   const c=canvasEl.getContext('2d'),d=G.character||{},w=canvasEl.width,h=canvasEl.height;
   c.clearRect(0,0,w,h);c.imageSmoothingEnabled=false;
-  const s=5,x=90,y=188, jacket=d.jacket||PAL.jkt,hair=d.hair||PAL.hair,trail=d.trail||'#f472b6';
+  const s=5,x=90,y=188, jacket=d.jacket||PAL.jkt,hair=d.hair||PAL.hair,trail=d.trail||'#f472b6',accent=d.accent||PAL.fur;
   c.fillStyle='rgba(3,1,14,.55)';c.fillRect(24,194,132,5);
   const px=(rx,ry,rw,rh,col)=>{c.fillStyle=col;c.fillRect(Math.round(x+rx*s),Math.round(y+ry*s),rw*s,rh*s);};
   // Estela y emblema cambian junto con la configuración.
@@ -1079,7 +1085,10 @@ function drawCustomizationPreview(canvasEl){
   px(-5,-22,11,8,PAL.skin);px(-4,-23,9,1,PAL.skinHi);px(-5,-16,11,1,PAL.skinSh);
   px(-6,-29,12,8,hair);px(-5,-29,10,1,PAL.hairHi);px(-6,-23,3,2,hair);px(3,-23,3,2,hair);
   px(-7,-14,14,11,jacket);px(-7,-14,14,1,_shade(jacket,1.24));px(-7,-4,14,1,_shade(jacket,.68));px(0,-14,1,7,_shade(jacket,.68));
-  px(-2,-13,5,8,PAL.shirt);px(-9,-13,2,9,_shade(jacket,.68));px(7,-13,2,9,jacket);px(-4,-7,3,1,_shade(jacket,.48));px(2,-7,3,1,_shade(jacket,.48));
+  px(-2,-13,5,8,PAL.shirt);px(-9,-13,2,9,_shade(jacket,.68));px(7,-13,2,9,jacket);px(-4,-7,3,1,_shade(jacket,.48));px(2,-7,3,1,_shade(jacket,.48));px(-3,-13,1,4,accent);px(2,-13,1,4,accent);
+  if(d.detail==='heart'){px(-1,-17,1,1,accent);px(1,-17,1,1,accent);px(-2,-16,4,2,accent);px(-1,-14,2,1,accent);}
+  if(d.detail==='star'){px(0,-17,1,5,accent);px(-2,-15,5,1,accent);px(-1,-16,3,3,accent);}
+  if(d.detail==='moon'){px(-1,-17,3,1,accent);px(-2,-16,3,2,accent);px(-1,-14,3,1,jacket);}
   px(-5,-3,4,8,PAL.jeansSh);px(1,-3,4,8,PAL.jeans);px(-5,5,5,3,PAL.bootSh);px(1,5,5,3,PAL.boot);
   // Brillo de selección, sin suavizado para conservar el acabado pixel art.
   c.strokeStyle='rgba(251,191,36,.65)';c.lineWidth=2;c.strokeRect(x-12*s,y-33*s,24*s,43*s);
@@ -2434,7 +2443,8 @@ function renderUI(){
       <div class="custom-stage"><canvas id="custom-preview" width="180" height="220" aria-label="Vista previa del personaje"></canvas><div class="stage-copy"><strong>${OUTFIT_CATALOG.find(o=>o.id===G.character.outfit)?.name||'Alison'}</strong><small>Tu estilo actual</small><span class="stage-combo">${activeCombo()?`Combo: ${activeCombo()}`:'Elige hasta 4 poderes'}</span></div></div>
       <div class="loadout-head"><strong>ROPA</strong><span>Elige tu conjunto</span></div>
       <div class="outfit-grid">${OUTFIT_CATALOG.map(o=>`<button class="outfit-card ${G.character.outfit===o.id?'selected':''}" data-outfit="${o.id}" ${G.ownedOutfits.includes(o.id)?'':'disabled'}><i style="--j:${o.jacket};--h:${o.hair}"></i><strong>${o.name}</strong><small>${G.ownedOutfits.includes(o.id)?(G.character.outfit===o.id?'Usando':'Usar'):'Tienda'}</small></button>`).join('')}</div>
-      <div class="color-pickers"><div><label>Chaqueta</label><div class="color-row">${colors('jacket')}</div></div><div><label>Pelo</label><div class="color-row">${colors('hair')}</div></div><div><label>Estela</label><div class="color-row">${colors('trail')}</div></div></div>
+      <div class="color-pickers"><div><label>Sudadera</label><div class="color-row">${colors('jacket')}</div></div><div><label>Pelo</label><div class="color-row">${colors('hair')}</div></div><div><label>Estela</label><div class="color-row">${colors('trail')}</div></div><div><label>Detalle</label><div class="color-row">${colors('accent')}</div></div></div>
+      <div class="detail-picker"><label>Emblema</label><div class="detail-row">${HOODIE_DETAILS.map(([id,name,icon])=>`<button class="detail-chip ${G.character.detail===id?'selected':''}" data-detail="${id}"><b>${icon}</b><small>${name}</small></button>`).join('')}</div></div>
       <div class="loadout-head powers-head"><strong>PODERES</strong><span>${basic.length}/4 activos</span></div>
       <div class="power-grid">${cards(BASIC_POWER_CATALOG,'basic')}</div>
       <div class="sealed-title">CONCIENCIA <span>Bloqueado</span></div><div class="consciousness-list">${CONSCIOUSNESS_PATH.map((c)=>`<div class="sealed-consciousness" style="--c:${c.color}"><b>▣ ${c.name}</b><small>Se desbloquea en la historia</small></div>`).join('')}</div>
@@ -2444,6 +2454,7 @@ function renderUI(){
     p.querySelectorAll('[data-power]').forEach(b=>b.onclick=()=>{toggleLoadout(b.dataset.group,b.dataset.power);renderUI();});
     p.querySelectorAll('[data-outfit]').forEach(b=>b.onclick=()=>{const o=OUTFIT_CATALOG.find(x=>x.id===b.dataset.outfit);Object.assign(G.character,{outfit:o.id,jacket:o.jacket,hair:o.hair,trail:o.trail});Save.save();SFX.select();renderUI();});
     p.querySelectorAll('[data-color-type]').forEach(b=>b.onclick=()=>{G.character[b.dataset.colorType]=b.dataset.color;Save.save();SFX.select();renderUI();});
+    p.querySelectorAll('[data-detail]').forEach(b=>b.onclick=()=>{G.character.detail=b.dataset.detail;Save.save();SFX.select();renderUI();});
     id('btnCustomizeBack').onclick=()=>{G.state=G.settingsReturn||'menu';renderUI();};
     return;
   }
@@ -2523,7 +2534,7 @@ function renderUI(){
 
     id('btnNew').onclick=()=>{
       Object.assign(G,{memories:[],decisions:{},
-        powers:{double_jump:false,dash:false,glide:false,rocket:false},equippedBasic:['double_jump','dash'],equippedConsciousness:{},consciousnessUnlocked:0,character:{accent:'#fbbf24',trail:'#f472b6',hair:'#d97832',jacket:'#8b5e3c',outfit:'aurora'},ownedBasic:['double_jump','dash','glide','rocket'],ownedOutfits:['aurora'],
+        powers:{double_jump:false,dash:false,glide:false,rocket:false},equippedBasic:['double_jump','dash'],equippedConsciousness:{},consciousnessUnlocked:0,character:{accent:'#d4c4a0',detail:'heart',trail:'#f472b6',hair:'#d97832',jacket:'#8b5e3c',outfit:'aurora'},ownedBasic:['double_jump','dash','glide','rocket'],ownedOutfits:['aurora'],
         levelId:1,timePlayed:0,unlockedEndings:[],score:0,coins:0});
       Save.clear();SFX.select();G.state='map';renderUI();
     };

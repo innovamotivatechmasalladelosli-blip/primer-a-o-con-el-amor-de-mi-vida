@@ -41,7 +41,7 @@ const G={
   memories:[],decisions:{},
   powers:{double_jump:false,dash:false,glide:false,rocket:false},
   equippedBasic:['double_jump','dash'],equippedConsciousness:{I:[]},
-  consciousnessUnlocked:0,character:{accent:'#fbbf24',trail:'#f472b6',hair:'#d97832',jacket:'#8b5e3c',outfit:'aurora'},
+  consciousnessUnlocked:0,character:{accent:'#d4c4a0',detail:'heart',trail:'#f472b6',hair:'#d97832',jacket:'#8b5e3c',outfit:'aurora'},
   ownedBasic:['double_jump','dash','glide','rocket'],ownedOutfits:['aurora'],
   timePlayed:0,currentMemory:null,
   paused:false,
