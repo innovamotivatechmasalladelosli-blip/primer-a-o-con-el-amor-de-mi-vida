@@ -947,6 +947,7 @@ function startLevel(id){
     isHeart: Math.random() > 0.85
   });
   Cam.snap(LS.player,data);
+  if(id===2)SFX.guera();
   G.state='level';G.paused=false;renderUI();
 }
 
@@ -989,6 +990,76 @@ function finishLevel(){
     G.levelId=nxt;Save.save();G.state='map';renderUI();
   }
   else finishGame();
+}
+
+// ═══════════════════════════════════════════════════════════
+//   PRÓLOGO — EL UNIVERSO QUE ALISON PERDIÓ
+// ═══════════════════════════════════════════════════════════
+let PRELUDE={page:0,t:0,fade:0};
+function startPrologue(){
+  G.state='prologue';G.paused=false;ui.innerHTML='';PRELUDE={page:0,t:0,fade:0};
+  G.storySeen=Array.isArray(G.storySeen)?G.storySeen:[];
+  if(!G.storySeen.includes(-1))G.storySeen.push(-1);Save.save();
+  canvas.onclick=advancePrologue;SFX.rift();
+}
+function advancePrologue(){
+  if(G.state!=='prologue')return;SFX.select();
+  if(PRELUDE.page<5){PRELUDE.page++;PRELUDE.t=0;if(PRELUDE.page===2||PRELUDE.page===4)SFX.rift();if(PRELUDE.page===5)SFX.blackHole();}
+  else{canvas.onclick=null;startLevel(1);}
+}
+function _drawGuera(x,y,s=1,run=0){
+  ctx.save();ctx.translate(Math.floor(x),Math.floor(y));ctx.scale(s,s);
+  const bob=Math.sin(PRELUDE.t*8+run)*1.3;
+  ctx.fillStyle='rgba(0,0,0,.3)';ctx.fillRect(-15,17,31,3);
+  // Cola levantada, orejas caídas y pelaje crema, inspirado en la referencia proporcionada.
+  ctx.fillStyle='#4b2e20';ctx.fillRect(-12,-17,7,5);ctx.fillRect(7,-16,7,5);
+  ctx.fillStyle='#e7c79e';ctx.fillRect(-10,-14,22,19);ctx.fillRect(-15,-9,9,11);ctx.fillRect(8,-10,8,12);
+  ctx.fillStyle='#fff7e8';ctx.fillRect(-8,-13,17,16);ctx.fillRect(-14,-7,11,8);
+  ctx.fillStyle='#b9784e';ctx.fillRect(-14,-7,5,6);ctx.fillRect(6,-12,5,7);ctx.fillRect(2,2,7,4);
+  ctx.fillStyle='#342015';ctx.fillRect(-9,-7,4,4);ctx.fillRect(5,-7,4,4);ctx.fillStyle='#fff';ctx.fillRect(-8,-7,1,1);ctx.fillRect(6,-7,1,1);
+  ctx.fillStyle='#8e4f3c';ctx.fillRect(-2,-2,5,3);ctx.fillStyle='#f18fa3';ctx.fillRect(-1,1,4,2);
+  ctx.fillStyle='#e7c79e';ctx.fillRect(-8,4,6,11);ctx.fillRect(5,4,6,11);ctx.fillRect(-14,3,-7,12);ctx.fillRect(12,3,18,12);
+  ctx.fillStyle='#6f4b38';ctx.fillRect(-9,14,7,3);ctx.fillRect(5,14,7,3);ctx.fillRect(18,14,7,3);
+  ctx.fillStyle='#f7dfbb';ctx.fillRect(14,-8,4,15);ctx.fillRect(18,-13,4,10);ctx.fillRect(21,-17,3,7);
+  ctx.restore();
+}
+function drawPrologue(){
+  const t=PRELUDE.t,p=PRELUDE.page;
+  const g=ctx.createLinearGradient(0,0,0,VH);g.addColorStop(0,p<3?'#12091d':'#020208');g.addColorStop(.6,p<3?'#4d2941':'#160b25');g.addColorStop(1,p<3?'#c17d68':'#05020c');ctx.fillStyle=g;ctx.fillRect(0,0,VW,VH);
+  // Partículas, grietas y escombros con movimiento cinematográfico.
+  ctx.globalAlpha=.55;
+  for(let i=0;i<42;i++){const x=(i*71+t*(p>=2?30:5))%VW,y=(i*37+Math.sin(t+i)*18)%VH;ctx.fillStyle=['#f8d7b0','#e879f9','#fbbf24','#93c5fd'][i%4];ctx.fillRect(x,y,1+(i%3),1+(i%2));}
+  ctx.globalAlpha=1;
+  if(p===0){
+    ctx.fillStyle='#fbbf24';ctx.font='7px "Press Start 2P"';ctx.textAlign='center';ctx.fillText('ANTES DEL PRIMER RECUERDO',VW/2,28);
+    ctx.fillStyle='#fff1df';ctx.font='bold 16px Nunito';ctx.fillText('Alison era una diosa',VW/2,78);ctx.font='bold 13px Nunito';ctx.fillText('oculta en un mundo que lo tenía todo.',VW/2,99);
+    ctx.fillStyle='#f5d0fe';ctx.font='10px Nunito';ctx.fillText('Uriel, Guera y una vida completa bajo un cielo eterno.',VW/2,128);
+    _drawGuera(VW/2-34,190,1.6);_drawAlly(VW/2+45,190,'#8b5e3c','#fbbf24');
+  }else if(p===1){
+    ctx.fillStyle='#fbbf24';ctx.font='7px "Press Start 2P"';ctx.textAlign='center';ctx.fillText('LA VISTA MENTAL',VW/2,26);
+    ctx.strokeStyle='rgba(244,114,182,.55)';ctx.lineWidth=2;for(let i=0;i<7;i++){ctx.beginPath();ctx.moveTo(0,55+i*25);ctx.bezierCurveTo(120,20+i*22,300,100-i*16,VW,48+i*24);ctx.stroke();}
+    ctx.fillStyle='#08020e';ctx.beginPath();ctx.arc(VW/2,130,45+Math.sin(t*3)*3,0,Math.PI*2);ctx.fill();ctx.strokeStyle='#fbbf24';ctx.lineWidth=2;ctx.stroke();
+    ctx.fillStyle='#fff1df';ctx.font='bold 13px Nunito';ctx.fillText('Entonces Alison sintió un silencio',VW/2,207);ctx.fillText('donde no debía existir ninguno.',VW/2,225);
+  }else if(p===2){
+    ctx.strokeStyle='#f472b6';ctx.lineWidth=3;for(let i=0;i<9;i++){ctx.beginPath();ctx.moveTo(VW/2+i*5-25,0);ctx.lineTo(VW/2-i*17, VH);ctx.stroke();}
+    ctx.fillStyle='#fbbf24';ctx.font='7px "Press Start 2P"';ctx.textAlign='center';ctx.fillText('EL DESGARRO',VW/2,27);
+    ctx.fillStyle='#fff1df';ctx.font='bold 13px Nunito';ctx.fillText('El universo no explotó.',VW/2,190);ctx.fillText('Se olvidó de sí mismo.',VW/2,210);
+    _drawGuera(95,190,1.1,1);_drawAlly(145,190,'#8b5e3c','#fbbf24');
+  }else if(p===3){
+    ctx.fillStyle='#15051f';ctx.fillRect(0,0,VW,VH);for(let i=0;i<16;i++){ctx.save();ctx.translate((i*43+t*70)%VW,60+(i*29)%150);ctx.rotate(t+i);ctx.fillStyle=['#fbbf24','#f472b6','#60a5fa','#a3e635'][i%4];ctx.fillRect(-5,-2,11,4);ctx.restore();}
+    ctx.fillStyle='#fbbf24';ctx.font='7px "Press Start 2P"';ctx.textAlign='center';ctx.fillText('TODO LO QUE AMABA',VW/2,27);
+    ctx.fillStyle='#fff1df';ctx.font='bold 13px Nunito';ctx.fillText('salió volando: habitaciones, voces,',VW/2,194);ctx.fillText('nombres… hasta sus propios poderes.',VW/2,214);
+    _drawGuera(96,150,1.1,2);_drawAlly(145,150,'#8b5e3c','#fbbf24');
+  }else if(p===4){
+    ctx.fillStyle='rgba(0,0,0,.45)';ctx.fillRect(0,0,VW,VH);const run=Math.min(1,t*1.7);_drawGuera(72+run*90,205,1.1,3);_drawAlly(116+run*90,205,'#8b5e3c','#fbbf24');
+    ctx.fillStyle='#fbbf24';ctx.font='7px "Press Start 2P"';ctx.textAlign='center';ctx.fillText('LA HUIDA',VW/2,29);
+    ctx.fillStyle='#fff1df';ctx.font='bold 13px Nunito';ctx.fillText('Alison corrió. Cada paso costaba',VW/2,185);ctx.fillText('un recuerdo y un nivel de conciencia.',VW/2,207);
+  }else{
+    const bx=VW*.75,by=122,r=48+Math.sin(t*2)*3;ctx.globalAlpha=.3;ctx.fillStyle='#7e22ce';ctx.beginPath();ctx.arc(bx,by,r+20,0,Math.PI*2);ctx.fill();ctx.globalAlpha=1;ctx.fillStyle='#020106';ctx.beginPath();ctx.arc(bx,by,r,0,Math.PI*2);ctx.fill();ctx.strokeStyle='#f59e0b';ctx.lineWidth=5;ctx.beginPath();ctx.ellipse(bx,by,r+9,20,-.2,0,Math.PI*2);ctx.stroke();
+    ctx.save();ctx.translate(135,150);ctx.rotate(-.2);_drawRocket(0,0,1,0,t);ctx.restore();ctx.strokeStyle='rgba(255,255,255,.3)';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(170,150);ctx.lineTo(bx-r,by);ctx.stroke();
+    ctx.fillStyle='#fff1df';ctx.font='bold 13px Nunito';ctx.textAlign='center';ctx.fillText('La nave apareció como una última promesa.',VW/2,196);ctx.fillText('El agujero negro la devoró con todo el universo.',VW/2,218);
+  }
+  ctx.fillStyle='rgba(3,1,10,.75)';ctx.fillRect(20,VH-34,VW-40,20);ctx.fillStyle='#f5d0fe';ctx.font='7px "Press Start 2P"';ctx.textAlign='center';ctx.fillText(p<5?'TOCA PARA CONTINUAR':'TOCA PARA DESPERTAR EN EL PRIMER NIVEL',VW/2,VH-21);ctx.textAlign='left';
 }
 
 let CINE = { timer: 0 };
@@ -1036,6 +1107,7 @@ const CONSCIOUSNESS_PATH=[
   {short:'V · SÚPER DIOS',name:'Trascendencia',hint:'El poder total',color:'#fbbf24'}
 ];
 const STORY_CHAPTERS=[
+  ['Antes del primer recuerdo','Alison, Uriel y Guera vivían en un universo completo hasta que una grieta comenzó a borrarlo.'],
   ['La fractura','Los recuerdos del universo se rompen.'],
   ['La infestación','Una entidad invade mentes y recuerdos.'],
   ['Los que resisten','Alison conserva su identidad.'],
@@ -1140,7 +1212,13 @@ function drawCinematic(){
   ctx.fillStyle='#fbbf24';ctx.fillRect(ex-14,ey-6,2,2);ctx.fillRect(ex+12,ey-6,2,2);
   ctx.fillStyle='#c084fc';ctx.font='6px "Press Start 2P"';ctx.textAlign='center';ctx.fillText('LA ENTIDAD',ex,ey+57);
   // Cartela de historia por fases.
-  const stories=[
+  const stories=G.levelId===2?[
+    ['LA CIUDAD QUE QUEDÓ','Después del agujero negro, una ciudad imposible quedó suspendida entre universos.'],
+    ['UNA HUELLA','Alison reconoció una huella pequeña entre el polvo de estrellas.'],
+    ['GUERA','No era un recuerdo: Guera había cruzado la grieta para encontrarla.'],
+    ['EL RUIDO DE URIEL','Uriel escuchó una señal bajo los edificios partidos.'],
+    ['LA ALIANZA','En la ciudad fracturada, los tres volverán a caminar juntos.']
+  ]:[
     ['LA FRACTURA','Los recuerdos del universo se están rompiendo.'],
     ['LA INFESTACIÓN','Una entidad se alimenta de mentes y recuerdos.'],
     ['LOS QUE RESISTEN','Quienes no se rinden conservan su identidad.'],
@@ -1164,6 +1242,7 @@ function drawCinematic(){
     _drawAlly(CINE.allyX,190,'#2563eb','#93c5fd');
     _drawAlly(CINE.allyX+30,190,'#15803d','#a3e635');
     ctx.fillStyle='#93c5fd';ctx.font='5px "Press Start 2P"';ctx.textAlign='left';ctx.fillText('URIEL',CINE.allyX-13,216);ctx.fillStyle='#a3e635';ctx.fillText('ALISON',CINE.allyX+19,216);ctx.textAlign='center';
+    if(G.levelId===2)_drawGuera(CINE.allyX+55,190,.65,CINE.timer);
   }
   if(CINE.page>=3){ctx.save();ctx.translate(CINE.shipX,188);_drawRocket(0,0);ctx.restore();}
   if(CINE.page>=4){
@@ -1474,6 +1553,17 @@ function drawBG(theme,cx,cy){
       ctx.globalAlpha=1;
     }
   }
+  else if(theme==='ruins'){
+    const g=ctx.createLinearGradient(0,0,0,VH);g.addColorStop(0,'#0b1021');g.addColorStop(.42,'#321b39');g.addColorStop(1,'#8c4d4c');ctx.fillStyle=g;ctx.fillRect(0,0,VW,VH);
+    for(let i=0;i<18;i++){
+      const bx=((i*58-cx*.14)%(VW+120))-60,bh=62+Math.sin(i*1.8)*24+35,lean=(i%3-1)*5;
+      ctx.save();ctx.translate(bx,VH-bh);ctx.rotate(lean*.012);ctx.fillStyle=i%2?'#15152a':'#21162e';ctx.fillRect(0,0,48,bh);ctx.fillStyle=i%3?'#f0a15a':'#83d1e8';
+      for(let wy=12;wy<bh-8;wy+=16)for(let wx=7;wx<42;wx+=14)if((i+wy+wx)%3){ctx.globalAlpha=.45+Math.sin(t*2+i+wy)*.2;ctx.fillRect(wx,wy,5,6);}ctx.globalAlpha=1;ctx.restore();
+    }
+    ctx.strokeStyle='rgba(244,114,182,.72)';ctx.lineWidth=2;for(let i=0;i<5;i++){ctx.beginPath();ctx.moveTo(80+i*105,0);ctx.lineTo(40+i*130,VH-25);ctx.stroke();}
+    ctx.fillStyle='rgba(251,191,36,.7)';ctx.fillRect(VW*.72,48,46,2);ctx.fillRect(VW*.72,53,26,2);
+    ctx.fillStyle='#fbbf24';ctx.font='6px "Press Start 2P"';ctx.fillText('CIUDAD / UNIVERSO 07',8,VH-30);
+  }
   else if(theme==='forest'){
     const g=ctx.createLinearGradient(0,0,0,VH);
     g.addColorStop(0,'#050d08');g.addColorStop(.4,'#0d2010');g.addColorStop(1,'#1a3d20');
@@ -1701,6 +1791,10 @@ function drawPlatforms(lvl,cx){
       for(let i=0;i<p.w;i+=7){
         ctx.fillStyle='rgba(0,0,0,.15)';ctx.fillRect(sx+i,sy+3,1,p.h-3);
       }
+    }else if(t==='ruins'){
+      ctx.fillStyle='#242033';ctx.fillRect(sx,sy,p.w,p.h);ctx.fillStyle='#514052';ctx.fillRect(sx,sy,p.w,3);ctx.fillStyle='#f0a15a';ctx.fillRect(sx,sy,p.w,1);
+      for(let i=7;i<p.w;i+=13){ctx.fillStyle=i%2?'rgba(0,0,0,.28)':'rgba(244,114,182,.22)';ctx.fillRect(sx+i,sy+4,1,Math.max(2,p.h-4));}
+      if(p.w>45){ctx.strokeStyle='rgba(244,114,182,.55)';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(sx+18,sy);ctx.lineTo(sx+25,sy+p.h);ctx.moveTo(sx+p.w-24,sy);ctx.lineTo(sx+p.w-30,sy+p.h);ctx.stroke();}
     }else if(t==='forest'){
       ctx.fillStyle='#2d1a0e';ctx.fillRect(sx,sy,p.w,p.h);
       ctx.fillStyle='#4a2e18';ctx.fillRect(sx,sy,p.w,3);
@@ -1990,6 +2084,7 @@ function renderLevel(){
   drawMemories();
   drawGoal();
   for(const e of LS.enemies)e.draw();
+  if(LS.data.companion==='guera'&&LS.player){_drawGuera(LS.player.x-18,LS.player.y+9,.72,LS.time);}
   if(LS.boss)LS.boss.draw();
   drawStartPortal();
   LS.player.draw();
@@ -2378,6 +2473,8 @@ function loop(){
     updateMinigame(dt);
   } else if (G.state==='cinematic'&&!G.paused) {
     updateCinematic(dt);
+  } else if (G.state==='prologue'&&!G.paused) {
+    PRELUDE.t+=dt;PRELUDE.fade=Math.min(1,PRELUDE.fade+dt*2);
   }
 
   if(G.state==='level'||G.state==='paused'||G.state==='minigame'){
@@ -2397,6 +2494,7 @@ function loop(){
   else if(G.state==='ending')drawEndingBG();
   else if(G.state==='minigame')drawMinigame();
   else if(G.state==='cinematic')drawCinematic();
+  else if(G.state==='prologue')drawPrologue();
 
   requestAnimationFrame(loop);
 }
@@ -2484,7 +2582,7 @@ function renderUI(){
   if(G.state==='story'){
     const p=mk('div','panel story-panel');
     const seen=Array.isArray(G.storySeen)?G.storySeen:[];
-    p.innerHTML=`<div class="eyebrow">HISTORIA</div><h2>El viaje</h2><p class="custom-subtitle">${seen.length}/${STORY_CHAPTERS.length} capítulos</p><div class="story-list">${STORY_CHAPTERS.map((s,i)=>seen.includes(i)?`<article class="story-entry"><span>${String(i+1).padStart(2,'0')}</span><div><strong>${s[0]}</strong><small>${s[1]}</small></div></article>`:`<article class="story-entry locked"><span>??</span><div><strong>Bloqueado</strong><small>Avanza para descubrirlo.</small></div></article>`).join('')}</div><button class="btn" id="btnStoryBack">Volver</button>`;
+    p.innerHTML=`<div class="eyebrow">HISTORIA</div><h2>El viaje</h2><p class="custom-subtitle">${seen.length}/${STORY_CHAPTERS.length} capítulos</p><div class="story-list">${STORY_CHAPTERS.map((s,i)=>{const key=i===0?-1:i-1;return seen.includes(key)?`<article class="story-entry"><span>${String(i+1).padStart(2,'0')}</span><div><strong>${s[0]}</strong><small>${s[1]}</small></div></article>`:`<article class="story-entry locked"><span>??</span><div><strong>Bloqueado</strong><small>Avanza para descubrirlo.</small></div></article>`;}).join('')}</div><button class="btn" id="btnStoryBack">Volver</button>`;
     ui.appendChild(p);
     id('btnStoryBack').onclick=()=>{G.state='menu';renderUI();};
     return;
@@ -2518,8 +2616,8 @@ function renderUI(){
     id('btnTitleStart').onclick=()=>{
       SFX.select();
       const hasSave=Save.load();
-      // Por ahora la aventura jugable comienza en La Galaxia; los demás capítulos quedan como próximos.
-      SFX.startMusic();startLevel(1);
+      SFX.startMusic();
+      if(hasSave)startLevel(1);else startPrologue();
       try{
         if(!document.fullscreenElement){
           document.documentElement.requestFullscreen?.()?.catch(()=>{});
@@ -2563,7 +2661,7 @@ function renderUI(){
       Object.assign(G,{memories:[],decisions:{},
         powers:{double_jump:false,dash:false,glide:false,rocket:false},equippedBasic:['double_jump','dash'],equippedConsciousness:{},consciousnessUnlocked:0,character:{accent:'#d4c4a0',detail:'heart',trail:'#f472b6',hair:'#d97832',jacket:'#8b5e3c',outfit:'aurora'},ownedBasic:['double_jump','dash'],ownedOutfits:['aurora'],
         levelId:1,timePlayed:0,unlockedEndings:[],score:0,coins:0,storySeen:[]});
-      Save.clear();SFX.select();G.state='map';renderUI();
+      Save.clear();SFX.select();SFX.startMusic();startPrologue();
     };
     id('btnCont').onclick=()=>{
       if(Save.load()){SFX.select();G.state='map';renderUI();}

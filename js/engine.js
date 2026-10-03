@@ -124,7 +124,7 @@ const LEVELS={
     spiritual:'Umbral del Despertar',
   },
   2:{
-    name:'La Ciudad',icon:'🌆',subtitle:'Neones y tu mano en la mía',theme:'city',
+    name:'La Ciudad Fracturada',icon:'🌆',subtitle:'Lo que quedó después del desgarrón',theme:'ruins',companion:'guera',
     width:2400,height:270,spawn:{x:40,y:195},
     powerUp:'dash',
     platforms:[
@@ -139,8 +139,10 @@ const LEVELS={
     spikes:[],
     memories:[{x:295,y:138,id:4},{x:770,y:126,id:5},{x:1262,y:126,id:6}],
     items:[
-      {x:200,y:168,type:'star'},{x:650,y:166,type:'star'},
-      {x:990,y:198,type:'heart'},{x:1730,y:128,type:'heart'},
+      {x:200,y:168,type:'fragment'},{x:320,y:135,type:'fragment'},{x:650,y:166,type:'star'},
+      {x:820,y:128,type:'fragment'},{x:990,y:198,type:'heart'},{x:1180,y:168,type:'fragment'},
+      {x:1390,y:158,type:'fragment'},{x:1550,y:198,type:'star'},{x:1730,y:128,type:'heart'},
+      {x:1880,y:168,type:'fragment'},{x:2110,y:168,type:'fragment'},{x:2260,y:198,type:'fragment'},
     ],
     enemies:[
       {x:205,y:178,type:'walker',range:55,dir:1,spd:.65},
@@ -156,7 +158,7 @@ const LEVELS={
       a:'Un hotel con vista al mar, solo nosotros y el horizonte',
       b:'Una cabaña perdida en la montaña, lluvia y café caliente',
     },
-    bgDesc:'Ciudad iluminada al atardecer',
+    bgDesc:'Una ciudad de neón partida por la grieta del universo',
     spiritual:'La Alianza',
   },
   3:{
@@ -298,6 +300,10 @@ const SFX=(()=>{
     win:()=>chord([523,659,784,1046,1318,1568],.25,.08,'triangle'),
     select:()=>tone(600,.06,.04,'triangle'),
     unlock:()=>chord([523,784,1046,1318,1568],.2,.08,'triangle'),
+    rift:()=>{tone(70,.7,.09,'sawtooth',28);setTimeout(()=>tone(180,.32,.05,'triangle',70),120);},
+    guera:()=>chord([392,523,659],.16,.06,'triangle'),
+    heartbeat:()=>tone(92,.18,.045,'sine',76),
+    blackHole:()=>{tone(48,.9,.11,'sawtooth',22);setTimeout(()=>tone(32,.8,.08,'sine',18),160);},
     step1:()=>tone(160,.04,.03,'square'),
     step2:()=>tone(140,.04,.03,'square'),
   };
