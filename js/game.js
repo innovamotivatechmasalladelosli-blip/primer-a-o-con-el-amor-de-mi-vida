@@ -995,9 +995,10 @@ function finishLevel(){
 // ═══════════════════════════════════════════════════════════
 //   PRÓLOGO — EL UNIVERSO QUE ALISON PERDIÓ
 // ═══════════════════════════════════════════════════════════
-let PRELUDE={page:0,t:0,fade:0};
-function startPrologue(){
+let PRELUDE={page:0,t:0,fade:0,next:1};
+function startPrologue(next=1){
   G.state='prologue';G.paused=false;ui.innerHTML='';PRELUDE={page:0,t:0,fade:0};
+  PRELUDE.next=next;
   G.storySeen=Array.isArray(G.storySeen)?G.storySeen:[];
   if(!G.storySeen.includes(-1))G.storySeen.push(-1);Save.save();
   canvas.onclick=advancePrologue;SFX.rift();
@@ -1005,7 +1006,7 @@ function startPrologue(){
 function advancePrologue(){
   if(G.state!=='prologue')return;SFX.select();
   if(PRELUDE.page<5){PRELUDE.page++;PRELUDE.t=0;if(PRELUDE.page===2||PRELUDE.page===4)SFX.rift();if(PRELUDE.page===5)SFX.blackHole();}
-  else{canvas.onclick=null;startLevel(1);}
+  else{canvas.onclick=null;startLevel(PRELUDE.next||1);}
 }
 function _drawGuera(x,y,s=1,run=0){
   ctx.save();ctx.translate(Math.floor(x),Math.floor(y));ctx.scale(s,s);
@@ -2616,8 +2617,7 @@ function renderUI(){
     id('btnTitleStart').onclick=()=>{
       SFX.select();
       const hasSave=Save.load();
-      SFX.startMusic();
-      if(hasSave)startLevel(1);else startPrologue();
+      SFX.startMusic();startLevel(1);
       try{
         if(!document.fullscreenElement){
           document.documentElement.requestFullscreen?.()?.catch(()=>{});
@@ -2661,7 +2661,7 @@ function renderUI(){
       Object.assign(G,{memories:[],decisions:{},
         powers:{double_jump:false,dash:false,glide:false,rocket:false},equippedBasic:['double_jump','dash'],equippedConsciousness:{},consciousnessUnlocked:0,character:{accent:'#d4c4a0',detail:'heart',trail:'#f472b6',hair:'#d97832',jacket:'#8b5e3c',outfit:'aurora'},ownedBasic:['double_jump','dash'],ownedOutfits:['aurora'],
         levelId:1,timePlayed:0,unlockedEndings:[],score:0,coins:0,storySeen:[]});
-      Save.clear();SFX.select();SFX.startMusic();startPrologue();
+      Save.clear();SFX.select();SFX.startMusic();startLevel(1);
     };
     id('btnCont').onclick=()=>{
       if(Save.load()){SFX.select();G.state='map';renderUI();}
@@ -2736,8 +2736,8 @@ function renderUI(){
       for(const n of MAP_NODES){
         const d=Math.hypot(mx-n.x,my-n.y);
         if(d<30){
-          const ok=n.id===1;
-          if(ok){SFX.select();startLevel(n.id);}else{SFX.hurt();G.shakeT=.15;G.shakeAmt=3;}
+          const ok=n.id===1||(n.id===2&&G.levelId>=2)||(n.id==='story-1'&&G.levelId>=2);
+          if(ok){SFX.select();if(n.id==='story-1')startPrologue(2);else startLevel(n.id);}else{SFX.hurt();G.shakeT=.15;G.shakeAmt=3;}
           return;
         }
       }
