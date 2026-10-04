@@ -124,7 +124,7 @@ const LEVELS={
     spiritual:'Umbral del Despertar',
   },
   2:{
-    name:'La Ciudad Fracturada',icon:'🌆',subtitle:'Lo que quedó después del desgarrón',theme:'ruins',companion:'guera',
+    name:'La Ciudad Fracturada',icon:'🌆',subtitle:'Lo que quedó después del desgarrón',theme:'ruins',
     width:2400,height:270,spawn:{x:40,y:195},
     powerUp:'dash',
     platforms:[
