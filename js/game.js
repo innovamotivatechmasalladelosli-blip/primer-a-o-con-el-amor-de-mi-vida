@@ -1113,6 +1113,7 @@ function startCinematic(){
   ui.innerHTML='';
   CINE={scene:0,time:0,total:0};
   G.storySeen=Array.isArray(G.storySeen)?G.storySeen:[];
+  if(!G.storySeen.includes(-1))G.storySeen.push(-1);
   if(!G.storySeen.includes(0))G.storySeen.push(0);
   Save.save();
   const root=document.createElement('section');root.className='cine-dialogue';
@@ -2222,6 +2223,7 @@ function drawMapFull(){
 
   for(const n of MAP_NODES){
     const isStory=n.kind==='story';
+    const storyAvailable=n.id==='story-1'&&G.levelId>=2;
     const unlocked=!isStory&&n.id===1;
     const completed=!isStory&&G.levelId>n.id;
     const active=!isStory&&G.levelId===n.id;
@@ -2237,15 +2239,21 @@ function drawMapFull(){
       ctx.beginPath();ctx.arc(n.x,n.y,22,0,Math.PI*2);ctx.fill();
       ctx.globalAlpha=1;
     }
+    if(storyAvailable){
+      ctx.globalAlpha=.18+Math.sin(t*3)*.08;
+      ctx.fillStyle='#fbbf24';ctx.beginPath();ctx.arc(n.x,n.y,21,0,Math.PI*2);ctx.fill();
+      ctx.globalAlpha=1;
+    }
 
     // Nodo
     const nr=active?16:13;
     const ngg=ctx.createRadialGradient(n.x-3,n.y-3,0,n.x,n.y,nr);
     if(completed){ngg.addColorStop(0,'#86efac');ngg.addColorStop(1,'#166534');}
+    else if(storyAvailable){ngg.addColorStop(0,'#fbbf24');ngg.addColorStop(1,'#78350f');}
     else if(unlocked){ngg.addColorStop(0,n.color);ngg.addColorStop(1,'#1e0535');}
     else{ngg.addColorStop(0,'#2d1b47');ngg.addColorStop(1,'#0d0118');}
     ctx.fillStyle=ngg;ctx.beginPath();ctx.arc(n.x,n.y,nr,0,Math.PI*2);ctx.fill();
-    ctx.strokeStyle=completed?'#4ade80':(unlocked?'#fbbf24':'#3b2060');
+    ctx.strokeStyle=completed?'#4ade80':((unlocked||storyAvailable)?'#fbbf24':'#3b2060');
     ctx.lineWidth=2;ctx.stroke();
     if(active){ctx.strokeStyle='#fff';ctx.lineWidth=1;
       ctx.beginPath();ctx.arc(n.x,n.y,nr+3,0,Math.PI*2);ctx.stroke();}
@@ -2259,7 +2267,7 @@ function drawMapFull(){
       ctx.fillStyle='#0d0118';ctx.font='bold 11px "Press Start 2P",monospace';
       ctx.fillText(n.id,n.x,n.y+1);
     }else if(isStory){
-      ctx.fillStyle='#fbbf24';ctx.font='bold 10px monospace';ctx.fillText('▤',n.x,n.y+2);
+      ctx.fillStyle=storyAvailable?'#fff1b8':'#fbbf24';ctx.font='bold 10px monospace';ctx.fillText('▤',n.x,n.y+2);
     }else{
       ctx.fillStyle='#6d28d9';ctx.fillRect(n.x-4,n.y-1,8,6);
       ctx.strokeStyle='#6d28d9';ctx.lineWidth=1.5;
@@ -2269,12 +2277,13 @@ function drawMapFull(){
     ctx.textBaseline='alphabetic';
 
     // Nombre
-    const col=completed?'#86efac':(unlocked?'#f5d0fe':'#6d4c8a');
+    const col=completed?'#86efac':((unlocked||storyAvailable)?'#f5d0fe':'#6d4c8a');
     ctx.fillStyle=col;ctx.font=isStory?'bold 6px "Press Start 2P",monospace':'bold 8px "Press Start 2P",monospace';
     ctx.textAlign='center';
     if(isStory){
       ctx.fillText(n.name,n.x,n.y-17);
-      ctx.fillStyle='#c49a45';ctx.font='5px "Press Start 2P",monospace';ctx.fillText('CAPÍTULO',n.x,n.y-8);
+      ctx.fillStyle=storyAvailable?'#ffe08a':'#c49a45';ctx.font='5px "Press Start 2P",monospace';
+      ctx.fillText(storyAvailable?'VER HISTORIA':'CAPÍTULO',n.x,n.y-8);
     }else ctx.fillText(n.name,n.x,n.y+nr+13);
     // Ícono y nombre del sendero espiritual desbloqueable
     if(!isStory&&unlocked){
@@ -2809,7 +2818,7 @@ function renderUI(){
         const d=Math.hypot(mx-n.x,my-n.y);
         if(d<30){
           const ok=n.id===1||(n.id===2&&G.levelId>=2)||(n.id==='story-1'&&G.levelId>=2);
-          if(ok){SFX.select();if(n.id==='story-1')startPrologue(2);else startLevel(n.id);}else{SFX.hurt();G.shakeT=.15;G.shakeAmt=3;}
+          if(ok){SFX.select();if(n.id==='story-1')startCinematic();else startLevel(n.id);}else{SFX.hurt();G.shakeT=.15;G.shakeAmt=3;}
           return;
         }
       }

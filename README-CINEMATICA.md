@@ -1,18 +1,19 @@
-# Actualización de la cinemática
+# Cinemática de Historia I
 
-Esta actualización reemplaza el intermedio breve entre los niveles 1 y 2 por cuatro escenas pixel art con fondo ilustrado, sprites animados y narración en español.
-
-## Archivos incluidos
-
-- `js/game.js`: escenas, diálogo, animación de Alison, Uriel y Güera, fundidos y controles.
-- `css/style.css`: cartela adaptable para teléfono y escritorio.
-- `assets/cinematic/*.webp`: cuatro fondos comprimidos para la carga en web.
+La cinemática conecta automáticamente la finalización del nivel 1 con la historia disponible en el nodo **HISTORIA I** del mapa. Al terminar sus cuatro escenas, el juego vuelve al mapa con el nivel 2 habilitado. El nodo **HISTORIA I** queda resaltado y permite volver a ver la secuencia.
 
 ## Secuencia
 
 1. Alison, Uriel y Güera juegan en un campo de flores.
 2. Bajo un árbol, Alison confiesa que es una diosa de otro universo y que ocultó su identidad.
-3. Una entidad despedaza ese universo, le roba sus poderes y fractura sus niveles de conciencia.
-4. Alison explica por qué se quedó con Uriel; los tres emprenden la búsqueda de los fragmentos y poderes.
+3. La entidad despedaza ese universo, roba sus poderes y fragmenta sus niveles de conciencia.
+4. Alison cuenta por qué eligió a Uriel; los tres parten a recuperar el universo y sus poderes.
 
-La cinemática comienza al terminar el nivel 1 y su minijuego. Cada escena avanza con toque, clic, Espacio, Enter o flecha derecha; Escape permite salir. Si se copia a otro repositorio, se deben mantener las rutas relativas `assets/cinematic/<nombre>.webp`.
+Cada escena avanza automáticamente después de su duración, o antes con toque, clic, Espacio, Enter o flecha derecha. Escape vuelve al mapa.
+
+## Archivos
+
+- `js/game.js`: progresión, nodo Historia I, diálogo y animaciones.
+- `css/style.css`: cartela adaptable a móvil y escritorio.
+- `assets/cinematic/*.webp`: cuatro fondos ilustrados optimizados.
+- `index.html`: claves de caché para que se cargue la versión más reciente.
