@@ -1011,7 +1011,7 @@ function startPrologue(next=1){
 }
 function advancePrologue(){
   if(G.state!=='prologue')return;SFX.select();
-  if(PRELUDE.page<2){PRELUDE.page++;PRELUDE.t=0;if(PRELUDE.page===2)SFX.blackHole();}
+  if(PRELUDE.page<5){PRELUDE.page++;PRELUDE.t=0;if(PRELUDE.page===2)SFX.rift();if(PRELUDE.page===4)SFX.blackHole();}
   else{
     G.storySeen=Array.isArray(G.storySeen)?G.storySeen:[];
     if(!G.storySeen.includes(-1))G.storySeen.push(-1);
@@ -1039,40 +1039,97 @@ function _drawGuera(x,y,s=1,run=0){
   const wag=Math.sin(clock*.72)*2;ctx.fillStyle='#f7dfbb';ctx.fillRect(15,-8+wag,5,12);ctx.fillRect(19,-14+wag,5,9);ctx.fillRect(22,-18+wag,4,7);ctx.fillStyle='#b9784e';ctx.fillRect(20,-12+wag,4,5);
   ctx.restore();
 }
+function drawPrologueEntity(t){
+  const x=VW*.82,y=126+Math.sin(t*1.5)*3;
+  ctx.save();
+  // Umbral rasgado que aparece sobre el parque; la criatura se dibuja en silueta angular.
+  ctx.globalAlpha=.75;ctx.strokeStyle='#f0abfc';ctx.lineWidth=1.5;ctx.beginPath();ctx.ellipse(x,y,24+Math.sin(t*3)*2,37,-.2,t*.4,t*.4+Math.PI*1.65);ctx.stroke();ctx.globalAlpha=1;
+  ctx.strokeStyle='#16051f';ctx.lineWidth=5;ctx.lineCap='square';ctx.lineJoin='miter';
+  const tentacles=[[-8,8,-22,17,-31,12],[-5,12,-17,26,-29,27],[0,13,1,28,-8,37],[8,11,20,23,29,19],[10,4,25,9,34,3]];
+  for(const a of tentacles){ctx.beginPath();ctx.moveTo(x+a[0],y+a[1]);ctx.lineTo(x+a[2],y+a[3]);ctx.lineTo(x+a[4],y+a[5]);ctx.stroke();}
+  ctx.fillStyle='#14051e';ctx.beginPath();ctx.moveTo(x-13,y-13);ctx.lineTo(x-11,y-25);ctx.lineTo(x-5,y-20);ctx.lineTo(x,y-31);ctx.lineTo(x+4,y-22);ctx.lineTo(x+14,y-27);ctx.lineTo(x+12,y-15);ctx.lineTo(x+17,y-5);ctx.lineTo(x+11,y+10);ctx.lineTo(x+2,y+15);ctx.lineTo(x-10,y+11);ctx.lineTo(x-17,y+1);ctx.closePath();ctx.fill();
+  ctx.fillStyle='#3f0b52';ctx.fillRect(x-11,y-12,22,18);ctx.fillStyle='#ff2d85';
+  ctx.fillRect(x-8,y-7,4,4);ctx.fillRect(x+5,y-7,4,4);ctx.fillStyle='#fff';ctx.fillRect(x-7,y-7,1,1);ctx.fillRect(x+6,y-7,1,1);
+  ctx.restore();
+}
 function drawPrologue(){
   const t=PRELUDE.t,p=PRELUDE.page;
-  const key=p===0?'field-play':p===1?'tree-embrace':'void-omen',im=CINE_ART[key];
+  const key=p===1?'tree-embrace':p===5?'void-omen':'field-play',im=CINE_ART[key];
   if(im?.complete&&im.naturalWidth)ctx.drawImage(im,0,0,VW,VH);else{ctx.fillStyle='#09051a';ctx.fillRect(0,0,VW,VH);}
   ctx.fillStyle='rgba(5,3,18,.58)';ctx.fillRect(0,0,VW,70);
   ctx.textAlign='center';ctx.fillStyle='#ffe7a1';ctx.font='6px "Press Start 2P",monospace';
   if(p===0){
-    ctx.fillText('ANTES DE QUE EL CIELO SE ROMPIERA',VW/2,15);
-    ctx.fillStyle='#fff1df';ctx.font='bold 11px Nunito';ctx.fillText('Alison, Uriel y Güera tenían un hogar tranquilo.',VW/2,34);
-    ctx.fillText('Por un momento, su mundo fue solo de ellos.',VW/2,49);
+    ctx.fillText('UNA TARDE EN EL PARQUE',VW/2,15);
+    ctx.fillStyle='#fff1df';ctx.font='bold 11px Nunito';ctx.fillText('Alison, Uriel y Güera jugaban entre las flores.',VW/2,34);
+    ctx.fillText('El mundo todavía se sentía seguro y completo.',VW/2,49);
     const bob=Math.sin(t*2)*1.5;
     _drawChar(202,207+bob,-1,'idle',0,false);drawCineBoy(223,207+bob,1,t,true);_drawGuera(183,208+bob,.43,t);
     for(let i=0;i<9;i++){const x=(i*53+t*9)%VW,y=145+(i*29)%63;ctx.fillStyle=i%2?'#fbbf24':'#f5a6ce';ctx.globalAlpha=.4+.3*Math.sin(t*2+i);ctx.fillRect(x,y,2,2);}ctx.globalAlpha=1;
   }else if(p===1){
-    ctx.fillText('LA DIOSA QUE ELIGIÓ UNA VIDA COMÚN',VW/2,15);
+    ctx.fillText('BAJO EL ÁRBOL, SU PEQUEÑO REFUGIO',VW/2,15);
     ctx.fillStyle='#fff1df';ctx.font='bold 11px Nunito';ctx.fillText('Alison ocultaba su divinidad; Uriel la amaba sin saberlo.',VW/2,34);
-    ctx.fillText('Entonces, algo imposible apareció en el cielo.',VW/2,49);
-    const bx=VW*.8,by=137,r=14+Math.sin(t*2)*2;
-    ctx.globalAlpha=.45;ctx.strokeStyle='#e879f9';ctx.lineWidth=2;ctx.beginPath();ctx.ellipse(bx,by,r*1.8,r*.5,-.16,t,t+Math.PI*1.8);ctx.stroke();ctx.globalAlpha=1;
-    ctx.fillStyle='#03010b';ctx.beginPath();ctx.arc(bx,by,r,0,Math.PI*2);ctx.fill();ctx.strokeStyle='#f472b6';ctx.lineWidth=1;ctx.beginPath();ctx.arc(bx,by,r+2,0,Math.PI*2);ctx.stroke();
+    ctx.fillText('Con él y con Güera, eligió una vida sencilla.',VW/2,49);
     _drawChar(200,211,-1,'idle',0,false);drawCineBoy(220,211,1,t,true);_drawGuera(180,212,.4,t);
-    ctx.globalAlpha=.7;ctx.fillStyle='#f9a8d4';ctx.fillRect(252,130,2,2);ctx.fillRect(239,114,1,1);ctx.fillRect(272,152,2,2);ctx.globalAlpha=1;
+  }else if(p===2){
+    const fade=Math.min(.55,.1+t*.065);ctx.fillStyle=`rgba(3,1,12,${fade})`;ctx.fillRect(0,70,VW,VH-70);
+    drawPrologueEntity(t);
+    for(let i=0;i<22;i++){const x=(i*47+t*(i%3+1)*5)%VW,y=83+(i*31)%150;ctx.globalAlpha=Math.min(.8,.15+t*.08);ctx.fillStyle=i%2?'#bd69d7':'#f4a7dd';ctx.fillRect(x,y,2+i%3,2);}
+    const friends=Math.max(0,1-t*.18);ctx.globalAlpha=friends;_drawChar(200,211,-1,'idle',0,false);drawCineBoy(220,211,1,t,true);_drawGuera(180,212,.4,t);ctx.globalAlpha=1;
+    ctx.fillStyle='#ffe7a1';ctx.font='6px "Press Start 2P",monospace';ctx.fillText('ALGO SURGIÓ DE LA NADA',VW/2,15);
+    ctx.fillStyle='#fff1df';ctx.font='bold 11px Nunito';ctx.fillText('Alison presintió algo: una entidad surgió de la nada.',VW/2,34);
+    ctx.fillText('Las flores, el sendero y el cielo empezaron a borrarse.',VW/2,49);
+  }else if(p===3){
+    const fade=Math.min(.62,.16+t*.09);ctx.fillStyle=`rgba(3,1,12,${fade})`;ctx.fillRect(0,70,VW,VH-70);
+    drawPrologueEntity(t+.8);
+    _drawChar(198,211,-1,'jump',Math.floor(t*7)%4,false);
+    ctx.fillStyle='#ffe7a1';ctx.font='6px "Press Start 2P",monospace';ctx.fillText('LOS NIVELES DE CONCIENCIA SE APAGAN',VW/2,15);
+    ctx.fillStyle='#fff1df';ctx.font='bold 11px Nunito';ctx.fillText('Quiso usar sus poderes, pero ya no respondían.',VW/2,34);
+    ctx.fillText('Su conciencia divina se apagó nivel por nivel.',VW/2,49);
+    const colors=['#60a5fa','#a78bfa','#f472b6','#34d399','#fbbf24'],labels=['I','II','III','IV','V'];
+    for(let i=0;i<5;i++){
+      const x=VW*.54+i*VW*.082,y=106,alpha=Math.max(0,Math.min(1,1-(t-i*.45)*1.05));
+      ctx.globalAlpha=alpha;ctx.strokeStyle=colors[i];ctx.lineWidth=2;ctx.beginPath();ctx.arc(x,y,8+Math.sin(t*6+i)*1.2,0,Math.PI*2);ctx.stroke();
+      ctx.fillStyle=colors[i];ctx.font='bold 7px Nunito';ctx.fillText(labels[i],x,y+2);ctx.globalAlpha=1;
+    }
+    const aura=Math.max(0,.5-t*.12);ctx.globalAlpha=aura;ctx.strokeStyle='#fbbf24';ctx.lineWidth=2;ctx.beginPath();ctx.arc(198,190,25+Math.sin(t*7)*3,0,Math.PI*2);ctx.stroke();ctx.globalAlpha=1;
+  }else if(p===4){
+    const holeX=VW*.77,holeY=VH*.47,collapse=Math.min(1,t/5);
+    ctx.fillStyle=`rgba(3,1,12,${.18+collapse*.3})`;ctx.fillRect(0,70,VW,VH-70);
+    // Grietas que se extienden por el parque hacia el horizonte de sucesos.
+    ctx.globalAlpha=.24+collapse*.38;ctx.strokeStyle='#d879f2';ctx.lineWidth=1;
+    for(let i=0;i<5;i++){
+      const sx=(i*103+17)%VW,sy=88+(i*37)%133;
+      ctx.beginPath();ctx.moveTo(sx,sy);ctx.lineTo(sx+(holeX-sx)*.3,sy+(holeY-sy)*.3+9);ctx.lineTo(sx+(holeX-sx)*.62,sy+(holeY-sy)*.62-7);ctx.lineTo(holeX,holeY);ctx.stroke();
+    }
+    ctx.globalAlpha=1;
+    // Manchas de ausencia crecen sobre la imagen original: el paisaje deja de ser un lugar continuo.
+    for(let i=0;i<17;i++){
+      const x=(i*89+31)%VW,y=82+(i*47)%145,w=5+i%4*3,h=4+i%3*3;
+      ctx.globalAlpha=collapse*(.35+(i%4)*.13);ctx.fillStyle=i%3?'#100b20':'#030109';ctx.fillRect(x,y,w,h);
+    }
+    ctx.globalAlpha=1;
+    // Trozos de cielo, flores y tierra se desprenden y son arrastrados al centro oscuro.
+    for(let i=0;i<30;i++){
+      const phase=(t*.12+i*.087)%1,sx=(i*73+23)%VW,sy=82+(i*41)%145;
+      const x=sx+(holeX-sx)*phase,y=sy+(holeY-sy)*phase;
+      const size=2+i%4*2;ctx.save();ctx.translate(x,y);ctx.rotate(phase*8+i);
+      ctx.globalAlpha=.35+.55*(1-phase);ctx.fillStyle=['#4b694d','#88775f','#e78eb4','#fbbf24','#51617b'][i%5];ctx.fillRect(-size/2,-size/2,size,size*.68);ctx.restore();
+    }
+    drawCosmicBlackHole(holeX,holeY,39+Math.sin(t*2)*2,t,1);
+    for(let i=0;i<18;i++){const a=t*.65+i*Math.PI*2/18,r=34+(i%4)*9,x=holeX+Math.cos(a)*r,y=holeY+Math.sin(a)*r*.53;ctx.fillStyle=i%2?'#fbbf24':'#c4b5fd';ctx.globalAlpha=.8;ctx.fillRect(x,y,2+i%3,2);}
+    const shield=Math.max(0,.8-t*.09);ctx.globalAlpha=shield;ctx.strokeStyle='#ffe7a1';ctx.lineWidth=2;ctx.beginPath();ctx.ellipse(151,175,23+Math.sin(t*9)*2,31,-.12,0,Math.PI*2);ctx.stroke();ctx.globalAlpha=1;
+    _drawChar(151,204+Math.sin(t*3)*3,-1,'fall',Math.floor(t*7)%4,false);
+    ctx.fillStyle='#ffe7a1';ctx.font='6px "Press Start 2P",monospace';ctx.fillText('EL AGUJERO NEGRO DEVORÓ SU MUNDO',VW/2,15);
+    ctx.fillStyle='#fff1df';ctx.font='bold 11px Nunito';ctx.fillText('El agujero negro devoró el parque y su universo.',VW/2,34);
+    ctx.fillText('A Alison no la absorbió: su cuerpo de diosa resistió.',VW/2,49);
   }else{
-    const shake=t<.8?Math.sin(t*35)*(1-t)*1.5:0;
-    ctx.save();ctx.translate(shake,Math.sin(t*1.5)*1.5);
-    for(let i=0;i<24;i++){const x=(i*61+t*(12+i%4*4))%VW,y=(i*37+Math.sin(t*1.8+i)*22)%VH;ctx.fillStyle=['#f472b6','#e879f9','#93c5fd','#fbbf24'][i%4];ctx.globalAlpha=.35+.3*Math.sin(t*4+i);ctx.fillRect(x,y,1+i%2,1+i%2);}ctx.globalAlpha=1;
-    const pulse=Math.sin(t*2.4)*1.6;ctx.globalAlpha=.25;ctx.strokeStyle='#e879f9';ctx.lineWidth=2;ctx.beginPath();ctx.ellipse(VW*.77,145,58+pulse,21,-.17,0,Math.PI*2);ctx.stroke();ctx.globalAlpha=1;
-    _drawChar(184+Math.sin(t*1.5)*2,212+Math.sin(t*3)*4,-1,'jump',Math.floor(t*8)%4,false);
-    ctx.restore();
-    ctx.fillStyle='#ffe7a1';ctx.font='6px "Press Start 2P",monospace';ctx.fillText('EL AGUJERO NEGRO',VW/2,82);
-    ctx.fillStyle='#fff1df';ctx.font='bold 11px Nunito';ctx.fillText('Alison ya está en el vacío, siguiendo el vórtice.',VW/2,100);
-    ctx.fillText('Lo que la espera al otro lado comienza en el nivel 1.',VW/2,116);
+    const bob=Math.sin(t*2.5)*4;_drawChar(173,195+bob,-1,'fall',Math.floor(t*8)%4,false);
+    for(let i=0;i<22;i++){const x=(i*53+t*(12+i%4*3))%VW,y=(i*37+Math.sin(t*1.8+i)*18)%VH;ctx.globalAlpha=.45;ctx.fillStyle=['#f472b6','#e879f9','#93c5fd','#fbbf24'][i%4];ctx.fillRect(x,y,1+i%3,1+i%2);}ctx.globalAlpha=1;
+    ctx.fillStyle='#ffe7a1';ctx.font='6px "Press Start 2P",monospace';ctx.fillText('ALISON SOBREVIVIÓ',VW/2,15);
+    ctx.fillStyle='#fff1df';ctx.font='bold 11px Nunito';ctx.fillText('Solo quedó el vacío; su resistencia divina la mantuvo viva.',VW/2,34);
+    ctx.fillText('Sus niveles de conciencia quedaron dispersos entre fragmentos.',VW/2,49);
   }
-  ctx.fillStyle='rgba(3,1,10,.82)';ctx.fillRect(20,VH-34,VW-40,20);ctx.fillStyle='#f5d0fe';ctx.font='6px "Press Start 2P"';ctx.fillText(p<2?'TOCA / ESPACIO PARA CONTINUAR':'TOCA / ESPACIO PARA IR AL NIVEL 1',VW/2,VH-21);ctx.textAlign='left';
+  ctx.fillStyle='rgba(3,1,10,.82)';ctx.fillRect(20,VH-34,VW-40,20);ctx.fillStyle='#f5d0fe';ctx.font='6px "Press Start 2P"';ctx.fillText(p<5?'TOCA / ESPACIO PARA CONTINUAR':'TOCA / ESPACIO PARA IR AL NIVEL 1',VW/2,VH-21);ctx.textAlign='left';
 }
 
 const CINE_SCENES=[
@@ -1167,11 +1224,11 @@ const CONSCIOUSNESS_PATH=[
   {short:'V · SÚPER DIOS',name:'Trascendencia',hint:'El poder total',color:'#fbbf24'}
 ];
 const STORY_CHAPTERS=[
-  ['El refugio bajo el árbol','Antes de la catástrofe, Alison, Uriel y Güera compartían un lugar tranquilo.'],
-  ['Rumbo al agujero negro','Alison siguió el extraño vórtice que ya aparecía en el cielo de su universo.'],
-  ['La entidad despierta','Algo surgió de la nada; Alison presintió su llegada e intentó usar sus poderes.'],
-  ['El mundo devorado','Sus poderes ya no respondieron. Su resistencia divina la sostuvo mientras todo su universo caía al agujero negro.'],
-  ['A la deriva','Alison quedó sola entre restos flotantes; las criaturas del vórtice hacen desaparecer cuanto tocan.']
+  ['El parque antes del fin','Alison, Uriel y Güera compartían un refugio bajo el árbol; ella ocultaba que era una diosa.'],
+  ['La entidad surgió de la nada','Alison presintió su llegada. Sin aviso, una entidad apareció en el parque y el mundo comenzó a desvanecerse.'],
+  ['Conciencias apagadas','Alison intentó invocar sus poderes, pero sus niveles de conciencia se apagaron uno tras otro.'],
+  ['El agujero negro','Su resistencia divina impidió que Alison fuera absorbida, aunque el vórtice devoró el parque y su universo.'],
+  ['A la deriva','Alison sobrevivió entre fragmentos. Las criaturas que emergen del agujero negro borran todo lo que tocan.']
 ];
 const BASIC_POWER_CATALOG=[
   {id:'double_jump',name:'Doble salto',icon:'↑↑',hint:'Salta dos veces',price:0},
