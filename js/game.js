@@ -17,6 +17,11 @@ window.addEventListener('keydown',e=>{
     if(e.code==='Escape')finishCinematic();else advanceCinematic();
     return;
   }
+  if(G.state==='prologue'&&['Space','Enter','ArrowRight','Escape'].includes(e.code)){
+    e.preventDefault();if(e.repeat)return;
+    if(e.code==='Escape'){canvas.onclick=null;startLevel(PRELUDE.next||1);}else advancePrologue();
+    return;
+  }
   SFX.unlockAudio();
   const k=KM[e.code];
   if(k){keys[k]=true;e.preventDefault();}
@@ -618,6 +623,26 @@ function _drawChar(cx,by,f,state,frame,dashing){
 //   ENEMIES
 
 // ═══════════════════════════════════════════════════════════
+function drawVoidling(cx,cy,scale=1,t=0,alert=false,flash=false){
+  ctx.save();ctx.translate(Math.floor(cx),Math.floor(cy));ctx.scale(scale,scale);
+  const pulse=1+Math.sin(t*8)*.06,wobble=Math.sin(t*5)*1.2;
+  if(alert){ctx.globalAlpha=.2+.12*Math.sin(t*11);ctx.fillStyle='#c026d3';ctx.beginPath();ctx.arc(0,0,14*pulse,0,Math.PI*2);ctx.fill();ctx.globalAlpha=1;}
+  ctx.fillStyle='rgba(0,0,0,.38)';ctx.fillRect(-10,10,20,3);
+  const dark=flash?'#f5d0fe':'#18051f',body=flash?'#fff':'#541080',light=flash?'#fff':'#9b3ed1';
+  // Brazos de gancho y patas que se arrastran como raíces.
+  ctx.fillStyle=dark;ctx.fillRect(-10,-3,4,3);ctx.fillRect(-14,-6,5,3);ctx.fillRect(-17,-5,4,2);
+  ctx.fillRect(7,-4,4,3);ctx.fillRect(11,-7,5,3);ctx.fillRect(15,-6,4,2);
+  ctx.fillRect(-7,6,3,5+Math.round(wobble));ctx.fillRect(-3,8,3,4);ctx.fillRect(2,7,3,5-Math.round(wobble));ctx.fillRect(6,6,3,5);
+  // Caparazón irregular con púas y espinas.
+  ctx.beginPath();ctx.moveTo(-8,-5);ctx.lineTo(-8,-11);ctx.lineTo(-4,-8);ctx.lineTo(-2,-13);ctx.lineTo(1,-9);ctx.lineTo(6,-12);ctx.lineTo(7,-6);ctx.lineTo(9,-2);ctx.lineTo(7,6);ctx.lineTo(3,9);ctx.lineTo(-5,8);ctx.lineTo(-9,3);ctx.closePath();
+  ctx.fillStyle=dark;ctx.fill();ctx.fillStyle=body;ctx.fillRect(-7,-5,14,9);ctx.fillRect(-5,-7,10,2);ctx.fillRect(-5,4,10,3);
+  ctx.fillStyle=light;ctx.fillRect(-6,-5,2,2);ctx.fillRect(4,-5,2,2);ctx.fillRect(-4,3,8,1);
+  // Ojos de neón y mandíbula partida.
+  ctx.fillStyle=flash?'#fff':'#ff2d85';ctx.fillRect(-5,-3,3,3);ctx.fillRect(2,-3,3,3);
+  ctx.fillStyle='#fff';ctx.fillRect(-4,-3,1,1);ctx.fillRect(3,-3,1,1);
+  ctx.fillStyle=dark;ctx.fillRect(-3,1,6,2);ctx.fillStyle='#e879f9';ctx.fillRect(-2,2,2,1);ctx.fillRect(1,2,2,1);
+  ctx.restore();
+}
 class Walker{
   constructor(x,y,o){
     this.x=x;this.y=y;this.w=16;this.h=16;
@@ -669,28 +694,7 @@ class Walker{
     const bob=Math.sin(this.animT*6)*1;
     const cx=Math.floor(this.x+this.w/2),cy=Math.floor(this.y+this.h/2+bob);
     const flash=this.hitT>0&&Math.floor(this.hitT*28)%2===0;
-    if(this.alertT>0){ctx.globalAlpha=.22+.12*Math.sin(this.animT*12);ctx.fillStyle='#fb7185';ctx.fillRect(cx-11,cy-11,22,22);ctx.globalAlpha=1;}
-    const body=flash?'#fff':'#6b21a8';
-    const dark=flash?'#fff':'#3b0764';
-    const eye=flash?'#fff':'#f43f5e';
-    // Cuerpo
-    ctx.fillStyle=body;
-    ctx.fillRect(cx-7,cy-5,14,10);
-    ctx.fillRect(cx-5,cy-7,10,2);
-    ctx.fillRect(cx-6,cy+5,12,3);
-    ctx.fillStyle=dark;
-    ctx.fillRect(cx-7,cy-5,14,2);
-    ctx.fillRect(cx-7,cy-5,2,10);
-    // Patas
-    ctx.fillStyle=dark;
-    ctx.fillRect(cx-5,cy+8,3,3);ctx.fillRect(cx+2,cy+8,3,3);
-    // Ojos
-    const ex=this.dir*2;
-    ctx.fillStyle=eye;
-    ctx.fillRect(cx-3+ex,cy-2,3,3);ctx.fillRect(cx+1+ex,cy-2,3,3);
-    ctx.fillStyle='#000';ctx.fillRect(cx-2+ex,cy-1,1,1);ctx.fillRect(cx+2+ex,cy-1,1,1);
-    // Boca
-    ctx.fillStyle=dark;ctx.fillRect(cx-1,cy+3,2,1);
+    drawVoidling(cx,cy,1,this.animT,this.alertT>0,flash);
   }
 }
 
@@ -1003,14 +1007,16 @@ let PRELUDE={page:0,t:0,fade:0,next:1};
 function startPrologue(next=1){
   G.state='prologue';G.paused=false;ui.innerHTML='';PRELUDE={page:0,t:0,fade:0};
   PRELUDE.next=next;
-  G.storySeen=Array.isArray(G.storySeen)?G.storySeen:[];
-  if(!G.storySeen.includes(-1))G.storySeen.push(-1);Save.save();
   canvas.onclick=advancePrologue;SFX.rift();
 }
 function advancePrologue(){
   if(G.state!=='prologue')return;SFX.select();
-  if(PRELUDE.page<5){PRELUDE.page++;PRELUDE.t=0;if(PRELUDE.page===2||PRELUDE.page===4)SFX.rift();if(PRELUDE.page===5)SFX.blackHole();}
-  else{canvas.onclick=null;startLevel(PRELUDE.next||1);}
+  if(PRELUDE.page<2){PRELUDE.page++;PRELUDE.t=0;if(PRELUDE.page===2)SFX.blackHole();}
+  else{
+    G.storySeen=Array.isArray(G.storySeen)?G.storySeen:[];
+    if(!G.storySeen.includes(-1))G.storySeen.push(-1);
+    Save.save();canvas.onclick=null;startLevel(PRELUDE.next||1);
+  }
 }
 function _drawGuera(x,y,s=1,run=0){
   ctx.save();ctx.translate(Math.floor(x),Math.floor(y));ctx.scale(s,s);
@@ -1035,58 +1041,55 @@ function _drawGuera(x,y,s=1,run=0){
 }
 function drawPrologue(){
   const t=PRELUDE.t,p=PRELUDE.page;
-  const g=ctx.createLinearGradient(0,0,0,VH);g.addColorStop(0,p<3?'#12091d':'#020208');g.addColorStop(.6,p<3?'#4d2941':'#160b25');g.addColorStop(1,p<3?'#c17d68':'#05020c');ctx.fillStyle=g;ctx.fillRect(0,0,VW,VH);
-  // Partículas, grietas y escombros con movimiento cinematográfico.
-  ctx.globalAlpha=.55;
-  for(let i=0;i<42;i++){const x=(i*71+t*(p>=2?30:5))%VW,y=(i*37+Math.sin(t+i)*18)%VH;ctx.fillStyle=['#f8d7b0','#e879f9','#fbbf24','#93c5fd'][i%4];ctx.fillRect(x,y,1+(i%3),1+(i%2));}
-  ctx.globalAlpha=1;
+  const key=p===0?'field-play':p===1?'tree-embrace':'void-omen',im=CINE_ART[key];
+  if(im?.complete&&im.naturalWidth)ctx.drawImage(im,0,0,VW,VH);else{ctx.fillStyle='#09051a';ctx.fillRect(0,0,VW,VH);}
+  ctx.fillStyle='rgba(5,3,18,.58)';ctx.fillRect(0,0,VW,70);
+  ctx.textAlign='center';ctx.fillStyle='#ffe7a1';ctx.font='6px "Press Start 2P",monospace';
   if(p===0){
-    ctx.fillStyle='#fbbf24';ctx.font='7px "Press Start 2P"';ctx.textAlign='center';ctx.fillText('ANTES DEL PRIMER RECUERDO',VW/2,28);
-    ctx.fillStyle='#fff1df';ctx.font='bold 16px Nunito';ctx.fillText('El Edén Encubierto',VW/2,74);ctx.font='bold 13px Nunito';ctx.fillText('Alison ocultó su divinidad para aprender a ser feliz.',VW/2,98);
-    ctx.fillStyle='#f5d0fe';ctx.font='10px Nunito';ctx.fillText('Uriel la acompaña. Guera persigue mariposas de luz.',VW/2,127);
-    for(let i=0;i<5;i++){const bx=VW/2-88+i*44+Math.sin(t*2+i)*5,by=155+Math.cos(t*2+i)*8;ctx.fillStyle='#fff1a8';ctx.fillRect(bx,by,3,2);ctx.fillRect(bx-1,by+2,5,1);} _drawGuera(VW/2-34,190,1.6,t);_drawAlly(VW/2+45,190,'#8b5e3c','#fbbf24');
+    ctx.fillText('ANTES DE QUE EL CIELO SE ROMPIERA',VW/2,15);
+    ctx.fillStyle='#fff1df';ctx.font='bold 11px Nunito';ctx.fillText('Alison, Uriel y Güera tenían un hogar tranquilo.',VW/2,34);
+    ctx.fillText('Por un momento, su mundo fue solo de ellos.',VW/2,49);
+    const bob=Math.sin(t*2)*1.5;
+    _drawChar(202,207+bob,-1,'idle',0,false);drawCineBoy(223,207+bob,1,t,true);_drawGuera(183,208+bob,.43,t);
+    for(let i=0;i<9;i++){const x=(i*53+t*9)%VW,y=145+(i*29)%63;ctx.fillStyle=i%2?'#fbbf24':'#f5a6ce';ctx.globalAlpha=.4+.3*Math.sin(t*2+i);ctx.fillRect(x,y,2,2);}ctx.globalAlpha=1;
   }else if(p===1){
-    ctx.fillStyle='#fbbf24';ctx.font='7px "Press Start 2P"';ctx.textAlign='center';ctx.fillText('LA VISTA MENTAL',VW/2,26);
-    ctx.strokeStyle='rgba(244,114,182,.55)';ctx.lineWidth=2;for(let i=0;i<7;i++){ctx.beginPath();ctx.moveTo(0,55+i*25);ctx.bezierCurveTo(120,20+i*22,300,100-i*16,VW,48+i*24);ctx.stroke();}
-    ctx.fillStyle='#08020e';ctx.beginPath();ctx.arc(VW/2,130,45+Math.sin(t*3)*3,0,Math.PI*2);ctx.fill();ctx.strokeStyle='#fbbf24';ctx.lineWidth=2;ctx.stroke();
-    ctx.fillStyle='#fff1df';ctx.font='bold 13px Nunito';ctx.fillText('La luz parpadeó. Alison abrió la vista remota.',VW/2,207);ctx.fillText('Más allá del cielo, la realidad se estaba rasgando.',VW/2,225);
-  }else if(p===2){
-    ctx.strokeStyle='#f472b6';ctx.lineWidth=3;for(let i=0;i<9;i++){ctx.beginPath();ctx.moveTo(VW/2+i*5-25,0);ctx.lineTo(VW/2-i*17, VH);ctx.stroke();}
-    ctx.fillStyle='#fbbf24';ctx.font='7px "Press Start 2P"';ctx.textAlign='center';ctx.fillText('EL DESGARRO',VW/2,27);
-    ctx.fillStyle='#fff1df';ctx.font='bold 13px Nunito';ctx.fillText('El cielo se quebró como cristal.',VW/2,190);ctx.fillText('La gravedad se invirtió y la materia comenzó a flotar.',VW/2,210);
-    _drawGuera(95,190,1.1,t);_drawAlly(145,190,'#8b5e3c','#fbbf24');for(let i=0;i<18;i++){ctx.fillStyle=['#e879f9','#fbbf24','#93c5fd'][i%3];ctx.fillRect(205+(i*17+t*18)%180,70+(i*23)%120,3,3);}
-  }else if(p===3){
-    ctx.fillStyle='#15051f';ctx.fillRect(0,0,VW,VH);for(let i=0;i<16;i++){ctx.save();ctx.translate((i*43+t*70)%VW,60+(i*29)%150);ctx.rotate(t+i);ctx.fillStyle=['#fbbf24','#f472b6','#60a5fa','#a3e635'][i%4];ctx.fillRect(-5,-2,11,4);ctx.restore();}
-    ctx.fillStyle='#fbbf24';ctx.font='7px "Press Start 2P"';ctx.textAlign='center';ctx.fillText('TODO LO QUE AMABA',VW/2,27);
-    ctx.fillStyle='#fff1df';ctx.font='bold 13px Nunito';ctx.fillText('Salieron volando la casa, el agua y las voces.',VW/2,194);ctx.fillText('Todo se convirtió en cubos de luz.',VW/2,214);
-    _drawGuera(96,150,1.1,t);_drawAlly(145,150,'#8b5e3c','#fbbf24');
-  }else if(p===4){
-    ctx.fillStyle='rgba(0,0,0,.45)';ctx.fillRect(0,0,VW,VH);const run=Math.min(1,t*1.7);const aura=t<1.3; if(aura){ctx.globalAlpha=.45;ctx.fillStyle='#fbbf24';ctx.beginPath();ctx.arc(116+run*90,175,25+Math.sin(t*8)*4,0,Math.PI*2);ctx.fill();ctx.globalAlpha=1;} _drawGuera(72+run*90,205,1.1,t);_drawAlly(116+run*90,205,'#8b5e3c','#fbbf24');
-    ctx.fillStyle='#fbbf24';ctx.font='7px "Press Start 2P"';ctx.textAlign='center';ctx.fillText('LA HUIDA',VW/2,29);
-    ctx.fillStyle='#fff1df';ctx.font='bold 13px Nunito';ctx.fillText('Corrió sobre los fragmentos de su mundo.',VW/2,185);ctx.fillText('Cada golpe apagó su aura, sus recuerdos y su poder.',VW/2,207);if(t>.7){ctx.fillStyle='#f5d0fe';ctx.font='8px Nunito';ctx.fillText('Uriel y Guera se desvanecen detrás de ella.',VW/2,224);}
+    ctx.fillText('LA DIOSA QUE ELIGIÓ UNA VIDA COMÚN',VW/2,15);
+    ctx.fillStyle='#fff1df';ctx.font='bold 11px Nunito';ctx.fillText('Alison ocultaba su divinidad; Uriel la amaba sin saberlo.',VW/2,34);
+    ctx.fillText('Entonces, algo imposible apareció en el cielo.',VW/2,49);
+    const bx=VW*.8,by=137,r=14+Math.sin(t*2)*2;
+    ctx.globalAlpha=.45;ctx.strokeStyle='#e879f9';ctx.lineWidth=2;ctx.beginPath();ctx.ellipse(bx,by,r*1.8,r*.5,-.16,t,t+Math.PI*1.8);ctx.stroke();ctx.globalAlpha=1;
+    ctx.fillStyle='#03010b';ctx.beginPath();ctx.arc(bx,by,r,0,Math.PI*2);ctx.fill();ctx.strokeStyle='#f472b6';ctx.lineWidth=1;ctx.beginPath();ctx.arc(bx,by,r+2,0,Math.PI*2);ctx.stroke();
+    _drawChar(200,211,-1,'idle',0,false);drawCineBoy(220,211,1,t,true);_drawGuera(180,212,.4,t);
+    ctx.globalAlpha=.7;ctx.fillStyle='#f9a8d4';ctx.fillRect(252,130,2,2);ctx.fillRect(239,114,1,1);ctx.fillRect(272,152,2,2);ctx.globalAlpha=1;
   }else{
-    const bx=VW*.75,by=122,r=48+Math.sin(t*2)*3;ctx.globalAlpha=.3;ctx.fillStyle='#7e22ce';ctx.beginPath();ctx.arc(bx,by,r+20,0,Math.PI*2);ctx.fill();ctx.globalAlpha=1;ctx.fillStyle='#020106';ctx.beginPath();ctx.arc(bx,by,r,0,Math.PI*2);ctx.fill();ctx.strokeStyle='#f59e0b';ctx.lineWidth=5;ctx.beginPath();ctx.ellipse(bx,by,r+9,20,-.2,0,Math.PI*2);ctx.stroke();
-    ctx.save();ctx.translate(135,150);ctx.rotate(-.2);_drawRocket(0,0,1,0,t);ctx.restore();ctx.globalAlpha=.7;_drawGuera(285,188,.55,t);_drawAlly(315,188,'#8b5e3c','#fbbf24');ctx.globalAlpha=1;ctx.strokeStyle='rgba(255,255,255,.3)';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(170,150);ctx.lineTo(bx-r,by);ctx.stroke();
-    ctx.fillStyle='#fff1df';ctx.font='bold 13px Nunito';ctx.textAlign='center';ctx.fillText('Encontró una nave de rescate rota.',VW/2,190);ctx.fillText('Entonces nació el Devorador de Mundos.',VW/2,209);ctx.font='italic 12px Nunito';ctx.fillText('“Y así, en el silencio absoluto de la nada…',VW/2,232);ctx.fillText('fui olvidada. Incluso por mí misma.”',VW/2,247);
+    const shake=t<.8?Math.sin(t*35)*(1-t)*1.5:0;
+    ctx.save();ctx.translate(shake,Math.sin(t*1.5)*1.5);
+    for(let i=0;i<24;i++){const x=(i*61+t*(12+i%4*4))%VW,y=(i*37+Math.sin(t*1.8+i)*22)%VH;ctx.fillStyle=['#f472b6','#e879f9','#93c5fd','#fbbf24'][i%4];ctx.globalAlpha=.35+.3*Math.sin(t*4+i);ctx.fillRect(x,y,1+i%2,1+i%2);}ctx.globalAlpha=1;
+    const pulse=Math.sin(t*2.4)*1.6;ctx.globalAlpha=.25;ctx.strokeStyle='#e879f9';ctx.lineWidth=2;ctx.beginPath();ctx.ellipse(VW*.77,145,58+pulse,21,-.17,0,Math.PI*2);ctx.stroke();ctx.globalAlpha=1;
+    _drawChar(184+Math.sin(t*1.5)*2,212+Math.sin(t*3)*4,-1,'jump',Math.floor(t*8)%4,false);
+    ctx.restore();
+    ctx.fillStyle='#ffe7a1';ctx.font='6px "Press Start 2P",monospace';ctx.fillText('EL AGUJERO NEGRO',VW/2,82);
+    ctx.fillStyle='#fff1df';ctx.font='bold 11px Nunito';ctx.fillText('Alison ya está en el vacío, siguiendo el vórtice.',VW/2,100);
+    ctx.fillText('Lo que la espera al otro lado comienza en el nivel 1.',VW/2,116);
   }
-  ctx.fillStyle='rgba(3,1,10,.75)';ctx.fillRect(20,VH-34,VW-40,20);ctx.fillStyle='#f5d0fe';ctx.font='7px "Press Start 2P"';ctx.textAlign='center';ctx.fillText(p<5?'TOCA PARA CONTINUAR':'TOCA PARA DESPERTAR EN EL PRIMER NIVEL',VW/2,VH-21);ctx.textAlign='left';
+  ctx.fillStyle='rgba(3,1,10,.82)';ctx.fillRect(20,VH-34,VW-40,20);ctx.fillStyle='#f5d0fe';ctx.font='6px "Press Start 2P"';ctx.fillText(p<2?'TOCA / ESPACIO PARA CONTINUAR':'TOCA / ESPACIO PARA IR AL NIVEL 1',VW/2,VH-21);ctx.textAlign='left';
 }
 
 const CINE_SCENES=[
-  {title:'EL CAMPO DE LAS FLORES',art:'field-play',duration:8.5,
-    text:'Entre las flores, Alison, Uriel y Güera jugaron juntos: aquel claro se volvió su pequeño universo.'},
-  {title:'BAJO EL ÁRBOL ANTIGUO',art:'tree-embrace',duration:8.5,
-    text:'Bajo el árbol, Alison confesó: «Soy una diosa de otro universo. Aquí oculté quién era para vivir como una chica común».'},
-  {title:'EL UNIVERSO SE DESHACE',art:'world-fracture',duration:9.5,
-    text:'La entidad despedazó su universo, le robó sus poderes y fragmentó sus niveles de conciencia, sellándolos en mundos distintos.'},
-  {title:'LO QUE ALISON VIO EN URIEL',art:'goddess-reveal',duration:9,
-    text:'Se quedó con Uriel porque vio bondad y valor: él la amaba sin pedir milagros. Con él y Güera recuperará su mundo y sus poderes.'},
+  {title:'EL PRESAGIO EN EL VÓRTICE',art:'void-omen',duration:8.5,
+    text:'Al cruzar el agujero negro, Alison sintió que algo la observaba desde el otro lado.'},
+  {title:'LA ENTIDAD DESPIERTA',art:'void-arrival',duration:8.5,
+    text:'Una entidad surgió de pronto. Alison intentó llamar a sus poderes, pero no respondieron; solo resistió su cuerpo de diosa.'},
+  {title:'EL UNIVERSO DESAPARECE',art:'void-collapse',duration:9.5,
+    text:'Su mundo entero se deshizo y cayó en el agujero negro. Su resistencia la mantuvo fuera; no pudo salvar su hogar.'},
+  {title:'A LA DERIVA',art:'void-survivor',duration:9,
+    text:'Quedaron fragmentos flotando en el espacio. Alison siguió adelante mientras horrores salían del vórtice y borraban todo lo que tocaban.'},
 ];
 const CINE_ART={};
-for(const scene of CINE_SCENES){
+for(const art of [...new Set([...CINE_SCENES.map(scene=>scene.art),'field-play','tree-embrace'])]){
   const image=new Image();
-  image.src=`assets/cinematic/${scene.art}.webp`;
-  CINE_ART[scene.art]=image;
+  image.src=`assets/cinematic/${art}.webp`;
+  CINE_ART[art]=image;
 }
 let CINE={scene:0,time:0,total:0};
 let CINE_DOM=null;
@@ -1113,7 +1116,6 @@ function startCinematic(){
   ui.innerHTML='';
   CINE={scene:0,time:0,total:0};
   G.storySeen=Array.isArray(G.storySeen)?G.storySeen:[];
-  if(!G.storySeen.includes(-1))G.storySeen.push(-1);
   if(!G.storySeen.includes(0))G.storySeen.push(0);
   Save.save();
   const root=document.createElement('section');root.className='cine-dialogue';
@@ -1165,12 +1167,11 @@ const CONSCIOUSNESS_PATH=[
   {short:'V · SÚPER DIOS',name:'Trascendencia',hint:'El poder total',color:'#fbbf24'}
 ];
 const STORY_CHAPTERS=[
-  ['Antes del primer recuerdo','Alison, Uriel y Guera vivían en un universo completo hasta que una grieta comenzó a borrarlo.'],
-  ['La fractura','Los recuerdos del universo se rompen.'],
-  ['La infestación','Una entidad invade mentes y recuerdos.'],
-  ['Los que resisten','Alison conserva su identidad.'],
-  ['La alianza','Uriel y Alison cruzan el vacío.'],
-  ['El primer umbral','El viaje espiritual comienza.']
+  ['El refugio bajo el árbol','Antes de la catástrofe, Alison, Uriel y Güera compartían un lugar tranquilo.'],
+  ['Rumbo al agujero negro','Alison siguió el extraño vórtice que ya aparecía en el cielo de su universo.'],
+  ['La entidad despierta','Algo surgió de la nada; Alison presintió su llegada e intentó usar sus poderes.'],
+  ['El mundo devorado','Sus poderes ya no respondieron. Su resistencia divina la sostuvo mientras todo su universo caía al agujero negro.'],
+  ['A la deriva','Alison quedó sola entre restos flotantes; las criaturas del vórtice hacen desaparecer cuanto tocan.']
 ];
 const BASIC_POWER_CATALOG=[
   {id:'double_jump',name:'Doble salto',icon:'↑↑',hint:'Salta dos veces',price:0},
@@ -1267,60 +1268,50 @@ function drawCinematic(){
   const t=CINE.time,idx=CINE.scene,im=CINE_ART[scene.art];
   const fade=Math.max(0,Math.min(1,t/.55,(scene.duration-t)/.55));
   ctx.save();
-  if(idx===2&&t>2)ctx.translate(Math.sin(t*26)*Math.min(2.4,(t-2)*1.5),Math.sin(t*19)*.9);
+  if(idx===1&&t>1.5)ctx.translate(Math.sin(t*30)*Math.min(2.6,(t-1.5)*1.4),Math.sin(t*21)*1.1);
+  if(idx===2&&t>1)ctx.translate(Math.sin(t*25)*Math.min(3,(t-1)*1.1),Math.sin(t*17)*1.3);
   if(im?.complete&&im.naturalWidth)ctx.drawImage(im,0,0,VW,VH);
   else {
     const g=ctx.createLinearGradient(0,0,VW,VH);
-    g.addColorStop(0,idx<2?'#739b6a':'#0b0827');g.addColorStop(1,'#23113e');
+    g.addColorStop(0,'#09051a');g.addColorStop(1,'#1b0633');
     ctx.fillStyle=g;ctx.fillRect(0,0,VW,VH);
-    for(let i=0;i<42;i++){ctx.fillStyle=i%2?'#f8c75e':'#e89dbc';ctx.fillRect((i*47)%VW,190+(i*13)%60,2,3);}
   }
-  // Capas de hierba y flores que continúan el paisaje por encima del fondo.
-  for(let i=0;i<42;i++){
-    const x=(i*67+11)%VW,y=218+(i*17)%43;
-    ctx.fillStyle=idx<2?'#356b49':'#30264e';ctx.fillRect(x,y,2,5+(i%3));
-    ctx.fillStyle=['#ffd36b','#f5a6ce','#e9ecff','#b5d77b'][i%4];
-    ctx.fillRect(x-1,y-2,3,2);
+  // Fragmentos y motas que son arrastrados hacia el mismo vórtice en todos los planos.
+  const drift=idx===0?14:idx===1?25:idx===2?39:32;
+  for(let i=0;i<32;i++){
+    const x=((i*71+t*drift*(.48+i%4*.18))%(VW+30))-12;
+    const y=(i*43+Math.sin(t*2+i)*8)%VH;
+    ctx.globalAlpha=.24+.36*(.5+.5*Math.sin(t*3+i));
+    ctx.fillStyle=['#f472b6','#a78bfa','#67e8f9','#fbbf24'][i%4];
+    ctx.fillRect(Math.floor(x),Math.floor(y),1+i%3,1+i%2);
   }
-  const hug=idx!==0,step=t*2.2;
-  let alisonX=idx===0?188:194,urielX=idx===0?229:210,baseline=185;
-  if(idx===0){alisonX+=Math.sin(t*1.2)*18;urielX+=Math.sin(t*1.1+2)*17;}
-  if(idx===2){alisonX+=Math.sin(t*3)*1.5;urielX+=Math.sin(t*3+.5)*1.5;}
-  if(idx===3){alisonX=193;urielX=210;}
-  const bob=idx===0?Math.abs(Math.sin(step))*2:Math.sin(t*2)*.6;
+  ctx.globalAlpha=1;
+  if(idx===1){
+    // Su último poder intenta responder y se extingue mientras la entidad se acerca.
+    const power=Math.max(0,1-t/3.2);
+    ctx.globalAlpha=.2*power;ctx.fillStyle='#fbbf24';ctx.beginPath();ctx.arc(184,185,20+Math.sin(t*12)*4,0,Math.PI*2);ctx.fill();ctx.globalAlpha=power;
+    for(let i=0;i<7;i++){const x=184+Math.cos(i*2.4+t*3)*(8+t*5),y=184+Math.sin(i*2.4+t*3)*(8+t*5);ctx.fillStyle='#ffe7a1';ctx.fillRect(x,y,2,2);}ctx.globalAlpha=1;
+  }
+  const alisonX=idx===0?176:idx===1?178:idx===2?178:168;
+  const baseline=idx===0?158:idx===1?156:idx===2?153:156;
+  const driftX=idx===3?-Math.min(34,t*3):Math.sin(t*1.2+idx)*3;
+  const bob=Math.sin(t*2.8+idx)*5;
   if(idx===3){
-    const halo=18+Math.sin(t*2.4)*2;
-    ctx.globalAlpha=.35+.13*Math.sin(t*3);ctx.fillStyle='#ffdf8b';
-    ctx.beginPath();ctx.arc(alisonX,baseline-21,halo,0,Math.PI*2);ctx.fill();ctx.globalAlpha=1;
-    for(let i=0;i<9;i++){
-      const a=t*.75+i*Math.PI*2/9,r=25+Math.sin(t+i)*2;
-      const sx=alisonX+Math.cos(a)*r,sy=baseline-21+Math.sin(a)*r*.65;
-      ctx.fillStyle=i%2?'#ffdf8b':'#f7a6d2';ctx.fillRect(Math.round(sx),Math.round(sy),2,2);
-    }
+    // Una última estela tenue: ya no hay hogar ni aura divina alrededor de Alison.
+    ctx.globalAlpha=.2;ctx.strokeStyle='#a78bfa';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(alisonX+driftX+12,baseline+bob-6);ctx.lineTo(alisonX+driftX+44,baseline+bob-10);ctx.stroke();ctx.globalAlpha=1;
   }
-  _drawChar(alisonX,baseline-bob,1,idx===0?'run':'idle',Math.floor(t*10)%4,false);
-  drawCineBoy(urielX,baseline-bob,-1,step,hug);
-  if(hug){
-    // Brazos cruzados por delante para que la pose se lea como un abrazo.
-    ctx.fillStyle='#8b5e3c';ctx.fillRect(alisonX+5,baseline-22-bob,8,2);
-    ctx.fillRect(alisonX+10,baseline-20-bob,4,2);ctx.fillStyle='#e8b89a';ctx.fillRect(alisonX+12,baseline-20-bob,2,2);
-    ctx.fillStyle='#477d70';ctx.fillRect(urielX-8,baseline-18-bob,8,2);
-    ctx.fillRect(urielX-9,baseline-20-bob,3,2);ctx.fillStyle='#e8b89a';ctx.fillRect(urielX-10,baseline-20-bob,2,2);
-  }
-  const dogX=idx===0?165+Math.sin(t*1.45)*71:idx===1?228:idx===2?227:229;
-  drawCineGuera(dogX,baseline-bob+(idx===0?Math.abs(Math.sin(t*7))*2:0),t,idx!==0);
+  ctx.save();ctx.translate(alisonX+driftX,baseline+bob);ctx.rotate(Math.sin(t*1.5+idx)*.09+(idx===3?-.12:0));ctx.scale(1.12,1.12);
+  _drawChar(0,0,-1,idx===0?'fall':'fall',Math.floor(t*8)%4,false);ctx.restore();
   if(idx===2){
-    for(let i=0;i<12;i++){
-      const px=(i*73+VW-CINE.total*16)%VW,py=35+(i*37)%145+Math.sin(t*5+i)*3;
-      ctx.fillStyle=i%2?'#f472b6':'#a78bfa';ctx.globalAlpha=.45+.35*Math.sin(t*8+i);
-      ctx.fillRect(px,py,3+(i%3),2+(i%2));
+    for(let i=0;i<15;i++){
+      const a=t*.7+i*Math.PI*2/15,r=29+(i%4)*9;
+      ctx.save();ctx.translate(382+Math.cos(a)*r,138+Math.sin(a)*r*.55);ctx.rotate(a+t);ctx.fillStyle=i%3?'#8989a8':'#ffc08a';ctx.globalAlpha=.55;ctx.fillRect(-3,-2,7,4);ctx.restore();
     }
-    ctx.globalAlpha=1;ctx.fillStyle='rgba(16,7,38,.22)';ctx.fillRect(0,0,VW,VH);
   }
   if(idx===3){
-    ctx.strokeStyle='rgba(251,191,36,.65)';ctx.lineWidth=1;
-    ctx.beginPath();ctx.arc(alisonX,baseline-20,25+Math.sin(t*2)*2,0,Math.PI*2);ctx.stroke();
+    for(let i=0;i<8;i++){const x=(i*63+t*(18+i%3*5))%VW,y=(i*47+t*(9+i%2*7))%VH;ctx.globalAlpha=.5;ctx.fillStyle='#e879f9';ctx.fillRect(x,y,2,2);}ctx.globalAlpha=1;
   }
+  if(idx>=1){ctx.fillStyle='rgba(3,1,15,.12)';ctx.fillRect(0,0,VW,VH);}
   ctx.restore();
   // Marco, cartela de diálogo y progreso de la secuencia.
   ctx.fillStyle='rgba(8,3,22,.62)';ctx.fillRect(0,0,VW,27);
@@ -1355,13 +1346,13 @@ function updateMinigame(dt) {
   MG.timer -= dt;
   MG.entryT += dt;
 
-  // Mostrar agujero negro en los últimos 5 segundos
-  if (!MG.blackHole && MG.timer <= 5) {
+  // El vórtice aparece antes y crece hasta ocupar buena parte de la pantalla.
+  if (!MG.blackHole && MG.timer <= 9) {
     MG.blackHole = { x: VW - 52, y: VH/2, r: 0, spin: 0 };
   }
   if (MG.blackHole) {
     const bh = MG.blackHole;
-    bh.r = Math.min(54, bh.r + 60*dt); // crece hasta radio 54
+    bh.r = Math.min(Math.min(88,VW*.22), bh.r + 74*dt);
     bh.spin += dt*2.8;
     // Asistencia de accesibilidad: al final del tiempo el umbral se acerca a la nave
     // para que una pantalla pequeña, latencia o control táctil no bloquee la progresión.
@@ -1448,83 +1439,49 @@ function updateMinigame(dt) {
 }
 
 function drawMinigame() {
-  drawBG('galaxy', MG.bgT * 100, 0);
+  drawBG('galaxy', MG.bgT * 100, 0, true);
 
-  // Agujero negro: disco de acreción, sombra central, horizonte y lente gravitacional.
-  if (MG.blackHole) {
-    const bh=MG.blackHole,t=performance.now()/1000;
-    ctx.save();ctx.translate(bh.x,bh.y);
-    ctx.globalAlpha=.22;ctx.fillStyle='#f472b6';ctx.beginPath();ctx.ellipse(0,0,bh.r*1.75,bh.r*.48,-.18,0,Math.PI*2);ctx.fill();
-    ctx.globalAlpha=.85;ctx.strokeStyle='#fbbf24';ctx.lineWidth=4;ctx.beginPath();ctx.ellipse(0,0,bh.r*1.42,bh.r*.42,-.18,0,Math.PI*2);ctx.stroke();
-    ctx.strokeStyle='#f472b6';ctx.lineWidth=3;ctx.beginPath();ctx.ellipse(0,0,bh.r*1.12,bh.r*.28,-.18,0,Math.PI*2);ctx.stroke();
-    ctx.globalAlpha=.45;ctx.strokeStyle='#a78bfa';ctx.lineWidth=2;ctx.beginPath();ctx.arc(0,0,bh.r*1.65,t*.4,t*.4+Math.PI*1.3);ctx.stroke();ctx.globalAlpha=1;
-    const core=ctx.createRadialGradient(0,0,0,0,0,bh.r*.75);core.addColorStop(0,'#000');core.addColorStop(.7,'#020106');core.addColorStop(1,'rgba(17,3,35,0)');ctx.fillStyle=core;ctx.beginPath();ctx.arc(0,0,bh.r*.82,0,Math.PI*2);ctx.fill();
-    ctx.strokeStyle='#fff';ctx.lineWidth=1;ctx.beginPath();ctx.arc(0,0,bh.r*.84,0,Math.PI*2);ctx.stroke();ctx.restore();
-  }
-
-  // Cometas/asteroides
-  for (let a of MG.asteroids) {
+  // Cometas y asteroides atraviesan el vacío por delante de las estrellas.
+  for (const a of MG.asteroids) {
     if (a.isComet) {
-      // Cola de cometa
-      const tailLen = 30;
-      const angle = Math.atan2(a.vy||0, a.vx);
-      for(let t=1; t<=5; t++){
-        ctx.globalAlpha = (6-t)/8;
-        ctx.fillStyle='#fbbf24';
-        ctx.beginPath();
-        ctx.arc(a.x - Math.cos(angle)*t*tailLen/5, a.y - Math.sin(angle)*t*tailLen/5, a.s*(1-t*0.15), 0, Math.PI*2);
-        ctx.fill();
+      const tailLen=30,angle=Math.atan2(a.vy||0,a.vx);
+      for(let i=1;i<=5;i++){
+        ctx.globalAlpha=(6-i)/8;ctx.fillStyle='#fbbf24';ctx.beginPath();
+        ctx.arc(a.x-Math.cos(angle)*i*tailLen/5,a.y-Math.sin(angle)*i*tailLen/5,a.s*(1-i*.15),0,Math.PI*2);ctx.fill();
       }
-      ctx.globalAlpha=1;
-      ctx.fillStyle='#fef3c7';
-      ctx.beginPath(); ctx.arc(a.x,a.y,a.s,0,Math.PI*2); ctx.fill();
+      ctx.globalAlpha=1;ctx.fillStyle='#fef3c7';ctx.beginPath();ctx.arc(a.x,a.y,a.s,0,Math.PI*2);ctx.fill();
     } else {
-      // Asteroide normal
-      ctx.fillStyle='#6b7280';
-      ctx.beginPath(); ctx.arc(a.x,a.y,a.s,0,Math.PI*2); ctx.fill();
-      ctx.strokeStyle='#374151'; ctx.lineWidth=1.5; ctx.stroke();
+      ctx.fillStyle='#6b7280';ctx.beginPath();ctx.arc(a.x,a.y,a.s,0,Math.PI*2);ctx.fill();
+      ctx.strokeStyle='#374151';ctx.lineWidth=1.5;ctx.stroke();
     }
     ctx.globalAlpha=1;
   }
 
+  // El agujero queda por delante de los restos: el centro negro siempre se distingue.
+  if(MG.blackHole){const bh=MG.blackHole;drawCosmicBlackHole(bh.x,bh.y,bh.r,performance.now()/1000,1.15);}
   Px.draw();
 
-  // Nave
-  ctx.save();
-  ctx.translate(MG.shipX, MG.shipY);
-  _drawRocket(0, 0, MG.vx, MG.vy, MG.entryT);
-  ctx.restore();
+  // Nave del jugador.
+  ctx.save();ctx.translate(MG.shipX,MG.shipY);_drawRocket(0,0,MG.vx,MG.vy,MG.entryT);ctx.restore();
 
-  // HUD — corazones
+  // HUD: vidas y tiempo restante.
   ctx.textAlign='left';
   for(let i=0;i<3;i++){
-    ctx.fillStyle = i < MG.health ? '#f472b6' : 'rgba(255,255,255,0.2)';
-    ctx.font='14px Arial';
-    ctx.fillText('♥', 8+i*18, 20);
+    ctx.fillStyle=i<MG.health?'#f472b6':'rgba(255,255,255,0.2)';ctx.font='14px Arial';ctx.fillText('♥',8+i*18,20);
   }
-  // Tiempo restante
-  const timeLeft = Math.max(0, MG.timer);
-  ctx.fillStyle='#fbbf24'; ctx.font='8px "Press Start 2P"';
-  ctx.textAlign='right';
-  ctx.fillText(`${Math.ceil(timeLeft)}s`, VW-8, 20);
+  ctx.fillStyle='#fbbf24';ctx.font='8px "Press Start 2P"';ctx.textAlign='right';
+  ctx.fillText(`${Math.ceil(Math.max(0,MG.timer))}s`,VW-8,20);
 
-  // Instrucciones rápidas al inicio
-  if (MG.bgT < 3) {
-    ctx.globalAlpha = Math.min(1, MG.bgT)*Math.min(1, 3-MG.bgT);
-    ctx.fillStyle='rgba(0,0,0,0.5)'; ctx.fillRect(VW/2-80,VH/2-12,160,22);
-    ctx.fillStyle='#fff'; ctx.font='6px "Press Start 2P"';
-    ctx.textAlign='center';
-    ctx.fillText('PILOTA ENTRE METEORITOS · SIGUE EL VÓRTICE',VW/2,VH/2+2);
-    ctx.globalAlpha=1;
+  if(MG.bgT<3){
+    ctx.globalAlpha=Math.min(1,MG.bgT)*Math.min(1,3-MG.bgT);
+    ctx.fillStyle='rgba(0,0,0,0.5)';ctx.fillRect(VW/2-80,VH/2-12,160,22);
+    ctx.fillStyle='#fff';ctx.font='6px "Press Start 2P"';ctx.textAlign='center';
+    ctx.fillText('PILOTA ENTRE METEORITOS · SIGUE EL VÓRTICE',VW/2,VH/2+2);ctx.globalAlpha=1;
   }
-
-  if (MG.won) {
-    ctx.fillStyle='rgba(0,0,0,0.6)'; ctx.fillRect(0,0,VW,VH);
-    ctx.fillStyle='#fbbf24'; ctx.font='10px "Press Start 2P"';
-    ctx.textAlign='center';
-    ctx.fillText('¡RECUERDOS ENCONTRADOS!', VW/2, VH/2-10);
-    ctx.fillStyle='#f472b6'; ctx.font='8px "Press Start 2P"';
-    ctx.fillText('♥ Has cruzado el horizonte · el despertar comienza ♥', VW/2, VH/2+10);
+  if(MG.won){
+    ctx.fillStyle='rgba(0,0,0,0.6)';ctx.fillRect(0,0,VW,VH);
+    ctx.fillStyle='#fbbf24';ctx.font='10px "Press Start 2P"';ctx.textAlign='center';ctx.fillText('¡RECUERDOS ENCONTRADOS!',VW/2,VH/2-10);
+    ctx.fillStyle='#f472b6';ctx.font='8px "Press Start 2P"';ctx.fillText('♥ Has cruzado el horizonte · el despertar comienza ♥',VW/2,VH/2+10);
   }
 }
 
@@ -1533,7 +1490,44 @@ function drawMinigame() {
 //   BACKGROUNDS
 
 // ═══════════════════════════════════════════════════════════
-function drawBG(theme,cx,cy){
+function drawCosmicBlackHole(cx,cy,r,t,intensity=1){
+  if(r<=0)return;
+  ctx.save();ctx.translate(cx,cy);
+  const pulse=1+Math.sin(t*2.2)*.025,core=r*pulse;
+  // Distorsión gravitatoria exterior, teñida de violeta para leerla incluso en pantallas pequeñas.
+  const aura=ctx.createRadialGradient(0,0,core*.72,0,0,core*2.8);
+  aura.addColorStop(0,'rgba(2,0,8,.98)');aura.addColorStop(.42,`rgba(45,8,83,${.54*intensity})`);aura.addColorStop(1,'rgba(5,2,18,0)');
+  ctx.fillStyle=aura;ctx.beginPath();ctx.arc(0,0,core*2.8,0,Math.PI*2);ctx.fill();
+  // Disco de acreción: varias bandas, no una simple línea decorativa.
+  ctx.save();ctx.rotate(-.16+Math.sin(t*.25)*.025);
+  const disk=ctx.createRadialGradient(-core*.3,-core*.15,core*.12,0,0,core*2.15);
+  disk.addColorStop(0,'rgba(5,1,15,0)');disk.addColorStop(.34,'rgba(92,27,153,.76)');disk.addColorStop(.63,'rgba(225,72,190,.94)');disk.addColorStop(.78,'rgba(255,186,105,.96)');disk.addColorStop(.9,'rgba(111,63,231,.8)');disk.addColorStop(1,'rgba(23,6,53,0)');
+  ctx.globalAlpha=.78*intensity;ctx.fillStyle=disk;ctx.beginPath();ctx.ellipse(0,0,core*2.1,core*.58,0,0,Math.PI*2);ctx.fill();
+  for(let i=0;i<5;i++){
+    const phase=t*(.55+i*.09)+i*1.18;
+    ctx.globalAlpha=(.35+i*.1)*intensity;ctx.strokeStyle=['#a78bfa','#f472b6','#fdba74','#67e8f9','#f0abfc'][i];ctx.lineWidth=i===2?2.2:1;
+    ctx.beginPath();ctx.ellipse(0,0,core*(1.15+i*.2),core*(.31+i*.055),0,phase,phase+Math.PI*(1.05+i*.12));ctx.stroke();
+  }
+  ctx.globalAlpha=.8*intensity;
+  for(let i=0;i<22;i++){
+    const a=t*(.7+i%4*.16)+i*2.399,rx=core*(.9+(i%5)*.24),ry=core*(.23+(i%4)*.075);
+    const x=Math.cos(a)*rx,y=Math.sin(a)*ry;
+    ctx.fillStyle=['#fbbf24','#f472b6','#c4b5fd','#67e8f9'][i%4];ctx.fillRect(Math.round(x),Math.round(y),1+i%3,1+i%2);
+  }
+  ctx.restore();
+  // Arcos de lente gravitatoria que envuelven el horizonte como una corona rota.
+  ctx.globalAlpha=.7*intensity;
+  for(let i=0;i<4;i++){
+    ctx.strokeStyle=['#f5d0fe','#c084fc','#60a5fa','#fbbf24'][i];ctx.lineWidth=i===0?1.8:1;
+    ctx.beginPath();ctx.ellipse(0,0,core*(1.05+i*.1),core*(.92+i*.15),-.08,t*.16+i*1.4,t*.16+i*1.4+Math.PI*(.72+i*.09));ctx.stroke();
+  }
+  // Evento negro (sin brillos dentro) y un filo de luz deformada en el borde.
+  ctx.globalAlpha=1;ctx.fillStyle='#010107';ctx.beginPath();ctx.arc(0,0,core*.84,0,Math.PI*2);ctx.fill();
+  ctx.strokeStyle='#e9d5ff';ctx.lineWidth=1;ctx.beginPath();ctx.arc(0,0,core*.87,Math.PI*1.08,Math.PI*1.92);ctx.stroke();
+  ctx.strokeStyle='rgba(248,113,232,.82)';ctx.lineWidth=1.2;ctx.beginPath();ctx.arc(0,0,core*.9,Math.PI*.12,Math.PI*.9);ctx.stroke();
+  ctx.restore();
+}
+function drawBG(theme,cx,cy,skipBlackHole=false){
   const t=performance.now()/1000;
 
   if(theme==='galaxy'){
@@ -1567,19 +1561,29 @@ function drawBG(theme,cx,cy){
       }
     }
     ctx.globalAlpha=1;
-    // Planeta decorativo enorme
-    const px=(VW*.88-cx*.06)%VW;
-    ctx.globalAlpha=.7;
-    const pg=ctx.createRadialGradient(px,80,0,px,80,75);
-    pg.addColorStop(0,'#f472b6');pg.addColorStop(.4,'#a855f7');pg.addColorStop(1,'#1e0535');
-    ctx.fillStyle=pg;ctx.beginPath();ctx.arc(px,80,75,0,Math.PI*2);ctx.fill();
-    // Anillos del planeta
-    ctx.strokeStyle='rgba(251,191,36,.6)';ctx.lineWidth=4;
-    ctx.beginPath();ctx.ellipse(px,80+5,110,25,-.2,0,Math.PI*2);ctx.stroke();
-    ctx.strokeStyle='rgba(96,165,250,.4)';ctx.lineWidth=2;
-    ctx.beginPath();ctx.ellipse(px,80+5,120,30,-.2,0,Math.PI*2);ctx.stroke();
+    // Horizonte de sucesos presente desde el inicio: se vuelve más grande conforme Alison se acerca.
+    const progress=Math.max(0,Math.min(1,cx/(LS.data?.width||2400)));
+    const bhX=VW*(.82-progress*.08),bhY=VH*(.38+Math.sin(t*.2)*.018);
+    const bhR=43+progress*24;
+    if(!skipBlackHole)drawCosmicBlackHole(bhX,bhY,bhR,t,.72+progress*.28);
+    // Fragmentos de universos y estrellas deformadas convergen hacia el mismo punto.
+    for(let i=0;i<18;i++){
+      const speed=8+(i%5)*4+progress*18;
+      const x=((i*47-t*speed-cx*.04)%(VW+80)+VW+80)%(VW+80)-40;
+      const y=18+(i*39+Math.sin(t*.8+i)*18)%Math.max(1,VH-36);
+      const dx=bhX-x,dy=bhY-y,dist=Math.hypot(dx,dy)||1;
+      ctx.globalAlpha=.45+progress*.25;ctx.fillStyle=i%4===0?'#ffc08a':i%3===0?'#a78bfa':'#5b5682';
+      ctx.save();ctx.translate(x,y);ctx.rotate(Math.atan2(dy,dx)+Math.sin(t+i)*.3);
+      ctx.fillRect(-3,-2,5+(i%4),3+(i%3));
+      ctx.fillStyle='#d8b4fe';ctx.globalAlpha=.45;ctx.fillRect(-2,-1,2,1);ctx.restore();
+      if(!skipBlackHole&&progress>.38&&i%6===0){
+        const ex=bhX+Math.cos(t*.8+i)*bhR*1.8,ey=bhY+Math.sin(t*.8+i)*bhR*.75;
+        drawVoidling(ex,ey,.58,t+i,false,false);
+      }
+    }
     ctx.globalAlpha=1;
-    // El cohete solo aparece como nave jugable/meta; el fondo queda dedicado al vacío espacial.
+    // La luz sobre el horizonte se vuelve más siniestra a medida que avanza el nivel.
+    ctx.globalAlpha=.08+progress*.1;ctx.fillStyle='#e879f9';ctx.fillRect(0,0,VW,VH);ctx.globalAlpha=1;
   }
   else if(theme==='city'){
     const g=ctx.createLinearGradient(0,0,0,VH);
@@ -2664,7 +2668,8 @@ function renderUI(){
   if(G.state==='story'){
     const p=mk('div','panel story-panel');
     const seen=Array.isArray(G.storySeen)?G.storySeen:[];
-    p.innerHTML=`<div class="eyebrow">HISTORIA</div><h2>El viaje</h2><p class="custom-subtitle">${seen.length}/${STORY_CHAPTERS.length} capítulos</p><div class="story-list">${STORY_CHAPTERS.map((s,i)=>{const key=i===0?-1:i-1;return seen.includes(key)?`<article class="story-entry"><span>${String(i+1).padStart(2,'0')}</span><div><strong>${s[0]}</strong><small>${s[1]}</small></div></article>`:`<article class="story-entry locked"><span>??</span><div><strong>Bloqueado</strong><small>Avanza para descubrirlo.</small></div></article>`;}).join('')}</div><button class="btn" id="btnStoryBack">Volver</button>`;
+    const seenChapters=STORY_CHAPTERS.filter((_,i)=>seen.includes(i===0?-1:i-1)).length;
+    p.innerHTML=`<div class="eyebrow">HISTORIA</div><h2>El viaje</h2><p class="custom-subtitle">${seenChapters}/${STORY_CHAPTERS.length} capítulos</p><div class="story-list">${STORY_CHAPTERS.map((s,i)=>{const key=i===0?-1:i-1;return seen.includes(key)?`<article class="story-entry"><span>${String(i+1).padStart(2,'0')}</span><div><strong>${s[0]}</strong><small>${s[1]}</small></div></article>`:`<article class="story-entry locked"><span>??</span><div><strong>Bloqueado</strong><small>Avanza para descubrirlo.</small></div></article>`;}).join('')}</div><button class="btn" id="btnStoryBack">Volver</button>`;
     ui.appendChild(p);
     id('btnStoryBack').onclick=()=>{G.state='menu';renderUI();};
     return;
@@ -2698,7 +2703,8 @@ function renderUI(){
     id('btnTitleStart').onclick=()=>{
       SFX.select();
       const hasSave=Save.load();
-      SFX.startMusic();startLevel(1);
+      SFX.startMusic();
+      if(hasSave){G.state='map';renderUI();}else startPrologue(1);
       try{
         if(!document.fullscreenElement){
           document.documentElement.requestFullscreen?.()?.catch(()=>{});
@@ -2742,7 +2748,7 @@ function renderUI(){
       Object.assign(G,{memories:[],decisions:{},
         powers:{double_jump:false,dash:false,glide:false,rocket:false},equippedBasic:['double_jump','dash'],equippedConsciousness:{},consciousnessUnlocked:0,character:{accent:'#d4c4a0',detail:'heart',trail:'#f472b6',hair:'#d97832',jacket:'#8b5e3c',outfit:'aurora'},ownedBasic:['double_jump','dash'],ownedOutfits:['aurora'],
         levelId:1,timePlayed:0,unlockedEndings:[],score:0,coins:0,storySeen:[]});
-      Save.clear();SFX.select();SFX.startMusic();startLevel(1);
+      Save.clear();SFX.select();SFX.startMusic();startPrologue(1);
     };
     id('btnCont').onclick=()=>{
       if(Save.load()){SFX.select();G.state='map';renderUI();}
@@ -2818,7 +2824,7 @@ function renderUI(){
         const d=Math.hypot(mx-n.x,my-n.y);
         if(d<30){
           const ok=n.id===1||(n.id===2&&G.levelId>=2)||(n.id==='story-1'&&G.levelId>=2);
-          if(ok){SFX.select();if(n.id==='story-1')startCinematic();else startLevel(n.id);}else{SFX.hurt();G.shakeT=.15;G.shakeAmt=3;}
+          if(ok){SFX.select();if(n.id==='story-1')startCinematic();else if(n.id===1&&!G.storySeen?.includes(-1))startPrologue(1);else startLevel(n.id);}else{SFX.hurt();G.shakeT=.15;G.shakeAmt=3;}
           return;
         }
       }
@@ -2928,7 +2934,7 @@ function renderUI(){
         ${G.memories.length} de 12 recuerdos encontrados
       </p>
       <div class="lore-box" style="font-size:10px;line-height:1.65;text-align:left;margin-bottom:12px">
-        <strong style="color:#f472b6;font-style:normal">LORE · LA INFESTACIÓN</strong><br>${STORY_LORE}
+        <strong style="color:#f472b6;font-style:normal">LORE · EL VÓRTICE</strong><br>${STORY_LORE}
       </div>
     `;
     p.appendChild(grid);

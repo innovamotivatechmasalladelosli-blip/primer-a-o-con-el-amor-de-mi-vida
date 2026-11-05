@@ -68,12 +68,12 @@ const MEMORY_TEXTS={
   12:"El futuro. Lo veo contigo, siempre contigo. Y cada día que pasa, esa imagen se vuelve más nítida y más bonita.",
 };
 const MEMORY_PHOTOS={1:'assets-recuerdo.jpg'};
-const STORY_LORE='Una entidad que se alimenta de mentes y recuerdos está infestando los caminos del multiverso. Cada recuerdo que recuperamos devuelve una parte de nuestra identidad. Quienes no se rinden despiertan niveles espirituales; en el trayecto, las amistades se convierten en brújula y juntos podremos llegar hasta la entidad.';
+const STORY_LORE='Alison, una diosa que vivía encubierta, siguió un agujero negro hasta el vacío. Una entidad surgió de él, le arrebató sus poderes y su universo empezó a desvanecerse hacia el vórtice. Su resistencia divina la salvó; ahora cruza fragmentos de mundos mientras criaturas violetas y horrores cósmicos emergen del agujero y borran todo lo que tocan.';
 
 // ─ Niveles ─
 const LEVELS={
   1:{
-    name:'La Galaxia',icon:'🚀',subtitle:'Donde todo empezó',theme:'galaxy',
+    name:'La Galaxia',icon:'🚀',subtitle:'Sigue el agujero negro',theme:'galaxy',
     width:2400,height:270,spawn:{x:40,y:190},
     powerUp:'double_jump',
     platforms:[
@@ -120,7 +120,7 @@ const LEVELS={
       a:'Las llamadas que duraban horas hasta quedarse dormidos',
       b:'Los mensajes que me hacían sonreír sola en cualquier lugar',
     },
-    bgDesc:'Cinturón de meteoritos y nebulosas profundas',
+    bgDesc:'El multiverso se deshace y es arrastrado hacia un vórtice',
     spiritual:'Umbral del Despertar',
   },
   2:{
