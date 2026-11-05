@@ -1063,18 +1063,18 @@ function drawPrologue(){
     ctx.fillStyle='#fff1df';ctx.font='bold 11px Nunito';ctx.fillText('Alison, Uriel y Güera jugaban entre las flores.',VW/2,34);
     ctx.fillText('El mundo todavía se sentía seguro y completo.',VW/2,49);
     const bob=Math.sin(t*2)*1.5;
-    _drawChar(202,207+bob,-1,'idle',0,false);drawCineBoy(223,207+bob,1,t,true);_drawGuera(183,208+bob,.43,t);
+    _drawChar(202,207+bob,-1,'idle',0,false);drawUrielSprite(223,207+bob,t,false);_drawGuera(183,208+bob,.43,t);
     for(let i=0;i<9;i++){const x=(i*53+t*9)%VW,y=145+(i*29)%63;ctx.fillStyle=i%2?'#fbbf24':'#f5a6ce';ctx.globalAlpha=.4+.3*Math.sin(t*2+i);ctx.fillRect(x,y,2,2);}ctx.globalAlpha=1;
   }else if(p===1){
     ctx.fillText('BAJO EL ÁRBOL, SU PEQUEÑO REFUGIO',VW/2,15);
     ctx.fillStyle='#fff1df';ctx.font='bold 11px Nunito';ctx.fillText('Alison ocultaba su divinidad; Uriel la amaba sin saberlo.',VW/2,34);
     ctx.fillText('Con él y con Güera, eligió una vida sencilla.',VW/2,49);
-    _drawChar(200,211,-1,'idle',0,false);drawCineBoy(220,211,1,t,true);_drawGuera(180,212,.4,t);
+    _drawChar(200,211,-1,'idle',0,false);drawUrielSprite(220,211,t,true);_drawGuera(180,212,.4,t);
   }else if(p===2){
     const fade=Math.min(.55,.1+t*.065);ctx.fillStyle=`rgba(3,1,12,${fade})`;ctx.fillRect(0,70,VW,VH-70);
     drawPrologueEntity(t);
     for(let i=0;i<22;i++){const x=(i*47+t*(i%3+1)*5)%VW,y=83+(i*31)%150;ctx.globalAlpha=Math.min(.8,.15+t*.08);ctx.fillStyle=i%2?'#bd69d7':'#f4a7dd';ctx.fillRect(x,y,2+i%3,2);}
-    const friends=Math.max(0,1-t*.18);ctx.globalAlpha=friends;_drawChar(200,211,-1,'idle',0,false);drawCineBoy(220,211,1,t,true);_drawGuera(180,212,.4,t);ctx.globalAlpha=1;
+    const friends=Math.max(0,1-t*.18);ctx.globalAlpha=friends;_drawChar(200,211,-1,'idle',0,false);drawUrielSprite(220,211,t,true);_drawGuera(180,212,.4,t);ctx.globalAlpha=1;
     ctx.fillStyle='#ffe7a1';ctx.font='6px "Press Start 2P",monospace';ctx.fillText('ALGO SURGIÓ DE LA NADA',VW/2,15);
     ctx.fillStyle='#fff1df';ctx.font='bold 11px Nunito';ctx.fillText('Alison presintió algo: una entidad surgió de la nada.',VW/2,34);
     ctx.fillText('Las flores, el sendero y el cielo empezaron a borrarse.',VW/2,49);
@@ -1143,10 +1143,18 @@ const CINE_SCENES=[
     text:'Quedaron fragmentos flotando en el espacio. Alison siguió adelante mientras horrores salían del vórtice y borraban todo lo que tocaban.'},
 ];
 const CINE_ART={};
-for(const art of [...new Set([...CINE_SCENES.map(scene=>scene.art),'field-play','tree-embrace'])]){
+for(const art of [...new Set([...CINE_SCENES.map(scene=>scene.art),'field-play','tree-embrace','uriel','uriel-hug'])]){
   const image=new Image();
   image.src=`assets/cinematic/${art}.webp`;
   CINE_ART[art]=image;
+}
+function drawUrielSprite(cx,base,phase,hug=false){
+  const image=CINE_ART[hug?'uriel-hug':'uriel'];
+  if(!image?.complete||!image.naturalWidth){drawCineBoy(cx,base,1,phase,hug);return;}
+  const height=48,width=Math.round(height*image.naturalWidth/image.naturalHeight);
+  const sway=hug?0:Math.sin(phase*2.4)*.45;
+  ctx.fillStyle='rgba(8,5,20,.34)';ctx.beginPath();ctx.ellipse(cx,base-1,width*.36,1.6,0,0,Math.PI*2);ctx.fill();
+  ctx.drawImage(image,Math.round(cx-width/2+sway),Math.round(base-height),width,height);
 }
 let CINE={scene:0,time:0,total:0};
 let CINE_DOM=null;
