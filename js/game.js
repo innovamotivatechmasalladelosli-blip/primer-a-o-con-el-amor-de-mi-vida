@@ -12,6 +12,11 @@ const KM={
 };
 let prevKeys={};
 window.addEventListener('keydown',e=>{
+  if(G.state==='cinematic'&&['Space','Enter','ArrowRight','Escape'].includes(e.code)){
+    e.preventDefault();if(e.repeat)return;
+    if(e.code==='Escape')finishCinematic();else advanceCinematic();
+    return;
+  }
   SFX.unlockAudio();
   const k=KM[e.code];
   if(k){keys[k]=true;e.preventDefault();}
@@ -1067,36 +1072,83 @@ function drawPrologue(){
   ctx.fillStyle='rgba(3,1,10,.75)';ctx.fillRect(20,VH-34,VW-40,20);ctx.fillStyle='#f5d0fe';ctx.font='7px "Press Start 2P"';ctx.textAlign='center';ctx.fillText(p<5?'TOCA PARA CONTINUAR':'TOCA PARA DESPERTAR EN EL PRIMER NIVEL',VW/2,VH-21);ctx.textAlign='left';
 }
 
-let CINE = { timer: 0 };
-function startCinematic() {
+const CINE_SCENES=[
+  {title:'EL CAMPO DE LAS FLORES',art:'field-play',duration:8.5,
+    text:'Entre las flores, Alison, Uriel y Güera jugaron juntos: aquel claro se volvió su pequeño universo.'},
+  {title:'BAJO EL ÁRBOL ANTIGUO',art:'tree-embrace',duration:8.5,
+    text:'Bajo el árbol, Alison confesó: «Soy una diosa de otro universo. Aquí oculté quién era para vivir como una chica común».'},
+  {title:'EL UNIVERSO SE DESHACE',art:'world-fracture',duration:9.5,
+    text:'La entidad despedazó su universo, le robó sus poderes y fragmentó sus niveles de conciencia, sellándolos en mundos distintos.'},
+  {title:'LO QUE ALISON VIO EN URIEL',art:'goddess-reveal',duration:9,
+    text:'Se quedó con Uriel porque vio bondad y valor: él la amaba sin pedir milagros. Con él y Güera recuperará su mundo y sus poderes.'},
+];
+const CINE_ART={};
+for(const scene of CINE_SCENES){
+  const image=new Image();
+  image.src=`assets/cinematic/${scene.art}.webp`;
+  CINE_ART[scene.art]=image;
+}
+let CINE={scene:0,time:0,total:0};
+let CINE_DOM=null;
+function positionCineCaption(){
+  if(!CINE_DOM)return;
+  const r=canvas.getBoundingClientRect();
+  Object.assign(CINE_DOM.root.style,{
+    left:`${r.left+r.width*.015}px`,top:`${r.top+r.height*.70}px`,
+    width:`${r.width*.97}px`,height:`${r.height*(document.body.dataset.layout==='small'?.30:.205)}px`,
+  });
+}
+function updateCineCaption(){
+  if(!CINE_DOM)return;
+  const scene=CINE_SCENES[CINE.scene];if(!scene)return;
+  CINE_DOM.count.textContent=`${String(CINE.scene+1).padStart(2,'0')} / 04`;
+  const chars=Math.max(0,Math.floor((CINE.time-.25)*33));
+  CINE_DOM.copy.textContent=scene.text.slice(0,chars);
+  CINE_DOM.progress.style.transform=`scaleX(${Math.min(1,(CINE.scene+CINE.time/scene.duration)/CINE_SCENES.length)})`;
+  positionCineCaption();
+}
+function startCinematic(){
   G.state='cinematic';
   updateTouchControls();
   ui.innerHTML='';
-  CINE={timer:0,page:0,pageT:0,allyX:-40,shipX:-70};
+  CINE={scene:0,time:0,total:0};
   G.storySeen=Array.isArray(G.storySeen)?G.storySeen:[];
   if(!G.storySeen.includes(0))G.storySeen.push(0);
   Save.save();
-  canvas.onclick=advanceCinematic;
+  const root=document.createElement('section');root.className='cine-dialogue';
+  root.innerHTML='<div class="cine-meta"><span class="cine-count"></span><span class="cine-hint">TOCA / ESPACIO AVANZA · ESC SALIR</span></div><p class="cine-copy"></p><div class="cine-track"><i></i></div>';
+  ui.appendChild(root);
+  CINE_DOM={root,count:root.querySelector('.cine-count'),copy:root.querySelector('.cine-copy'),progress:root.querySelector('.cine-track i')};
+  updateCineCaption();
+  canvas.onclick=onCinematicClick;
 }
-function updateCinematic(dt){
-  CINE.timer+=dt;
-  CINE.pageT+=dt;
-  CINE.allyX=Math.min(245,CINE.allyX+dt*42);
-  CINE.shipX=Math.min(540,CINE.shipX+dt*78);
+function onCinematicClick(e){
+  const r=canvas.getBoundingClientRect();
+  const x=(e.clientX-r.left)*VW/r.width;
+  const y=(e.clientY-r.top)*VH/r.height;
+  if(x>VW-94&&y<35)finishCinematic();
+  else advanceCinematic();
 }
 function advanceCinematic(){
   if(G.state!=='cinematic')return;
-  SFX.select();
-  if(CINE.page<4){
-    CINE.page++;
-    if(!G.storySeen.includes(CINE.page))G.storySeen.push(CINE.page);
-    Save.save();
-    CINE.pageT=0;
-    if(CINE.page===2)CINE.allyX=-40;
-    if(CINE.page===3)CINE.shipX=-70;
-  }else{
-    canvas.onclick=null;G.state='map';renderUI();
-  }
+  CINE.scene++;CINE.time=0;
+  G.storySeen=Array.isArray(G.storySeen)?G.storySeen:[];
+  if(!G.storySeen.includes(CINE.scene))G.storySeen.push(CINE.scene);
+  Save.save();
+  if(CINE.scene>=CINE_SCENES.length)finishCinematic();
+}
+function finishCinematic(){
+  G.state='map';canvas.onclick=null;CINE_DOM=null;renderUI();
+}
+function updateCinematic(dt){
+  const scene=CINE_SCENES[CINE.scene];
+  if(!scene){finishCinematic();return;}
+  CINE.time+=dt;CINE.total+=dt;
+  updateCineCaption();
+  if(CINE.time>=scene.duration)advanceCinematic();
+}
+function drawCineGuera(cx,base,phase,sitting=false){
+  _drawGuera(cx,base-17,sitting?.78:1,phase);
 }
 function _drawAlly(x,y,col,accent){
   ctx.fillStyle='rgba(0,0,0,.35)';ctx.fillRect(x-8,y+18,16,2);
@@ -1192,63 +1244,87 @@ function startCustomizationPreview(){
   const paint=()=>{if(G.state!=='customize'||!document.body.contains(preview))return;drawCustomizationPreview(preview);requestAnimationFrame(paint);};
   paint();
 }
+function drawCineBoy(cx,base,facing,phase,hug=false){
+  ctx.save();ctx.translate(cx,base);if(facing<0)ctx.scale(-1,1);
+  const p=(x,y,w,h,c)=>{ctx.fillStyle=c;ctx.fillRect(Math.round(x),Math.round(y),w,h);};
+  const step=hug?0:Math.round(Math.sin(phase*11)*2);
+  ctx.fillStyle='rgba(8,5,20,.38)';ctx.beginPath();ctx.ellipse(0,-1,8,2,0,0,Math.PI*2);ctx.fill();
+  p(-5+step,-10,4,8,'#31475c');p(1-step,-10,4,8,'#3b5971');
+  p(-6+step,-3,5,3,'#242536');p(1-step,-3,5,3,'#242536');
+  p(-6,-23,12,13,'#477d70');p(-5,-22,10,1,'#8cc7aa');
+  p(-2,-21,4,8,'#d4c6a2');p(-7,-21,2,8,'#31594f');
+  if(hug){p(-8,-22,2,8,'#477d70');p(6,-23,2,9,'#477d70');p(7,-16,4,2,'#e8b89a');}
+  else {p(-8,-22+step,2,9,'#477d70');p(6,-22-step,2,9,'#477d70');p(-8,-13+step,2,2,'#e8b89a');p(6,-13-step,2,2,'#e8b89a');}
+  p(-5,-35,10,12,'#e8b89a');p(-6,-34,2,9,'#3b251e');p(4,-34,2,9,'#3b251e');
+  p(-5,-37,10,4,'#3b251e');p(-4,-38,7,2,'#563327');
+  p(-3,-29,2,2,'#251a1a');p(2,-29,2,2,'#251a1a');p(-1,-25,3,1,'#9b4f55');
+  ctx.restore();
+}
 function drawCinematic(){
-  const t=CINE.timer;
-  const g=ctx.createLinearGradient(0,0,0,VH);g.addColorStop(0,'#02010a');g.addColorStop(.55,'#12052a');g.addColorStop(1,'#32104f');
-  ctx.fillStyle=g;ctx.fillRect(0,0,VW,VH);
-  // Interfaz narrativa: capítulo, progreso y panel de lectura para que la cinemática se sienta como una página viva del diario.
-  ctx.fillStyle='rgba(5,2,16,.86)';ctx.fillRect(14,10,452,20);
-  ctx.strokeStyle='rgba(192,132,252,.65)';ctx.lineWidth=1;ctx.strokeRect(14.5,10.5,451,19);
-  ctx.fillStyle='#fbbf24';ctx.font='6px "Press Start 2P"';ctx.textAlign='left';ctx.fillText('CAPÍTULO 01  /  EL DESPERTAR',24,23);
-  ctx.fillStyle='rgba(196,181,253,.55)';ctx.fillText('01',424,23);ctx.fillStyle='#f472b6';ctx.fillRect(442,20,14,2);
-  // Multiverso fracturado: rutas de recuerdos que la entidad intenta infectar.
-  ctx.globalAlpha=.45;
-  for(let i=0;i<8;i++){
-    ctx.strokeStyle=['#f472b6','#a78bfa','#60a5fa','#fbbf24'][i%4];ctx.lineWidth=i%3===0?2:1;
-    ctx.beginPath();ctx.moveTo(0,30+i*30);ctx.bezierCurveTo(140,10+i*34,280,70-i*20,480,25+i*27);ctx.stroke();
+  const scene=CINE_SCENES[CINE.scene];
+  if(!scene){ctx.fillStyle='#080316';ctx.fillRect(0,0,VW,VH);return;}
+  const t=CINE.time,idx=CINE.scene,im=CINE_ART[scene.art];
+  const fade=Math.max(0,Math.min(1,t/.55,(scene.duration-t)/.55));
+  ctx.save();
+  if(idx===2&&t>2)ctx.translate(Math.sin(t*26)*Math.min(2.4,(t-2)*1.5),Math.sin(t*19)*.9);
+  if(im?.complete&&im.naturalWidth)ctx.drawImage(im,0,0,VW,VH);
+  else {
+    const g=ctx.createLinearGradient(0,0,VW,VH);
+    g.addColorStop(0,idx<2?'#739b6a':'#0b0827');g.addColorStop(1,'#23113e');
+    ctx.fillStyle=g;ctx.fillRect(0,0,VW,VH);
+    for(let i=0;i<42;i++){ctx.fillStyle=i%2?'#f8c75e':'#e89dbc';ctx.fillRect((i*47)%VW,190+(i*13)%60,2,3);}
   }
-  ctx.globalAlpha=1;
-  // Entidad: silueta mental, ojos y recuerdos atrapados.
-  const ex=360,ey=112+Math.sin(t*2)*4, pulse=1+Math.sin(t*3)*.08;
-  ctx.globalAlpha=.2;ctx.fillStyle='#7e22ce';ctx.beginPath();ctx.arc(ex,ey,58*pulse,0,Math.PI*2);ctx.fill();ctx.globalAlpha=1;
-  ctx.fillStyle='#090313';ctx.beginPath();ctx.arc(ex,ey,37*pulse,0,Math.PI*2);ctx.fill();
-  ctx.strokeStyle='#e879f9';ctx.lineWidth=3;ctx.beginPath();ctx.arc(ex,ey,38*pulse,Math.PI*.1,Math.PI*1.9);ctx.stroke();
-  ctx.fillStyle='#f43f5e';ctx.fillRect(ex-17,ey-7,8,5);ctx.fillRect(ex+9,ey-7,8,5);
-  ctx.fillStyle='#fbbf24';ctx.fillRect(ex-14,ey-6,2,2);ctx.fillRect(ex+12,ey-6,2,2);
-  ctx.fillStyle='#c084fc';ctx.font='6px "Press Start 2P"';ctx.textAlign='center';ctx.fillText('LA ENTIDAD',ex,ey+57);
-  // Cartela de historia por fases.
-  const stories=[
-    ['LA FRACTURA','Los recuerdos del universo se están rompiendo.'],
-    ['LA INFESTACIÓN','Una entidad se alimenta de mentes y recuerdos.'],
-    ['LOS QUE RESISTEN','Quienes no se rinden conservan su identidad.'],
-    ['LA ALIANZA','Uriel y Alison cruzan el vacío para resistir juntos.'],
-    ['EL PRIMER UMBRAL','El viaje espiritual comienza. El multiverso aún puede salvarse.']
-  ];
-  const story=stories[CINE.page||0];
-  const storyFade=Math.min(1,(CINE.pageT||0)*5);
-  ctx.globalAlpha=storyFade;
-  ctx.fillStyle='rgba(4,2,14,.9)';ctx.fillRect(24,220,432,36);
-  ctx.strokeStyle='rgba(244,114,182,.7)';ctx.strokeRect(24.5,220.5,431,35);
-  ctx.fillStyle='#fbbf24';ctx.font='6px "Press Start 2P"';ctx.textAlign='left';ctx.fillText(story[0],36,234);
-  ctx.fillStyle='#f5d0fe';ctx.font='7px Nunito,sans-serif';ctx.fillText(story[1],36,249);
-  ctx.fillStyle='rgba(255,255,255,.25)';ctx.fillRect(36,252,408,1);
-  ctx.fillStyle='#f472b6';ctx.fillRect(36,252,408*((Math.min(4,CINE.page||0)+1)/5),1);
-  ctx.globalAlpha=1;
-  ctx.fillStyle='#f5d0fe';ctx.font='6px "Press Start 2P"';ctx.textAlign='center';
-  ctx.fillText(CINE.page<4?'TOCA PARA CONTINUAR':'TOCA PARA VER EL MAPA',VW/2,58);
-  if(CINE.page>=2&&CINE.page<4){
-    ctx.fillStyle='#f472b6';ctx.font='7px "Press Start 2P"';ctx.textAlign='center';ctx.fillText('NO TE RINDAS · DESPIERTA',VW/2,48);
-    _drawAlly(CINE.allyX,190,'#2563eb','#93c5fd');
-    _drawAlly(CINE.allyX+30,190,'#15803d','#a3e635');
-    ctx.fillStyle='#93c5fd';ctx.font='5px "Press Start 2P"';ctx.textAlign='left';ctx.fillText('URIEL',CINE.allyX-13,216);ctx.fillStyle='#a3e635';ctx.fillText('ALISON',CINE.allyX+19,216);ctx.textAlign='center';
+  // Capas de hierba y flores que continúan el paisaje por encima del fondo.
+  for(let i=0;i<42;i++){
+    const x=(i*67+11)%VW,y=218+(i*17)%43;
+    ctx.fillStyle=idx<2?'#356b49':'#30264e';ctx.fillRect(x,y,2,5+(i%3));
+    ctx.fillStyle=['#ffd36b','#f5a6ce','#e9ecff','#b5d77b'][i%4];
+    ctx.fillRect(x-1,y-2,3,2);
   }
-  if(CINE.page>=3){ctx.save();ctx.translate(CINE.shipX,188);_drawRocket(0,0);ctx.restore();}
-  if(CINE.page>=4){
-    ctx.fillStyle='rgba(4,2,14,.88)';ctx.fillRect(18,158,444,46);ctx.strokeStyle='#fbbf24';ctx.strokeRect(18.5,158.5,443,45);
-    ctx.fillStyle='#fff';ctx.font='6px "Press Start 2P"';ctx.textAlign='center';ctx.fillText('RANGOS DE CONCIENCIA · SELLADOS',VW/2,170);
-    ctx.fillStyle='#d8b4fe';ctx.font='6px Nunito,sans-serif';ctx.fillText('Sus habilidades se revelarán cuando llegue el momento.',VW/2,190);
+  const hug=idx!==0,step=t*2.2;
+  let alisonX=idx===0?188:194,urielX=idx===0?229:210,baseline=185;
+  if(idx===0){alisonX+=Math.sin(t*1.2)*18;urielX+=Math.sin(t*1.1+2)*17;}
+  if(idx===2){alisonX+=Math.sin(t*3)*1.5;urielX+=Math.sin(t*3+.5)*1.5;}
+  if(idx===3){alisonX=193;urielX=210;}
+  const bob=idx===0?Math.abs(Math.sin(step))*2:Math.sin(t*2)*.6;
+  if(idx===3){
+    const halo=18+Math.sin(t*2.4)*2;
+    ctx.globalAlpha=.35+.13*Math.sin(t*3);ctx.fillStyle='#ffdf8b';
+    ctx.beginPath();ctx.arc(alisonX,baseline-21,halo,0,Math.PI*2);ctx.fill();ctx.globalAlpha=1;
+    for(let i=0;i<9;i++){
+      const a=t*.75+i*Math.PI*2/9,r=25+Math.sin(t+i)*2;
+      const sx=alisonX+Math.cos(a)*r,sy=baseline-21+Math.sin(a)*r*.65;
+      ctx.fillStyle=i%2?'#ffdf8b':'#f7a6d2';ctx.fillRect(Math.round(sx),Math.round(sy),2,2);
+    }
   }
-  ctx.textAlign='left';
+  _drawChar(alisonX,baseline-bob,1,idx===0?'run':'idle',Math.floor(t*10)%4,false);
+  drawCineBoy(urielX,baseline-bob,-1,step,hug);
+  if(hug){
+    // Brazos cruzados por delante para que la pose se lea como un abrazo.
+    ctx.fillStyle='#8b5e3c';ctx.fillRect(alisonX+5,baseline-22-bob,8,2);
+    ctx.fillRect(alisonX+10,baseline-20-bob,4,2);ctx.fillStyle='#e8b89a';ctx.fillRect(alisonX+12,baseline-20-bob,2,2);
+    ctx.fillStyle='#477d70';ctx.fillRect(urielX-8,baseline-18-bob,8,2);
+    ctx.fillRect(urielX-9,baseline-20-bob,3,2);ctx.fillStyle='#e8b89a';ctx.fillRect(urielX-10,baseline-20-bob,2,2);
+  }
+  const dogX=idx===0?165+Math.sin(t*1.45)*71:idx===1?228:idx===2?227:229;
+  drawCineGuera(dogX,baseline-bob+(idx===0?Math.abs(Math.sin(t*7))*2:0),t,idx!==0);
+  if(idx===2){
+    for(let i=0;i<12;i++){
+      const px=(i*73+VW-CINE.total*16)%VW,py=35+(i*37)%145+Math.sin(t*5+i)*3;
+      ctx.fillStyle=i%2?'#f472b6':'#a78bfa';ctx.globalAlpha=.45+.35*Math.sin(t*8+i);
+      ctx.fillRect(px,py,3+(i%3),2+(i%2));
+    }
+    ctx.globalAlpha=1;ctx.fillStyle='rgba(16,7,38,.22)';ctx.fillRect(0,0,VW,VH);
+  }
+  if(idx===3){
+    ctx.strokeStyle='rgba(251,191,36,.65)';ctx.lineWidth=1;
+    ctx.beginPath();ctx.arc(alisonX,baseline-20,25+Math.sin(t*2)*2,0,Math.PI*2);ctx.stroke();
+  }
+  ctx.restore();
+  // Marco, cartela de diálogo y progreso de la secuencia.
+  ctx.fillStyle='rgba(8,3,22,.62)';ctx.fillRect(0,0,VW,27);
+  ctx.fillStyle='#ffe7a1';ctx.font='5px "Press Start 2P",monospace';ctx.textAlign='left';ctx.fillText(scene.title,12,16);
+  ctx.globalAlpha=1-fade;ctx.fillStyle='#080316';ctx.fillRect(0,0,VW,VH);ctx.globalAlpha=1;
 }
 
 let MG = { active: false };
