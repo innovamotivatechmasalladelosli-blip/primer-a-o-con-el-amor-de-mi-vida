@@ -388,16 +388,28 @@ class Player{
     // Reiniciar nivel completo al morir
     const lvlId = G.levelId;
     G.shakeT=0;
-    setTimeout(()=>{ startLevel(lvlId); }, 600);
+    setTimeout(()=>{ startLevel(lvlId,false); }, 600);
   }
 
   draw(){
     if(this.invT>0&&Math.floor(this.invT*20)%2===0)return;
     const cx=Math.floor(this.x+this.w/2);
     const by=Math.floor(this.y+this.h);
+    if(LS.arrival?.phase==='rest'||LS.arrival?.phase==='rise'){
+      const a=LS.arrival,stand=a.phase==='rise'?Math.min(1,a.t/.42):0;
+      const angle=Math.PI/2*(1-stand)+Math.sin(performance.now()/180)*.015*(1-stand);
+      ctx.save();ctx.translate(cx,this.y+this.h/2);ctx.rotate(angle);
+      _drawChar(0,14,this.facing,'fall',0,false);ctx.restore();
+      return;
+    }
     const sq=this.squash,st=this.stretch;
     const sy=(this.crouching?.78:1)-sq*.28+st*.2,sx=1+sq*.28-st*.18;
     ctx.save();
+    if(LS.arrival?.phase==='fall'){
+      ctx.globalAlpha=.32;ctx.fillStyle='#c4b5fd';
+      for(let i=0;i<4;i++)ctx.fillRect(cx-7+i*4,by-42-i%2*8,1,8+i%2*4);
+      ctx.globalAlpha=1;ctx.translate(cx,by);ctx.rotate(.2+Math.sin(LS.arrival.t*14)*.06);ctx.translate(-cx,-by);
+    }
     ctx.translate(cx,by);ctx.scale(sx,sy);ctx.translate(-cx,-by);
     _drawChar(cx,by,this.facing,this.state,this.frame,this.dashT>0);
     ctx.restore();
@@ -928,13 +940,18 @@ class Boss{
 
 // ═══════════════════════════════════════════════════════════
 const LS={data:null,player:null,enemies:[],memories:[],items:[],meteorites:[],boss:null,
-  goalReached:false,time:0,stars:[],flashT:0,scrollFx:0,};
+  goalReached:false,time:0,stars:[],flashT:0,scrollFx:0,arrival:null};
 
-function startLevel(id){
+function startLevel(id,playOpening=true){
   const data=LEVELS[id];
   G.levelId=id;LS.data=data;
-  LS.player=new Player(data.spawn.x,data.spawn.y);
-  LS.portal={x:data.spawn.x+8,y:data.spawn.y+14,t:id===1?0:99,active:id===1};
+  const hasArrival=id===1&&playOpening;
+  const openingSpawn=hasArrival?{x:data.spawn.x+34,y:-18}:data.spawn;
+  LS.player=new Player(openingSpawn.x,openingSpawn.y);
+  LS.arrival=hasArrival?{phase:'fall',t:0,startX:openingSpawn.x,startY:openingSpawn.y,
+    landX:openingSpawn.x,landY:data.platforms[0].y-LS.player.h,fallDuration:1.15,restDuration:1.5}:null;
+  // El nivel 1 comienza con una caída desde el vacío, no con un portal de entrada.
+  LS.portal={x:data.spawn.x+8,y:data.spawn.y+14,t:99,active:false};
   LS.player.checkpoint={...data.spawn};
   LS.enemies=(data.enemies||[]).map(e=>
     e.type==='flyer'?new Flyer(e.x,e.y,e):new Walker(e.x,e.y,e));
@@ -946,7 +963,7 @@ function startLevel(id){
   LS.items=(data.items||[]).map(it=>({...it,taken:false,bob:Math.random()*10}));
   LS.meteorites=(data.meteorites||[]).map(m=>({...m,phase:m.phase||0}));
   LS.boss=data.boss?new Boss(data.width/2-26,90):null;
-  LS.goalReached=false;LS.time=0;LS.flashT=.4;LS.scrollFx=0;
+  LS.goalReached=false;LS.time=0;LS.flashT=hasArrival?0:.4;LS.scrollFx=0;
   // Stars bg
   LS.stars=[];
   for(let i=0;i<200;i++) LS.stars.push({
@@ -957,6 +974,30 @@ function startLevel(id){
   });
   Cam.snap(LS.player,data);
   G.state='level';G.paused=false;renderUI();
+}
+function updateLevelArrival(dt){
+  const a=LS.arrival,p=LS.player;
+  if(!a||a.phase==='done')return false;
+  a.t+=dt;
+  if(a.phase==='fall'){
+    const u=Math.min(1,a.t/a.fallDuration),ease=u*u;
+    p.x=a.startX+(a.landX-a.startX)*ease;
+    p.y=a.startY+(a.landY-a.startY)*ease;
+    p.vx=0;p.vy=0;p.onGround=false;p.state='fall';p.frame=Math.floor(a.t*9)%4;
+    if(u>=1){
+      a.phase='rest';a.t=0;p.x=a.landX;p.y=a.landY;p.vy=0;p.onGround=true;p.state='fall';p.frame=0;
+      Px.burst(p.x+p.w/2,p.y+p.h,'#a9a2c2',12,{speed:.8,up:.5,grav:.02});
+      Px.burst(p.x+p.w/2,p.y+p.h,'#e879f9',5,{speed:.5,up:.2,grav:0});
+      G.shakeT=.18;G.shakeAmt=2.5;
+    }
+  }else if(a.phase==='rest'){
+    p.x=a.landX;p.y=a.landY;p.vx=0;p.vy=0;p.onGround=true;p.state='fall';p.frame=0;
+    if(a.t>=a.restDuration){a.phase='rise';a.t=0;}
+  }else if(a.phase==='rise'){
+    p.x=a.landX;p.y=a.landY;p.vx=0;p.vy=0;p.onGround=true;p.state='fall';p.frame=0;
+    if(a.t>=.42){a.phase='done';p.state='idle';}
+  }
+  return a.phase!=='done';
 }
 
 function openJournal(){
@@ -1572,7 +1613,7 @@ function updateMinigame(dt) {
       Px.burst(MG.shipX, MG.shipY, '#f87171', 18, {speed:2});
       if (MG.health <= 0) {
         // Reiniciar el NIVEL completo
-        setTimeout(()=>{ startLevel(G.levelId); }, 600);
+        setTimeout(()=>{ startLevel(G.levelId,false); }, 600);
         G.state='level';
         return;
       }
@@ -1705,24 +1746,39 @@ function drawBG(theme,cx,cy,skipBlackHole=false){
       }
     }
     ctx.globalAlpha=1;
-    // Horizonte de sucesos presente desde el inicio: se vuelve más grande conforme Alison se acerca.
+    // Horizonte de sucesos masivo desde el inicio, creciendo conforme Alison se acerca.
     const progress=Math.max(0,Math.min(1,cx/(LS.data?.width||2400)));
-    const bhX=VW*(.82-progress*.08),bhY=VH*(.38+Math.sin(t*.2)*.018);
-    const bhR=43+progress*24;
+    const bhX=VW*(.82-progress*.08),bhY=VH*(.39+Math.sin(t*.2)*.018);
+    const bhR=52+progress*30;
+    // Desgarros luminosos en el espacio: el tejido del universo se abre hacia el centro.
+    for(let i=0;i<7;i++){
+      const sx=((i*103-t*(3+i%3)-cx*.055)%(VW+100)+VW+100)%(VW+100)-50;
+      const sy=62+(i*37)%150,kinkX=sx+(bhX-sx)*.46+Math.sin(t*.7+i)*13,kinkY=sy+(bhY-sy)*.48;
+      ctx.globalAlpha=.2+progress*.2+.06*Math.sin(t*1.4+i);ctx.strokeStyle=i%2?'#b58cff':'#f29ce8';ctx.lineWidth=i%3===0?1.7:1.2;
+      ctx.beginPath();ctx.moveTo(sx,sy);ctx.lineTo(kinkX,kinkY);ctx.lineTo(bhX,bhY);ctx.stroke();
+      ctx.globalAlpha=.22;ctx.fillStyle='#eedcff';ctx.fillRect(Math.round(kinkX),Math.round(kinkY),2,1);
+    }
+    ctx.globalAlpha=1;
     if(!skipBlackHole)drawCosmicBlackHole(bhX,bhY,bhR,t,.72+progress*.28);
-    // Fragmentos de universos y estrellas deformadas convergen hacia el mismo punto.
-    for(let i=0;i<18;i++){
-      const speed=8+(i%5)*4+progress*18;
-      const x=((i*47-t*speed-cx*.04)%(VW+80)+VW+80)%(VW+80)-40;
-      const y=18+(i*39+Math.sin(t*.8+i)*18)%Math.max(1,VH-36);
+    // Continentes, lunas y trozos de realidad viajan desde los bordes hasta el vórtice.
+    for(let i=0;i<34;i++){
+      const speed=.075+(i%5)*.018+progress*.055;
+      const phase=(t*speed+i*.137+progress*.24)%1;
+      const startX=((i*47)%(VW+80))-40,startY=20+(i*31)%Math.max(1,VH-40);
+      const rawX=startX+(bhX-startX)*phase+Math.sin(t*.8+i)*8*(1-phase);
+      const rawY=startY+(bhY-startY)*phase+Math.cos(t*.7+i)*6*(1-phase);
+      const x=rawX,y=rawY;
       const dx=bhX-x,dy=bhY-y,dist=Math.hypot(dx,dy)||1;
-      ctx.globalAlpha=.45+progress*.25;ctx.fillStyle=i%4===0?'#ffc08a':i%3===0?'#a78bfa':'#5b5682';
+      const shard=5+i%8+(i%6===0?5:0);ctx.globalAlpha=.5+progress*.28;ctx.fillStyle=i%4===0?'#ffc08a':i%3===0?'#a78bfa':'#5b5682';
+      // Cola corta que señala la dirección de absorción.
+      ctx.strokeStyle=i%3===0?'rgba(228,183,255,.42)':'rgba(142,154,201,.35)';ctx.lineWidth=1;
+      ctx.beginPath();ctx.moveTo(x-dx/dist*(shard+3),y-dy/dist*(shard+3));ctx.lineTo(x,y);ctx.stroke();
       ctx.save();ctx.translate(x,y);ctx.rotate(Math.atan2(dy,dx)+Math.sin(t+i)*.3);
-      ctx.fillRect(-3,-2,5+(i%4),3+(i%3));
-      ctx.fillStyle='#d8b4fe';ctx.globalAlpha=.45;ctx.fillRect(-2,-1,2,1);ctx.restore();
-      if(!skipBlackHole&&progress>.38&&i%6===0){
+      ctx.beginPath();ctx.moveTo(-shard,-shard*.4);ctx.lineTo(-shard*.35,-shard);ctx.lineTo(shard,.1);ctx.lineTo(shard*.42,shard*.72);ctx.lineTo(-shard*.75,shard*.55);ctx.closePath();ctx.fill();
+      ctx.fillStyle='#d8b4fe';ctx.globalAlpha=.5;ctx.fillRect(-shard*.2,-shard*.25,Math.max(2,shard*.35),1);ctx.restore();
+      if(!skipBlackHole&&progress>.28&&i%5===0){
         const ex=bhX+Math.cos(t*.8+i)*bhR*1.8,ey=bhY+Math.sin(t*.8+i)*bhR*.75;
-        drawVoidling(ex,ey,.58,t+i,false,false);
+        drawVoidling(ex,ey,.5,t+i,false,false);
       }
     }
     ctx.globalAlpha=1;
@@ -1980,6 +2036,22 @@ function _drawFloatingFurniture(draw,sx,sy,w,h,seed){
   ctx.fillRect(Math.floor(sx+3),Math.floor(sy+h+3),Math.max(4,w-6),2);
   ctx.globalAlpha=1;
 }
+function _drawSpaceRubble(sx,sy,w,seed,pieceIndex){
+  // Grietas abiertas, bordes arrancados y esquirlas: el universo se está deshaciendo.
+  const crackX=sx+5+Math.floor(seed*Math.max(1,w-12));
+  ctx.save();ctx.globalAlpha=.9;ctx.strokeStyle='#171329';ctx.lineWidth=2;ctx.beginPath();
+  ctx.moveTo(crackX,sy-1);ctx.lineTo(crackX-3,sy+3);ctx.lineTo(crackX+2,sy+6);ctx.lineTo(crackX-1,sy+9);ctx.stroke();
+  ctx.globalAlpha=.82;ctx.strokeStyle='#c5a1e8';ctx.lineWidth=1;ctx.beginPath();
+  ctx.moveTo(crackX,sy);ctx.lineTo(crackX-2,sy+3);ctx.lineTo(crackX+1,sy+6);ctx.stroke();
+  if(pieceIndex%2===0){ctx.globalAlpha=.9;ctx.fillStyle='#090716';ctx.fillRect(sx+Math.floor(w*.72),sy-1,4,3);ctx.fillRect(sx+Math.floor(w*.76),sy+1,3,2);}
+  const t=performance.now()/1000;
+  for(let i=0;i<3;i++){
+    const x=sx+((seed*71+i*19+t*(5+i*2))%(w+24))-12;
+    const y=sy-7-Math.sin(t*1.3+i+seed*4)*3;
+    ctx.globalAlpha=.68;ctx.fillStyle=i===1?'#9b85cb':'#625c80';ctx.fillRect(Math.round(x),Math.round(y),2+i%2,2);
+  }
+  ctx.restore();ctx.globalAlpha=1;
+}
 
 // ═══════════════════════════════════════════════════════════
 //   PLATFORMS & OBJECTS
@@ -2003,6 +2075,7 @@ function drawPlatforms(lvl,cx){
         const seed=_furnitureSeed(p.x,piece+furnitureIdx*7);
         const draw=fi===0?_drawSofa:fi===1?_drawShelf:fi===2?_drawCloud:_drawBook;
         _drawFloatingFurniture(draw,currX,sy,drawW,p.h,seed);
+        _drawSpaceRubble(currX,sy,drawW,seed,piece+furnitureIdx);
         currX+=drawW; remW-=drawW; piece++;
       }
       furnitureIdx++;
@@ -2058,7 +2131,15 @@ function drawMeteorites(){
     ctx.fillStyle='rgba(249,115,22,.28)';ctx.beginPath();ctx.arc(-r*.7,0,r*.65,0,Math.PI*2);ctx.fill();
     ctx.fillStyle='#4b5563';ctx.beginPath();ctx.moveTo(-r,-r*.35);ctx.lineTo(-r*.35,-r);ctx.lineTo(r*.8,-r*.65);ctx.lineTo(r,r*.4);ctx.lineTo(.25*r,r);ctx.lineTo(-r*.7,r*.7);ctx.closePath();ctx.fill();
     ctx.fillStyle='#9ca3af';ctx.fillRect(-r*.35,-r*.35,Math.max(2,r*.32),Math.max(2,r*.24));ctx.fillStyle='#1f2937';ctx.fillRect(r*.25,r*.1,Math.max(2,r*.3),Math.max(2,r*.2));
-    ctx.fillStyle='#f97316';ctx.globalAlpha=.65;ctx.fillRect(-r*1.9,-2,r*.8,2);ctx.globalAlpha=1;ctx.restore();
+    // Fisuras angulares y una grieta luminosa en la roca.
+    ctx.strokeStyle='#202838';ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(-r*.42,-r*.48);ctx.lineTo(-r*.08,-r*.12);ctx.lineTo(-r*.24,r*.23);ctx.lineTo(r*.06,r*.58);ctx.stroke();
+    ctx.strokeStyle='rgba(249,115,22,.8)';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(-r*.08,-r*.12);ctx.lineTo(-r*.24,r*.23);ctx.lineTo(r*.06,r*.58);ctx.stroke();
+    ctx.fillStyle='#f97316';ctx.globalAlpha=.65;ctx.fillRect(-r*1.9,-2,r*.8,2);ctx.globalAlpha=1;
+    for(let i=0;i<3;i++){
+      const a=t*(.7+i*.12)+m.phase+i*2.1,dist=r+4+i*3;
+      ctx.globalAlpha=.72;ctx.fillStyle=i===1?'#b4a1d7':'#77758e';ctx.fillRect(Math.cos(a)*dist,Math.sin(a)*dist*.55,2+i%2,2);
+    }
+    ctx.globalAlpha=1;ctx.restore();
   }
 }
 function drawStartPortal(){
@@ -2634,7 +2715,10 @@ function loop(){
   lastTime=now;
 
   if(G.state==='level'&&!G.paused){
+    if(LS.flashT>0)LS.flashT-=dt;
+    if(G.shakeT>0)G.shakeT-=dt;
     const p=LS.player;
+    if(!updateLevelArrival(dt)){
     p.update(dt,LS.data);
     for(const e of LS.enemies)e.update(dt,LS.data,p);
     // Separación ligera: dos bots cercanos no se quedan superpuestos ni forman un bloqueo.
@@ -2696,9 +2780,8 @@ function loop(){
       if(p.x<g.x+g.w+12&&p.x+p.w>g.x-12&&p.y<g.y+g.h+18&&p.y+p.h>g.y-18)reachGoal();
     }
     // Timers
-    if(LS.flashT>0)LS.flashT-=dt;
     LS.time+=dt;
-    if(G.shakeT>0)G.shakeT-=dt;
+    }
   } else if (G.state==='minigame'&&!G.paused) {
     updateMinigame(dt);
   } else if (G.state==='cinematic'&&!G.paused) {
