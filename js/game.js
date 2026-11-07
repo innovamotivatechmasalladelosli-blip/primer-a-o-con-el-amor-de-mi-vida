@@ -1119,28 +1119,28 @@ function drawPrologue(){
     for(let i=0;i<18;i++){const a=t*.65+i*Math.PI*2/18,r=34+(i%4)*9,x=holeX+Math.cos(a)*r,y=holeY+Math.sin(a)*r*.53;ctx.fillStyle=i%2?'#fbbf24':'#c4b5fd';ctx.globalAlpha=.8;ctx.fillRect(x,y,2+i%3,2);}
     const shield=Math.max(0,.8-t*.09);ctx.globalAlpha=shield;ctx.strokeStyle='#ffe7a1';ctx.lineWidth=2;ctx.beginPath();ctx.ellipse(151,175,23+Math.sin(t*9)*2,31,-.12,0,Math.PI*2);ctx.stroke();ctx.globalAlpha=1;
     _drawChar(151,204+Math.sin(t*3)*3,-1,'fall',Math.floor(t*7)%4,false);
-    ctx.fillStyle='#ffe7a1';ctx.font='6px "Press Start 2P",monospace';ctx.fillText('EL AGUJERO NEGRO DEVORÓ SU MUNDO',VW/2,15);
-    ctx.fillStyle='#fff1df';ctx.font='bold 11px Nunito';ctx.fillText('El agujero negro devoró el parque y su universo.',VW/2,34);
-    ctx.fillText('A Alison no la absorbió: su cuerpo de diosa resistió.',VW/2,49);
+    ctx.fillStyle='#ffe7a1';ctx.font='6px "Press Start 2P",monospace';ctx.fillText('EL VÓRTICE ABSORBIÓ SU UNIVERSO',VW/2,15);
+    ctx.fillStyle='#fff1df';ctx.font='bold 11px Nunito';ctx.fillText('El agujero negro absorbió el parque y todo el universo.',VW/2,34);
+    ctx.fillText('Alison resistió el tirón; quedó a la deriva entre fragmentos.',VW/2,49);
   }else{
     const bob=Math.sin(t*2.5)*4;_drawChar(173,195+bob,-1,'fall',Math.floor(t*8)%4,false);
     for(let i=0;i<22;i++){const x=(i*53+t*(12+i%4*3))%VW,y=(i*37+Math.sin(t*1.8+i)*18)%VH;ctx.globalAlpha=.45;ctx.fillStyle=['#f472b6','#e879f9','#93c5fd','#fbbf24'][i%4];ctx.fillRect(x,y,1+i%3,1+i%2);}ctx.globalAlpha=1;
-    ctx.fillStyle='#ffe7a1';ctx.font='6px "Press Start 2P",monospace';ctx.fillText('ALISON SOBREVIVIÓ',VW/2,15);
-    ctx.fillStyle='#fff1df';ctx.font='bold 11px Nunito';ctx.fillText('Solo quedó el vacío; su resistencia divina la mantuvo viva.',VW/2,34);
-    ctx.fillText('Sus niveles de conciencia quedaron dispersos entre fragmentos.',VW/2,49);
+    ctx.fillStyle='#ffe7a1';ctx.font='6px "Press Start 2P",monospace';ctx.fillText('SIGUIÓ EL VÓRTICE',VW/2,15);
+    ctx.fillStyle='#fff1df';ctx.font='bold 11px Nunito';ctx.fillText('Su resistencia divina la mantuvo viva entre los restos.',VW/2,34);
+    ctx.fillText('Alison siguió el agujero negro: el nivel 1 comienza.',VW/2,49);
   }
   ctx.fillStyle='rgba(3,1,10,.82)';ctx.fillRect(20,VH-34,VW-40,20);ctx.fillStyle='#f5d0fe';ctx.font='6px "Press Start 2P"';ctx.fillText(p<5?'TOCA / ESPACIO PARA CONTINUAR':'TOCA / ESPACIO PARA IR AL NIVEL 1',VW/2,VH-21);ctx.textAlign='left';
 }
 
 const CINE_SCENES=[
-  {title:'EL PRESAGIO EN EL VÓRTICE',art:'void-omen',duration:8.5,
-    text:'Al cruzar el agujero negro, Alison sintió que algo la observaba desde el otro lado.'},
-  {title:'LA ENTIDAD DESPIERTA',art:'void-arrival',duration:8.5,
-    text:'Una entidad surgió de pronto. Alison intentó llamar a sus poderes, pero no respondieron; solo resistió su cuerpo de diosa.'},
-  {title:'EL UNIVERSO DESAPARECE',art:'void-collapse',duration:9.5,
-    text:'Su mundo entero se deshizo y cayó en el agujero negro. Su resistencia la mantuvo fuera; no pudo salvar su hogar.'},
-  {title:'A LA DERIVA',art:'void-survivor',duration:9,
-    text:'Quedaron fragmentos flotando en el espacio. Alison siguió adelante mientras horrores salían del vórtice y borraban todo lo que tocaban.'},
+  {title:'AL OTRO LADO DEL HORIZONTE',art:'void-horizon',duration:8.5,
+    text:'Esta vez, el agujero negro también absorbió a Alison. Su cuerpo de diosa resistió el paso; al otro lado, la oscuridad se abrió en luz.'},
+  {title:'EL MAR DE LOS UNIVERSOS',art:'multiverse-nexus',duration:8.5,
+    text:'Encontró un lugar imposible: miles de universos flotaban como islas, cada uno con mundos y cielos distintos.'},
+  {title:'DONDE NACE UN UNIVERSO',art:'universe-convergence',duration:9.5,
+    text:'En el centro, todos convergían y se mezclaban, como si naciera un nuevo universo hecho de muchos. Portales brillaban por todas partes.'},
+  {title:'LA CAÍDA POR EL PORTAL',art:'portal-fall',duration:9,
+    text:'Una corriente la empujó hacia uno de los portales. Alison cayó sin saber qué mundo la esperaba al otro lado.'},
 ];
 const CINE_ART={};
 for(const art of [...new Set([...CINE_SCENES.map(scene=>scene.art),'field-play','tree-embrace','uriel','uriel-hug'])]){
@@ -1233,10 +1233,10 @@ const CONSCIOUSNESS_PATH=[
 ];
 const STORY_CHAPTERS=[
   ['El parque antes del fin','Alison, Uriel y Güera compartían un refugio bajo el árbol; ella ocultaba que era una diosa.'],
-  ['La entidad surgió de la nada','Alison presintió su llegada. Sin aviso, una entidad apareció en el parque y el mundo comenzó a desvanecerse.'],
-  ['Conciencias apagadas','Alison intentó invocar sus poderes, pero sus niveles de conciencia se apagaron uno tras otro.'],
-  ['El agujero negro','Su resistencia divina impidió que Alison fuera absorbida, aunque el vórtice devoró el parque y su universo.'],
-  ['A la deriva','Alison sobrevivió entre fragmentos. Las criaturas que emergen del agujero negro borran todo lo que tocan.']
+  ['Más allá del horizonte','Al final del nivel 1, el agujero negro absorbió también a Alison. Su cuerpo de diosa resistió el cruce.'],
+  ['El mar de los universos','Miles de universos flotaban allí, cada uno con un mundo distinto.'],
+  ['El universo que nace','En el centro, los universos convergían y se mezclaban para formar uno nuevo. Portales brillaban por todas partes.'],
+  ['La caída por el portal','Una corriente arrastró a Alison hacia uno de los portales. No sabía qué mundo la esperaba al otro lado.']
 ];
 const BASIC_POWER_CATALOG=[
   {id:'double_jump',name:'Doble salto',icon:'↑↑',hint:'Salta dos veces',price:0},
@@ -1368,39 +1368,64 @@ function drawCinematic(){
     g.addColorStop(0,'#09051a');g.addColorStop(1,'#1b0633');
     ctx.fillStyle=g;ctx.fillRect(0,0,VW,VH);
   }
-  // Fragmentos y motas que son arrastrados hacia el mismo vórtice en todos los planos.
-  const drift=idx===0?14:idx===1?25:idx===2?39:32;
-  for(let i=0;i<32;i++){
+  // Motas mágicas y fragmentos: ya no repiten el colapso del universo.
+  const drift=idx===0?28:idx===1?11:idx===2?20:15;
+  for(let i=0;i<24;i++){
     const x=((i*71+t*drift*(.48+i%4*.18))%(VW+30))-12;
     const y=(i*43+Math.sin(t*2+i)*8)%VH;
     ctx.globalAlpha=.24+.36*(.5+.5*Math.sin(t*3+i));
-    ctx.fillStyle=['#f472b6','#a78bfa','#67e8f9','#fbbf24'][i%4];
+    ctx.fillStyle=['#f472b6','#a78bfa','#67e8f9','#fbbf24','#c4b5fd'][i%5];
     ctx.fillRect(Math.floor(x),Math.floor(y),1+i%3,1+i%2);
   }
   ctx.globalAlpha=1;
-  if(idx===1){
-    // Su último poder intenta responder y se extingue mientras la entidad se acerca.
-    const power=Math.max(0,1-t/3.2);
-    ctx.globalAlpha=.2*power;ctx.fillStyle='#fbbf24';ctx.beginPath();ctx.arc(184,185,20+Math.sin(t*12)*4,0,Math.PI*2);ctx.fill();ctx.globalAlpha=power;
-    for(let i=0;i<7;i++){const x=184+Math.cos(i*2.4+t*3)*(8+t*5),y=184+Math.sin(i*2.4+t*3)*(8+t*5);ctx.fillStyle='#ffe7a1';ctx.fillRect(x,y,2,2);}ctx.globalAlpha=1;
+  if(idx===0){
+    // Estelas gravitacionales arrastran a Alison hacia el horizonte.
+    ctx.globalAlpha=.3;ctx.strokeStyle='#f5a6ff';ctx.lineWidth=1;
+    for(let i=0;i<5;i++){
+      ctx.beginPath();ctx.ellipse(356,103,40+i*9,13+i*4,-.16+t*.025,t*.18+i*.7,t*.18+i*.7+Math.PI*1.15);ctx.stroke();
+    }
+    ctx.globalAlpha=1;
+  }else if(idx===1){
+    // Brillos de los mundos-isla a distintas profundidades.
+    for(let i=0;i<7;i++){
+      const x=35+i*62+Math.sin(t*.55+i)*5,y=78+(i%3)*43;
+      ctx.globalAlpha=.18+.15*(.5+.5*Math.sin(t*2+i));ctx.strokeStyle=i%2?'#8ce8ff':'#f0a2ff';ctx.lineWidth=1;
+      ctx.beginPath();ctx.arc(x,y,6+Math.sin(t+i)*1.5,0,Math.PI*2);ctx.stroke();
+    }
+    ctx.globalAlpha=1;
+  }else if(idx===2){
+    // Corrientes convergen hacia el núcleo del universo naciente.
+    const nx=390,ny=92;
+    for(let i=0;i<9;i++){
+      const a=i*Math.PI*2/9+t*.12,x=nx+Math.cos(a)*210,y=ny+Math.sin(a)*102;
+      ctx.globalAlpha=.18+.12*Math.sin(t*2+i);ctx.strokeStyle=i%2?'#7be7ff':'#ffd28b';ctx.lineWidth=1;
+      ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(nx,ny);ctx.stroke();
+    }
+    ctx.globalAlpha=.45;ctx.fillStyle='#fff2ba';ctx.beginPath();ctx.arc(nx,ny,9+Math.sin(t*3)*2,0,Math.PI*2);ctx.fill();ctx.globalAlpha=1;
   }
-  const alisonX=idx===0?176:idx===1?178:idx===2?178:168;
-  const baseline=idx===0?158:idx===1?156:idx===2?153:156;
-  const driftX=idx===3?-Math.min(34,t*3):Math.sin(t*1.2+idx)*3;
+  const alisonX=idx===0?188:idx===1?184:idx===2?184:258;
+  const baseline=idx===0?160:idx===1?151:idx===2?153:55;
+  const driftX=idx===0?Math.min(150,t*17):idx===3?-Math.min(150,t*16):Math.sin(t*1.2+idx)*3;
+  const fallY=idx===0?-Math.min(58,t*6):idx===3?Math.min(76,t*8):0;
   const bob=Math.sin(t*2.8+idx)*5;
-  if(idx===3){
-    // Una última estela tenue: ya no hay hogar ni aura divina alrededor de Alison.
-    ctx.globalAlpha=.2;ctx.strokeStyle='#a78bfa';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(alisonX+driftX+12,baseline+bob-6);ctx.lineTo(alisonX+driftX+44,baseline+bob-10);ctx.stroke();ctx.globalAlpha=1;
+  if(idx===0||idx===3){
+    // Estela corta que sigue la dirección de la caída hacia el agujero o el portal.
+    ctx.globalAlpha=.3;ctx.strokeStyle=idx===0?'#ffe6a1':'#8ce8ff';ctx.lineWidth=2;ctx.beginPath();
+    ctx.moveTo(alisonX+driftX+8,baseline+fallY+bob-9);ctx.lineTo(alisonX+driftX+30,baseline+fallY+bob-20);ctx.stroke();ctx.globalAlpha=1;
   }
-  ctx.save();ctx.translate(alisonX+driftX,baseline+bob);ctx.rotate(Math.sin(t*1.5+idx)*.09+(idx===3?-.12:0));ctx.scale(1.12,1.12);
+  ctx.save();ctx.translate(alisonX+driftX,baseline+fallY+bob);
+  ctx.rotate(Math.sin(t*1.5+idx)*.09+(idx===0?t*.08:idx===3?-.12-t*.045:0));ctx.scale(idx===0||idx===3?1.12:1.08,idx===0||idx===3?1.12:1.08);
   _drawChar(0,0,-1,idx===0?'fall':'fall',Math.floor(t*8)%4,false);ctx.restore();
   if(idx===2){
     for(let i=0;i<15;i++){
-      const a=t*.7+i*Math.PI*2/15,r=29+(i%4)*9;
-      ctx.save();ctx.translate(382+Math.cos(a)*r,138+Math.sin(a)*r*.55);ctx.rotate(a+t);ctx.fillStyle=i%3?'#8989a8':'#ffc08a';ctx.globalAlpha=.55;ctx.fillRect(-3,-2,7,4);ctx.restore();
+      const a=t*.7+i*Math.PI*2/15,r=20+(i%4)*10;
+      ctx.save();ctx.translate(390+Math.cos(a)*r,92+Math.sin(a)*r*.55);ctx.rotate(a+t);ctx.fillStyle=i%3?'#8989a8':'#ffc08a';ctx.globalAlpha=.55;ctx.fillRect(-3,-2,7,4);ctx.restore();
     }
   }
   if(idx===3){
+    // Anillos pulsantes remarcan el portal al que cae Alison.
+    ctx.globalAlpha=.45;ctx.strokeStyle='#c8f4ff';ctx.lineWidth=1;
+    for(let i=0;i<3;i++){ctx.beginPath();ctx.ellipse(112,104,28+i*5+Math.sin(t*2+i),39+i*4,-.18,0,Math.PI*2);ctx.stroke();}
     for(let i=0;i<8;i++){const x=(i*63+t*(18+i%3*5))%VW,y=(i*47+t*(9+i%2*7))%VH;ctx.globalAlpha=.5;ctx.fillStyle='#e879f9';ctx.fillRect(x,y,2,2);}ctx.globalAlpha=1;
   }
   if(idx>=1){ctx.fillStyle='rgba(3,1,15,.12)';ctx.fillRect(0,0,VW,VH);}

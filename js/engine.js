@@ -68,7 +68,7 @@ const MEMORY_TEXTS={
   12:"El futuro. Lo veo contigo, siempre contigo. Y cada día que pasa, esa imagen se vuelve más nítida y más bonita.",
 };
 const MEMORY_PHOTOS={1:'assets-recuerdo.jpg'};
-const STORY_LORE='Alison era una diosa encubierta que había elegido una vida sencilla en el parque con Uriel y Güera. Una entidad surgió de la nada; el parque y su universo comenzaron a desvanecerse. Alison intentó usar sus poderes, pero sus niveles de conciencia se apagaron uno a uno. El agujero negro devoró su mundo, pero no pudo absorberla: su resistencia divina la mantuvo viva. Ahora, en el espacio, sigue el vórtice entre fragmentos mientras criaturas violetas y horrores cósmicos borran todo lo que tocan.';
+const STORY_LORE='Alison era una diosa encubierta que había elegido una vida sencilla en el parque con Uriel y Güera. Una entidad surgió de la nada; el parque y sus niveles de conciencia comenzaron a desvanecerse, y sus poderes dejaron de responder. Alison siguió el agujero negro en el nivel 1. Al cruzar su horizonte, también fue absorbida; su cuerpo de diosa resistió el tránsito. Del otro lado descubrió un mar fantástico de miles de universos flotantes, todos convergiendo en el centro para formar uno nuevo. Portales conectaban ese lugar imposible, y una corriente arrastró a Alison hacia uno de ellos.';
 
 // ─ Niveles ─
 const LEVELS={
