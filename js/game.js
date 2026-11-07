@@ -1423,41 +1423,53 @@ function drawCineBoy(cx,base,facing,phase,hug=false){
   ctx.restore();
 }
 function drawPortalCity(t){
-  // El óvalo del portal deja ver una ciudad moderna, cálida y reconocible al otro lado.
-  const cx=112,cy=104,rx=18,ry=29,shift=Math.sin(t*.7)*1.2;
+  // El portal funciona como una abertura profunda, no como una ventanita flotante.
+  const cx=112,cy=104,rx=25,ry=36,shift=Math.sin(t*.7)*1.8;
   ctx.save();ctx.beginPath();ctx.ellipse(cx,cy,rx,ry,-.16,0,Math.PI*2);ctx.clip();
   const sky=ctx.createLinearGradient(cx,cy-ry,cx,cy+ry);
-  sky.addColorStop(0,'#7bcaff');sky.addColorStop(.48,'#f5c69d');sky.addColorStop(1,'#39445b');
+  sky.addColorStop(0,'#91dcff');sky.addColorStop(.42,'#f5c69d');sky.addColorStop(1,'#263449');
   ctx.fillStyle=sky;ctx.fillRect(cx-rx,cy-ry,rx*2,ry*2);
-  ctx.fillStyle='#fff0b0';ctx.globalAlpha=.9;ctx.beginPath();ctx.arc(cx+5,cy-16,4,0,Math.PI*2);ctx.fill();ctx.globalAlpha=1;
-  // Torres y edificios de departamentos con ventanas encendidas.
-  const heights=[17,27,20,34,23,30,16,25,19];
+  ctx.fillStyle='rgba(255,239,190,.22)';ctx.beginPath();ctx.ellipse(cx+3,cy-12,18,8,-.12,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#fff0b0';ctx.globalAlpha=.95;ctx.beginPath();ctx.arc(cx+8,cy-21,4,0,Math.PI*2);ctx.fill();ctx.globalAlpha=1;
+  // Torres y departamentos con ventanas encendidas a distintas distancias.
+  const heights=[20,29,23,36,27,32,19,28,22,31];
   for(let i=0;i<heights.length;i++){
-    const w=7,x=cx-rx-2+i*5+shift*(i%2?1:-1),h=heights[i],y=cy+11-h;
+    const w=7,x=cx-rx-2+i*5+shift*(i%2?1:-1),h=heights[i],y=cy+9-h;
     ctx.fillStyle=['#526177','#39465e','#45536a','#303e56'][i%4];ctx.fillRect(Math.round(x),Math.round(y),w,h);
     ctx.fillStyle='rgba(26,42,62,.7)';ctx.fillRect(Math.round(x),Math.round(y),w,2);
-    for(let wy=y+4;wy<cy+9;wy+=5)for(let wx=x+1;wx<x+w-1;wx+=3){
+    for(let wy=y+4;wy<cy+8;wy+=5)for(let wx=x+1;wx<x+w-1;wx+=3){
       ctx.fillStyle=((i*3+Math.floor(wy)+Math.floor(wx))%4===0)?'#ffe3a0':'#a5dcf5';
       ctx.globalAlpha=.8;ctx.fillRect(Math.round(wx),Math.round(wy),1,2);
     }
   }
-  // Calle, faroles y dos luces de autos: una ciudad cotidiana, no otro reino cósmico.
-  ctx.globalAlpha=1;ctx.fillStyle='#263346';ctx.fillRect(cx-rx,cy+10,rx*2,ry);
-  ctx.fillStyle='#d7bd8e';ctx.fillRect(cx-rx,cy+10,rx*2,2);
-  ctx.fillStyle='#fff0b0';ctx.fillRect(cx-11+shift,cy+15,2,2);ctx.fillRect(cx+6-shift,cy+19,3,1);
+  // Calle en perspectiva, faroles y vehículos diminutos al fondo.
+  ctx.globalAlpha=1;ctx.fillStyle='#263346';ctx.fillRect(cx-rx,cy+8,rx*2,ry);
+  ctx.fillStyle='#d7bd8e';ctx.fillRect(cx-rx,cy+8,rx*2,2);
+  ctx.fillStyle='#182538';ctx.beginPath();ctx.moveTo(cx-7,cy+10);ctx.lineTo(cx+7,cy+10);ctx.lineTo(cx+22,cy+ry);ctx.lineTo(cx-22,cy+ry);ctx.closePath();ctx.fill();
+  ctx.strokeStyle='rgba(255,226,163,.55)';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(cx,cy+12);ctx.lineTo(cx+1,cy+ry);ctx.stroke();
+  ctx.fillStyle='#fff0b0';ctx.fillRect(cx-16+shift,cy+16,3,2);ctx.fillRect(cx+8-shift,cy+21,4,2);
   for(let i=0;i<3;i++){
-    const lx=cx-12+i*12+shift;
-    ctx.fillStyle='#303848';ctx.fillRect(lx,cy+3,1,9);ctx.fillStyle='#ffe6a1';ctx.fillRect(lx-1,cy+2,3,2);
+    const lx=cx-17+i*17+shift;
+    ctx.fillStyle='#303848';ctx.fillRect(lx,cy+1,1,9);ctx.fillStyle='#ffe6a1';ctx.fillRect(lx-1,cy,3,2);
   }
   ctx.restore();
-  // Borde luminoso y halo cálido para separar la ciudad del multiverso.
-  const glow=ctx.createRadialGradient(cx,cy,8,cx,cy,42);
-  glow.addColorStop(0,'rgba(255,221,157,.2)');glow.addColorStop(.55,'rgba(111,222,255,.12)');glow.addColorStop(1,'rgba(111,222,255,0)');
-  ctx.fillStyle=glow;ctx.fillRect(cx-42,cy-42,84,84);
+  // Halo volumétrico alrededor de la abertura, sin ocultar la ciudad.
+  const glow=ctx.createRadialGradient(cx,cy,12,cx,cy,62);
+  glow.addColorStop(0,'rgba(255,221,157,.28)');glow.addColorStop(.42,'rgba(111,222,255,.18)');glow.addColorStop(1,'rgba(111,222,255,0)');
+  ctx.fillStyle=glow;ctx.fillRect(cx-62,cy-62,124,124);
 }
 function drawPortalSuction(t,entry){
   const cx=112,cy=104;
   ctx.save();
+  // Anillos incompletos giran a distinta velocidad alrededor de la abertura.
+  const pulse=1+Math.sin(t*7)*.055+entry*.13;
+  ctx.save();ctx.translate(cx,cy);ctx.rotate(-.16+t*.12);
+  for(let i=0;i<3;i++){
+    ctx.globalAlpha=.5-i*.11;ctx.strokeStyle=i===0?'#fff0b2':i===1?'#8ce8ff':'#d59cff';ctx.lineWidth=i===0?2:1.4;
+    ctx.setLineDash(i===0?[20,8,5,10]:[31+i*5,13]);ctx.lineDashOffset=-t*(18+i*7);
+    ctx.beginPath();ctx.ellipse(0,0,(31+i*7)*pulse,(44+i*8)*pulse,0,0,Math.PI*2);ctx.stroke();
+  }
+  ctx.restore();ctx.setLineDash([]);ctx.globalAlpha=1;
   // Filamentos curvos muestran el espacio doblándose hacia el portal.
   for(let i=0;i<11;i++){
     const a=t*1.15+i*Math.PI*2/11,r=52+(i%4)*13;
@@ -1477,7 +1489,6 @@ function drawPortalSuction(t,entry){
   }
   ctx.globalAlpha=1;
   // A medida que ella entra, el portal pulsa y emite una onda luminosa.
-  const pulse=1+Math.sin(t*7)*.06+entry*.15;
   for(let i=0;i<5;i++){
     const rx=(28+i*6)*pulse,ry=(40+i*7)*pulse;
     ctx.globalAlpha=.2+(1-i/6)*.34;ctx.strokeStyle=i%2?'#9cecff':'#f3b8ff';ctx.lineWidth=i===0?2:1;
@@ -2520,32 +2531,32 @@ function drawMapFull(){
 
   if (G.state !== 'map') return;
 
-  // Título del mapa
-  ctx.fillStyle='rgba(9,3,22,.8)';ctx.fillRect(VW/2-130,4,260,28);
-  ctx.strokeStyle='rgba(109,40,217,.5)';ctx.lineWidth=1;
-  ctx.strokeRect(VW/2-129.5,4.5,259,27);
+  // Título flotante con resplandor, sin otra caja que encierre el mapa.
+  ctx.save();ctx.shadowColor='rgba(251,191,36,.72)';ctx.shadowBlur=14;
   ctx.fillStyle='#fbbf24';ctx.font='bold 10px "Press Start 2P",monospace';
   ctx.textAlign='center';ctx.fillText('✦ ELIGE UN NIVEL ✦',VW/2,23);ctx.textAlign='left';
+  ctx.restore();
   ctx.fillStyle='#c4b5fd';ctx.font='6px "Press Start 2P",monospace';ctx.textAlign='center';
   ctx.fillText('ELIGE TU SIGUIENTE UMBRAL',VW/2,40);ctx.textAlign='left';
 
-  // Camino punteado animado
+  // Camino animado como una corriente luminosa, sin bloques visuales.
   ctx.save();
-  ctx.setLineDash([6,7]);ctx.lineDashOffset=-t*18;
-  ctx.strokeStyle='rgba(232,121,249,.45)';ctx.lineWidth=2.5;
+  ctx.lineCap='round';ctx.shadowColor='rgba(232,121,249,.75)';ctx.shadowBlur=9;
+  ctx.strokeStyle='rgba(167,139,250,.22)';ctx.lineWidth=6;
   ctx.beginPath();ctx.moveTo(MAP_NODES[0].x,MAP_NODES[0].y);
   for(let i=1;i<MAP_NODES.length;i++){
     const a=MAP_NODES[i-1],b=MAP_NODES[i];
     ctx.quadraticCurveTo((a.x+b.x)/2+20,(a.y+b.y)/2-15,b.x,b.y);
   }
-  ctx.stroke();ctx.setLineDash([]);ctx.restore();
+  ctx.stroke();ctx.shadowBlur=0;ctx.setLineDash([3,9]);ctx.lineDashOffset=-t*15;
+  ctx.strokeStyle='rgba(240,213,255,.72)';ctx.lineWidth=1.3;ctx.stroke();ctx.setLineDash([]);ctx.restore();
 
   G.mapNodePositions=MAP_NODES;
 
   for(const n of MAP_NODES){
     const isStory=n.kind==='story';
     const storyAvailable=n.id==='story-1'&&G.levelId>=2;
-    const unlocked=!isStory&&n.id===1;
+    const unlocked=!isStory&&(n.id===1||(n.id===2&&G.levelId>=2));
     const completed=!isStory&&G.levelId>n.id;
     const active=!isStory&&G.levelId===n.id;
 
@@ -2649,12 +2660,17 @@ function _drawStoryDiorama(x,y,w,h,t){
 }
 
 function _drawDiorama(id,x,y,w,h,unlocked,t){
-  // Marco
-  ctx.fillStyle=unlocked?'rgba(139,92,246,.7)':'rgba(60,30,80,.5)';
-  ctx.fillRect(x-1,y-1,w+2,h+2);
-  ctx.fillStyle=unlocked?'#09011a':'#050010';
-  ctx.fillRect(x,y,w,h);
-  ctx.save();ctx.beginPath();ctx.rect(x,y,w,h);ctx.clip();
+  // Islas-mundo flotantes: luz suave y esquinas redondeadas, nunca marcos rígidos.
+  if(unlocked){
+    const aura=ctx.createRadialGradient(x+w/2,y+h/2,4,x+w/2,y+h/2,w*.72);
+    aura.addColorStop(0,'rgba(167,139,250,.18)');aura.addColorStop(1,'rgba(167,139,250,0)');
+    ctx.fillStyle=aura;ctx.fillRect(x-10,y-8,w+20,h+16);
+  }
+  ctx.save();ctx.beginPath();ctx.roundRect(x,y,w,h,7);ctx.clip();
+  const base=ctx.createLinearGradient(x,y,x,y+h);
+  base.addColorStop(0,unlocked?'rgba(24,13,54,.3)':'rgba(12,5,25,.4)');
+  base.addColorStop(1,unlocked?'rgba(9,1,26,.92)':'rgba(5,0,16,.96)');
+  ctx.fillStyle=base;ctx.fillRect(x,y,w,h);
 
   if(id===1){
     // Galaxia mini
@@ -2719,7 +2735,8 @@ function _drawDiorama(id,x,y,w,h,unlocked,t){
   }
   ctx.restore();
   if(!unlocked){
-    ctx.globalAlpha=.72;ctx.fillStyle='rgba(0,0,0,.78)';ctx.fillRect(x,y,w,h);
+    ctx.save();ctx.beginPath();ctx.roundRect(x,y,w,h,7);ctx.clip();
+    ctx.globalAlpha=.68;ctx.fillStyle='rgba(0,0,0,.64)';ctx.fillRect(x,y,w,h);ctx.restore();
     const lx=x+w/2,ly=y+h/2;
     ctx.fillStyle='#6d28d9';ctx.fillRect(lx-5,ly-1,10,7);
     ctx.strokeStyle='#6d28d9';ctx.lineWidth=1.5;
