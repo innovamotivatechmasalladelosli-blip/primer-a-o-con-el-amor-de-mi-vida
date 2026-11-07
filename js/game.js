@@ -1151,7 +1151,7 @@ for(const art of [...new Set([...CINE_SCENES.map(scene=>scene.art),'field-play',
 function drawUrielSprite(cx,base,phase,hug=false){
   const image=CINE_ART[hug?'uriel-hug':'uriel'];
   if(!image?.complete||!image.naturalWidth){drawCineBoy(cx,base,1,phase,hug);return;}
-  const height=48,width=Math.round(height*image.naturalWidth/image.naturalHeight);
+  const height=36,width=Math.round(height*image.naturalWidth/image.naturalHeight);
   const sway=hug?0:Math.sin(phase*2.4)*.45;
   ctx.fillStyle='rgba(8,5,20,.34)';ctx.beginPath();ctx.ellipse(cx,base-1,width*.36,1.6,0,0,Math.PI*2);ctx.fill();
   ctx.drawImage(image,Math.round(cx-width/2+sway),Math.round(base-height),width,height);
