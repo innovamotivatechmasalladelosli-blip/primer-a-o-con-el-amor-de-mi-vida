@@ -1208,7 +1208,7 @@ const CINE_SCENES=[
   {title:'DONDE NACE UN UNIVERSO',art:'universe-convergence',duration:9.5,
     text:'En el centro, todos convergían y se mezclaban, como si naciera un nuevo universo hecho de muchos. Portales brillaban por todas partes.'},
   {title:'LA CAÍDA POR EL PORTAL',art:'portal-fall',duration:9,
-    text:'Una corriente la empujó hacia uno de los portales. Alison cayó sin saber qué mundo la esperaba al otro lado.'},
+    text:'Al otro lado había una ciudad normal, con calles y edificios. La corriente la arrastró y Alison cayó dentro del portal.'},
 ];
 const CINE_ART={};
 for(const art of [...new Set([...CINE_SCENES.map(scene=>scene.art),'field-play','tree-embrace','void-omen','uriel','uriel-hug'])]){
@@ -1422,10 +1422,91 @@ function drawCineBoy(cx,base,facing,phase,hug=false){
   p(2,-36,3,2,'#17161b');p(5,-36,2,3,'#111014');
   ctx.restore();
 }
+function drawPortalCity(t){
+  // El óvalo del portal deja ver una ciudad moderna, cálida y reconocible al otro lado.
+  const cx=112,cy=104,rx=18,ry=29,shift=Math.sin(t*.7)*1.2;
+  ctx.save();ctx.beginPath();ctx.ellipse(cx,cy,rx,ry,-.16,0,Math.PI*2);ctx.clip();
+  const sky=ctx.createLinearGradient(cx,cy-ry,cx,cy+ry);
+  sky.addColorStop(0,'#7bcaff');sky.addColorStop(.48,'#f5c69d');sky.addColorStop(1,'#39445b');
+  ctx.fillStyle=sky;ctx.fillRect(cx-rx,cy-ry,rx*2,ry*2);
+  ctx.fillStyle='#fff0b0';ctx.globalAlpha=.9;ctx.beginPath();ctx.arc(cx+5,cy-16,4,0,Math.PI*2);ctx.fill();ctx.globalAlpha=1;
+  // Torres y edificios de departamentos con ventanas encendidas.
+  const heights=[17,27,20,34,23,30,16,25,19];
+  for(let i=0;i<heights.length;i++){
+    const w=7,x=cx-rx-2+i*5+shift*(i%2?1:-1),h=heights[i],y=cy+11-h;
+    ctx.fillStyle=['#526177','#39465e','#45536a','#303e56'][i%4];ctx.fillRect(Math.round(x),Math.round(y),w,h);
+    ctx.fillStyle='rgba(26,42,62,.7)';ctx.fillRect(Math.round(x),Math.round(y),w,2);
+    for(let wy=y+4;wy<cy+9;wy+=5)for(let wx=x+1;wx<x+w-1;wx+=3){
+      ctx.fillStyle=((i*3+Math.floor(wy)+Math.floor(wx))%4===0)?'#ffe3a0':'#a5dcf5';
+      ctx.globalAlpha=.8;ctx.fillRect(Math.round(wx),Math.round(wy),1,2);
+    }
+  }
+  // Calle, faroles y dos luces de autos: una ciudad cotidiana, no otro reino cósmico.
+  ctx.globalAlpha=1;ctx.fillStyle='#263346';ctx.fillRect(cx-rx,cy+10,rx*2,ry);
+  ctx.fillStyle='#d7bd8e';ctx.fillRect(cx-rx,cy+10,rx*2,2);
+  ctx.fillStyle='#fff0b0';ctx.fillRect(cx-11+shift,cy+15,2,2);ctx.fillRect(cx+6-shift,cy+19,3,1);
+  for(let i=0;i<3;i++){
+    const lx=cx-12+i*12+shift;
+    ctx.fillStyle='#303848';ctx.fillRect(lx,cy+3,1,9);ctx.fillStyle='#ffe6a1';ctx.fillRect(lx-1,cy+2,3,2);
+  }
+  ctx.restore();
+  // Borde luminoso y halo cálido para separar la ciudad del multiverso.
+  const glow=ctx.createRadialGradient(cx,cy,8,cx,cy,42);
+  glow.addColorStop(0,'rgba(255,221,157,.2)');glow.addColorStop(.55,'rgba(111,222,255,.12)');glow.addColorStop(1,'rgba(111,222,255,0)');
+  ctx.fillStyle=glow;ctx.fillRect(cx-42,cy-42,84,84);
+}
+function drawPortalSuction(t,entry){
+  const cx=112,cy=104;
+  ctx.save();
+  // Filamentos curvos muestran el espacio doblándose hacia el portal.
+  for(let i=0;i<11;i++){
+    const a=t*1.15+i*Math.PI*2/11,r=52+(i%4)*13;
+    const x=cx+Math.cos(a)*r*1.18,y=cy+Math.sin(a)*r*.88;
+    const mx=cx+Math.cos(a-.6)*r*.66,my=cy+Math.sin(a-.6)*r*.62;
+    ctx.globalAlpha=.2+.13*Math.sin(t*2+i)**2;ctx.strokeStyle=i%3?'#8ce8ff':'#ffc982';ctx.lineWidth=i%4===0?1.6:1;
+    ctx.beginPath();ctx.moveTo(x,y);ctx.quadraticCurveTo(mx,my,cx+Math.cos(a-1.2)*8,cy+Math.sin(a-1.2)*12);ctx.stroke();
+  }
+  // Trazas en espiral que nacen alrededor de la pantalla y se hunden en el centro.
+  for(let i=0;i<34;i++){
+    const p=(t*(.13+i%4*.018)+i*.071)%1,a=i*2.399+t*(1.3+p*.8);
+    const r=20+(1-p)*190,x=cx+Math.cos(a)*r,y=cy+Math.sin(a)*r*.7;
+    const size=1+(i%3===0?1:0);ctx.globalAlpha=.25+.5*(1-p);ctx.fillStyle=i%4===0?'#fff0b2':i%2?'#91eaff':'#f4a4ff';
+    ctx.strokeStyle=i%2?'rgba(145,234,255,.45)':'rgba(244,164,255,.45)';ctx.lineWidth=1;
+    ctx.beginPath();ctx.moveTo(x+Math.cos(a)*8,y+Math.sin(a)*6);ctx.lineTo(x,y);ctx.stroke();
+    ctx.save();ctx.translate(Math.round(x),Math.round(y));ctx.rotate(a);ctx.fillRect(-size,-1,size*2,2);ctx.restore();
+  }
+  ctx.globalAlpha=1;
+  // A medida que ella entra, el portal pulsa y emite una onda luminosa.
+  const pulse=1+Math.sin(t*7)*.06+entry*.15;
+  for(let i=0;i<5;i++){
+    const rx=(28+i*6)*pulse,ry=(40+i*7)*pulse;
+    ctx.globalAlpha=.2+(1-i/6)*.34;ctx.strokeStyle=i%2?'#9cecff':'#f3b8ff';ctx.lineWidth=i===0?2:1;
+    ctx.beginPath();ctx.ellipse(cx,cy,rx,ry,-.16+t*.08+i*.035,t*.3+i*.8,t*.3+i*.8+Math.PI*(1.45+entry*.3));ctx.stroke();
+  }
+  ctx.globalAlpha=.16+entry*.2;ctx.fillStyle='#fff1bb';ctx.beginPath();ctx.arc(cx,cy,13+entry*19,0,Math.PI*2);ctx.fill();
+  ctx.restore();ctx.globalAlpha=1;
+}
+function drawPortalAlison(t,entry){
+  if(entry<.12)return;
+  const q=Math.max(0,Math.min(1,(entry-.12)/.88)),depth=q*q*(3-2*q),cx=112,cy=104;
+  const px=cx+13*(1-depth),py=cy+22*(1-depth),scale=.96-depth*.27;
+  ctx.save();ctx.beginPath();ctx.ellipse(cx,cy,18,29,-.16,0,Math.PI*2);ctx.clip();
+  // Un último rastro la conecta con el borde; después su silueta se aleja por la ciudad.
+  ctx.globalAlpha=.62*(1-depth);ctx.strokeStyle='#fff0b2';ctx.lineWidth=2;ctx.beginPath();
+  ctx.moveTo(cx+19+depth*10,cy+24+depth*4);ctx.quadraticCurveTo(cx+9,cy+20,cx+4,cy+12);ctx.stroke();
+  const halo=ctx.createRadialGradient(px,py-15*scale,1,px,py-15*scale,24*scale);
+  halo.addColorStop(0,'rgba(255,237,180,.55)');halo.addColorStop(.48,'rgba(255,196,140,.24)');halo.addColorStop(1,'rgba(255,196,140,0)');
+  ctx.globalAlpha=.78*(1-depth*.45);ctx.fillStyle=halo;ctx.fillRect(px-24*scale,py-40*scale,48*scale,48*scale);
+  ctx.globalAlpha=.98-depth*.2;ctx.shadowColor='#ffe0a0';ctx.shadowBlur=10;
+  ctx.translate(px,py);ctx.rotate(-.34+depth*.18);ctx.scale(scale,scale);
+  _drawChar(0,0,-1,'fall',Math.floor(t*9)%4,false);
+  ctx.restore();ctx.globalAlpha=1;
+}
 function drawCinematic(){
   const scene=CINE_SCENES[CINE.scene];
   if(!scene){ctx.fillStyle='#080316';ctx.fillRect(0,0,VW,VH);return;}
   const t=CINE.time,idx=CINE.scene,im=CINE_ART[scene.art];
+  const portalEntry=idx===3?Math.max(0,Math.min(1,(t-2.2)/6.2)):0;
   const fade=Math.max(0,Math.min(1,t/.55,(scene.duration-t)/.55));
   ctx.save();
   if(idx===1&&t>1.5)ctx.translate(Math.sin(t*30)*Math.min(2.6,(t-1.5)*1.4),Math.sin(t*21)*1.1);
@@ -1436,14 +1517,20 @@ function drawCinematic(){
     g.addColorStop(0,'#09051a');g.addColorStop(1,'#1b0633');
     ctx.fillStyle=g;ctx.fillRect(0,0,VW,VH);
   }
-  // Motas mágicas y fragmentos: ya no repiten el colapso del universo.
-  const drift=idx===0?28:idx===1?11:idx===2?20:15;
-  for(let i=0;i<24;i++){
-    const x=((i*71+t*drift*(.48+i%4*.18))%(VW+30))-12;
-    const y=(i*43+Math.sin(t*2+i)*8)%VH;
-    ctx.globalAlpha=.24+.36*(.5+.5*Math.sin(t*3+i));
-    ctx.fillStyle=['#f472b6','#a78bfa','#67e8f9','#fbbf24','#c4b5fd'][i%5];
-    ctx.fillRect(Math.floor(x),Math.floor(y),1+i%3,1+i%2);
+  if(idx===3){
+    drawPortalCity(t);
+    drawPortalSuction(t,portalEntry);
+    drawPortalAlison(t,portalEntry);
+  }else{
+    // Motas mágicas y fragmentos: ya no repiten el colapso del universo.
+    const drift=idx===0?28:idx===1?11:20;
+    for(let i=0;i<24;i++){
+      const x=((i*71+t*drift*(.48+i%4*.18))%(VW+30))-12;
+      const y=(i*43+Math.sin(t*2+i)*8)%VH;
+      ctx.globalAlpha=.24+.36*(.5+.5*Math.sin(t*3+i));
+      ctx.fillStyle=['#f472b6','#a78bfa','#67e8f9','#fbbf24','#c4b5fd'][i%5];
+      ctx.fillRect(Math.floor(x),Math.floor(y),1+i%3,1+i%2);
+    }
   }
   ctx.globalAlpha=1;
   if(idx===0){
@@ -1473,16 +1560,20 @@ function drawCinematic(){
   }
   const alisonX=idx===0?188:idx===1?184:idx===2?184:258;
   const baseline=idx===0?160:idx===1?151:idx===2?153:55;
-  const driftX=idx===0?Math.min(150,t*17):idx===3?-Math.min(150,t*16):Math.sin(t*1.2+idx)*3;
-  const fallY=idx===0?-Math.min(58,t*6):idx===3?Math.min(76,t*8):0;
+  const entryEase=portalEntry*portalEntry*(3-2*portalEntry);
+  const driftX=idx===0?Math.min(150,t*17):idx===3?-146*entryEase:Math.sin(t*1.2+idx)*3;
+  const fallY=idx===0?-Math.min(58,t*6):idx===3?76*entryEase:0;
   const bob=Math.sin(t*2.8+idx)*5;
   if(idx===0||idx===3){
     // Estela corta que sigue la dirección de la caída hacia el agujero o el portal.
-    ctx.globalAlpha=.3;ctx.strokeStyle=idx===0?'#ffe6a1':'#8ce8ff';ctx.lineWidth=2;ctx.beginPath();
+    ctx.globalAlpha=idx===3?.34*(1-portalEntry):.3;ctx.strokeStyle=idx===0?'#ffe6a1':'#8ce8ff';ctx.lineWidth=2;ctx.beginPath();
     ctx.moveTo(alisonX+driftX+8,baseline+fallY+bob-9);ctx.lineTo(alisonX+driftX+30,baseline+fallY+bob-20);ctx.stroke();ctx.globalAlpha=1;
   }
   ctx.save();ctx.translate(alisonX+driftX,baseline+fallY+bob);
-  ctx.rotate(Math.sin(t*1.5+idx)*.09+(idx===0?t*.08:idx===3?-.12-t*.045:0));ctx.scale(idx===0||idx===3?1.12:1.08,idx===0||idx===3?1.12:1.08);
+  ctx.rotate(Math.sin(t*1.5+idx)*.09+(idx===0?t*.08:idx===3?-.12-t*.045-portalEntry*.42:0));
+  const alisonScale=idx===3?1.12*(1-.9*portalEntry):idx===0?1.12:1.08;
+  if(idx===3)ctx.globalAlpha=1-.92*portalEntry;
+  ctx.scale(alisonScale,alisonScale);
   _drawChar(0,0,-1,idx===0?'fall':'fall',Math.floor(t*8)%4,false);ctx.restore();
   if(idx===2){
     for(let i=0;i<15;i++){
@@ -1491,10 +1582,11 @@ function drawCinematic(){
     }
   }
   if(idx===3){
-    // Anillos pulsantes remarcan el portal al que cae Alison.
-    ctx.globalAlpha=.45;ctx.strokeStyle='#c8f4ff';ctx.lineWidth=1;
-    for(let i=0;i<3;i++){ctx.beginPath();ctx.ellipse(112,104,28+i*5+Math.sin(t*2+i),39+i*4,-.18,0,Math.PI*2);ctx.stroke();}
-    for(let i=0;i<8;i++){const x=(i*63+t*(18+i%3*5))%VW,y=(i*47+t*(9+i%2*7))%VH;ctx.globalAlpha=.5;ctx.fillStyle='#e879f9';ctx.fillRect(x,y,2,2);}ctx.globalAlpha=1;
+    // Destello de cruce: la silueta ya está dentro y la boca del portal la envuelve.
+    const ring=28+portalEntry*22+Math.sin(t*8)*2;
+    ctx.globalAlpha=.22+.34*portalEntry;ctx.strokeStyle='#fff0b2';ctx.lineWidth=1.5;
+    ctx.beginPath();ctx.ellipse(112,104,ring,ring*1.4,-.16,0,Math.PI*2);ctx.stroke();
+    ctx.globalAlpha=.3*(1-portalEntry);ctx.fillStyle='#a8edff';ctx.beginPath();ctx.arc(112,104,10+portalEntry*24,0,Math.PI*2);ctx.fill();ctx.globalAlpha=1;
   }
   if(idx>=1){ctx.fillStyle='rgba(3,1,15,.12)';ctx.fillRect(0,0,VW,VH);}
   ctx.restore();
