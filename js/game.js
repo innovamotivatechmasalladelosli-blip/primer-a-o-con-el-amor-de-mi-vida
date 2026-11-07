@@ -1123,11 +1123,38 @@ function drawPrologue(){
     ctx.fillStyle='#fff1df';ctx.font='bold 11px Nunito';ctx.fillText('El agujero negro absorbió el parque y todo el universo.',VW/2,34);
     ctx.fillText('Alison resistió el tirón; quedó a la deriva entre fragmentos.',VW/2,49);
   }else{
-    const bob=Math.sin(t*2.5)*4;_drawChar(173,195+bob,-1,'fall',Math.floor(t*8)%4,false);
-    for(let i=0;i<22;i++){const x=(i*53+t*(12+i%4*3))%VW,y=(i*37+Math.sin(t*1.8+i)*18)%VH;ctx.globalAlpha=.45;ctx.fillStyle=['#f472b6','#e879f9','#93c5fd','#fbbf24'][i%4];ctx.fillRect(x,y,1+i%3,1+i%2);}ctx.globalAlpha=1;
-    ctx.fillStyle='#ffe7a1';ctx.font='6px "Press Start 2P",monospace';ctx.fillText('SIGUIÓ EL VÓRTICE',VW/2,15);
-    ctx.fillStyle='#fff1df';ctx.font='bold 11px Nunito';ctx.fillText('Su resistencia divina la mantuvo viva entre los restos.',VW/2,34);
-    ctx.fillText('Alison siguió el agujero negro: el nivel 1 comienza.',VW/2,49);
+    // El fondo muestra el agujero negro que absorbió el universo y sus mundos rotos.
+    ctx.fillStyle='rgba(2,2,14,.12)';ctx.fillRect(0,70,VW,VH-70);
+    // Fragmentos grandes del universo pasan flotando delante de Alison.
+    for(let i=0;i<18;i++){
+      const x=((i*61+t*(5+i%4*1.8))%(VW+36))-18;
+      const y=82+(i*37+Math.sin(t*1.1+i)*14)%142;
+      const size=3+i%4;
+      ctx.save();ctx.translate(Math.round(x),Math.round(y));ctx.rotate(Math.sin(t*.8+i)*.32);
+      ctx.globalAlpha=.72;ctx.fillStyle=['#242b57','#343867','#514275','#536084','#5a4939','#75496c'][i%6];ctx.fillRect(-size,-size*.65,size*2,size);
+      ctx.fillStyle=['#8292ca','#a78bd4','#d7a86f','#83b9c7'][i%4];ctx.globalAlpha=.58;ctx.fillRect(-size+1,-size*.65+1,Math.max(2,size),Math.max(1,size*.32));ctx.restore();
+    }
+    // Restos luminosos orbitan alrededor del horizonte de sucesos.
+    const orbitX=VW*.78,orbitY=VH*.32;
+    for(let i=0;i<12;i++){
+      const a=t*.48+i*Math.PI*2/12,r=35+(i%4)*8;
+      const x=orbitX+Math.cos(a)*r,y=orbitY+Math.sin(a)*r*.48;
+      ctx.globalAlpha=.7;ctx.fillStyle=i%3?'#aeb8e8':'#ffc17a';ctx.fillRect(Math.round(x),Math.round(y),2+i%3,2);
+    }
+    ctx.globalAlpha=1;
+    // Alison flota lejos del horizonte: seguirá el agujero negro al comenzar el nivel 1.
+    const floatX=163+Math.sin(t*.7)*5,floatY=192+Math.sin(t*1.7)*6;
+    ctx.globalAlpha=.32;ctx.strokeStyle='#a7c8ff';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(floatX-8,floatY-10);ctx.quadraticCurveTo(floatX-30,floatY-3,floatX-39,floatY+7);ctx.stroke();ctx.globalAlpha=1;
+    ctx.save();ctx.translate(floatX,floatY);ctx.rotate(-.16+Math.sin(t*1.2)*.08);_drawChar(0,0,-1,'fall',Math.floor(t*5)%4,false);ctx.restore();
+    // Polvo estelar da profundidad sin ocultar los restos.
+    for(let i=0;i<24;i++){
+      const x=(i*47+t*(2+i%3))%VW,y=(i*31+Math.sin(t+i)*9)%VH;
+      ctx.globalAlpha=.28+.25*(.5+.5*Math.sin(t*2+i));ctx.fillStyle=i%2?'#a9b8ff':'#f3c4ff';ctx.fillRect(Math.round(x),Math.round(y),1,1);
+    }
+    ctx.globalAlpha=1;
+    ctx.fillStyle='#ffe7a1';ctx.font='6px "Press Start 2P",monospace';ctx.fillText('A LA DERIVA EN EL ESPACIO',VW/2,15);
+    ctx.fillStyle='#fff1df';ctx.font='bold 11px Nunito';ctx.fillText('Su universo fue absorbido; Alison resistió el tirón.',VW/2,34);
+    ctx.fillText('Flota entre sus restos, siguiendo el agujero negro.',VW/2,49);
   }
   ctx.fillStyle='rgba(3,1,10,.82)';ctx.fillRect(20,VH-34,VW-40,20);ctx.fillStyle='#f5d0fe';ctx.font='6px "Press Start 2P"';ctx.fillText(p<5?'TOCA / ESPACIO PARA CONTINUAR':'TOCA / ESPACIO PARA IR AL NIVEL 1',VW/2,VH-21);ctx.textAlign='left';
 }
@@ -1143,7 +1170,7 @@ const CINE_SCENES=[
     text:'Una corriente la empujó hacia uno de los portales. Alison cayó sin saber qué mundo la esperaba al otro lado.'},
 ];
 const CINE_ART={};
-for(const art of [...new Set([...CINE_SCENES.map(scene=>scene.art),'field-play','tree-embrace','uriel','uriel-hug'])]){
+for(const art of [...new Set([...CINE_SCENES.map(scene=>scene.art),'field-play','tree-embrace','void-omen','uriel','uriel-hug'])]){
   const image=new Image();
   image.src=`assets/cinematic/${art}.webp`;
   CINE_ART[art]=image;
